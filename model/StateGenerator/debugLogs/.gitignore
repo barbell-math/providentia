@@ -1,7 +1,0 @@
-# This file is needed to keep the directory but not keep any
-#   files inside the directory. This directory is needed for
-#   testing, and if not created tests will fail.
-# Ignore everything in this directory
-*
-# Except this file
-!.gitignore

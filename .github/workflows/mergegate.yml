@@ -1,0 +1,31 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Mergegate
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  mergeGateOps:
+    name: Test on Go v${{ matrix.go_version }} and ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        go_version: ['1.24']
+        os: [ubuntu-latest]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go v${{ matrix.go_version }}
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ matrix.go_version }}
+
+    - name: Run Ops
+      run: |
+        go build -o ./bs/bs ./bs && ./bs/bs mergegate
+      shell: bash
