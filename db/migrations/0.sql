@@ -1,4 +1,4 @@
-CREATE SCHEMA IF NOT EXISTS prodvidentia;
+CREATE SCHEMA IF NOT EXISTS providentia;
 
 CREATE TABLE IF NOT EXISTS providentia.ExerciseFocus (
 	ID SERIAL PRIMARY KEY NOT NULL,
@@ -14,8 +14,8 @@ CREATE TABLE IF NOT EXISTS providentia.ExerciseType (
 CREATE TABLE IF NOT EXISTS providentia.Exercise (
 	ID SERIAL NOT NULL PRIMARY KEY,
 	Name TEXT NOT NULL,
-	TypeID NOT NULL REFERENCES providentia.ExerciseType(ID),
-	FocusID NOT NULL REFERENCES providentia.ExerciseFocus(ID)
+	TypeID INT NOT NULL REFERENCES providentia.ExerciseType(ID),
+	FocusID INT NOT NULL REFERENCES providentia.ExerciseFocus(ID)
 );
 
 CREATE TABLE IF NOT EXISTS providentia.Client (
