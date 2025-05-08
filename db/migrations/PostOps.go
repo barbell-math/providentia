@@ -8,4 +8,6 @@ import (
 
 //go:embed *.sql
 var SqlMigrations embed.FS
-var PostOps = map[sbsqlm.Migration]sbsqlm.PostMigrationOp{}
+var PostOps = map[sbsqlm.Migration]sbsqlm.PostMigrationOp{
+	0: postOp0,
+}
