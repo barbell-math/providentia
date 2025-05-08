@@ -8,6 +8,8 @@ github.com/barbell-math/smoothbrain-errs v0.0.0-20250505014541-5cf84614edb6 h1:X
 github.com/barbell-math/smoothbrain-errs v0.0.0-20250505014541-5cf84614edb6/go.mod h1:HkfxoW5I9gwJtUlRVMnKTJwO0XGfoL2ZBY+CHSikZhU=
 github.com/barbell-math/smoothbrain-logging v0.0.0-20250505020129-9bd5cd694620 h1:hWMXos1ctcvmvO6qKhBVXoRA2KTin7yzAcft/cHwNN8=
 github.com/barbell-math/smoothbrain-logging v0.0.0-20250505020129-9bd5cd694620/go.mod h1:qoSzKhCp1HeUioOZXaR7YAp9c3L7w4ytPdx7keQRrq8=
+github.com/barbell-math/smoothbrain-sqlmigrate v0.0.0-20250505053340-79cbcea61ac8 h1:YREb1fnTJmwD1RSAIVjsK353TYSq6mPG1xLZGhI1cO0=
+github.com/barbell-math/smoothbrain-sqlmigrate v0.0.0-20250505053340-79cbcea61ac8/go.mod h1:bGgYZdQMxlzLVJa5nxi6SA8Cty6Zo6RhUX701BycyF0=
 github.com/barbell-math/smoothbrain-test v0.0.0-20250505014501-62d578f863d7 h1:f+6VX3X1gsk5OA8KCZQ2/w3VRxF9xVF9781ZkIWiNWE=
 github.com/barbell-math/smoothbrain-test v0.0.0-20250505014501-62d578f863d7/go.mod h1:/hUIUGUJrMcJEgQ5abqRIpwPR42z7DfFRSZbW4aMpzU=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

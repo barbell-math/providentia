@@ -16,4 +16,10 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Println(state.FromContext(globalCtxt))
+
+	s, ok := state.FromContext(globalCtxt)
+	if !ok {
+		fmt.Println("EHH?")
+	}
+	s.Log.Info("We are up and running!")
 }

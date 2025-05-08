@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/barbell-math/providentia/db/migrations"
 	sbargp "github.com/barbell-math/smoothbrain-argparse"
 	sblog "github.com/barbell-math/smoothbrain-logging"
+	sbsqlm "github.com/barbell-math/smoothbrain-sqlmigrate"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -35,7 +37,7 @@ func FromContext(ctxt context.Context) (*State, bool) {
 	return s, ok
 }
 
-func Parse(ctxt context.Context, args []string) (context.Context, error) {
+func Parse(ctxt context.Context, args []string) (context.Context, func(), error) {
 	var err error
 	var poolConf *pgxpool.Config
 	state := State{}
@@ -67,12 +69,12 @@ func Parse(ctxt context.Context, args []string) (context.Context, error) {
 		CurVerbosityLevel: uint(state.Conf.Logging.Verbosity),
 		RotateWriterOpts: sblog.RotateWriterOpts{
 			LogDir:          string(state.Conf.Logging.SaveTo),
-			LogName:         "providentia",
+			LogName:         state.Conf.Logging.Name,
 			MaxNumLogs:      uint(state.Conf.Logging.MaxNumLogs),
 			MaxLogSizeBytes: uint64(state.Conf.Logging.MaxLogSizeBytes),
 		},
 	}); err != nil {
-		return nil, err
+		goto done
 	}
 
 	if poolConf, err = pgxpool.ParseConfig(fmt.Sprintf(
@@ -92,6 +94,19 @@ func Parse(ctxt context.Context, args []string) (context.Context, error) {
 		goto done
 	}
 
+	if err = sbsqlm.Load(
+		migrations.SqlMigrations, ".", migrations.PostOps,
+	); err != nil {
+		goto done
+	}
+	if err = sbsqlm.Run(ctxt, state.DB); err != nil {
+		goto done
+	}
+
 done:
-	return context.WithValue(ctxt, stateCtxtKey, &state), err
+	return context.WithValue(ctxt, stateCtxtKey, &state), func() {
+		if state.DB != nil {
+			state.DB.Close()
+		}
+	}, err
 }

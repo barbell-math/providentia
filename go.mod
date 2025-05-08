@@ -6,6 +6,7 @@ require (
 	github.com/barbell-math/smoothbrain-argparse v0.0.0-20250505041120-5444e24fc8b8
 	github.com/barbell-math/smoothbrain-bs v0.0.0-20250504072551-feab7facc14e
 	github.com/barbell-math/smoothbrain-logging v0.0.0-20250505020129-9bd5cd694620
+	github.com/barbell-math/smoothbrain-sqlmigrate v0.0.0-20250505053340-79cbcea61ac8
 	github.com/jackc/pgx/v5 v5.7.4
 )
 
@@ -20,3 +21,5 @@ require (
 	golang.org/x/sync v0.13.0 // indirect
 	golang.org/x/text v0.24.0 // indirect
 )
+
+replace github.com/barbell-math/providentia => ../providentia/
