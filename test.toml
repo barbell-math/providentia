@@ -1,7 +1,0 @@
-#asaf
-#asdf="asf"
-
-[ DB ]
-User="jack"
-PswdEnvVar="DB_PSWD"
-Name="grafanatest"

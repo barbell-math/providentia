@@ -1,0 +1,23 @@
+version: "2"
+
+sql:
+  - engine: "postgresql"
+    queries: "./queries.sql"
+    schema: "./schema.sql"
+    gen:
+      go:
+        package: "dal"
+        out: "dataAccessLayer"
+        sql_package: "pgx/v5"
+        emit_json_tags: true
+
+overrides:
+ go:
+  rename:
+    providentia_exercise_focu: ExerciseFocus
+    providentia_exercise_kind: ExerciseKind
+    providentia_video_datum: VideoData
+    providentia_exercise: Exercise
+    providentia_client: Client
+    providentia_training_log: TrainingLog
+    providentia_model_state: ModelState
