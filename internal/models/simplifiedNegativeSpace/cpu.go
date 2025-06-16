@@ -24,25 +24,23 @@ type (
 	}
 )
 
+// TODO - TEST THIS SHIT
+
 func ModelStates(
 	clientID int64,
-	historicalData []dal.ClientTrainingLogDataDateRangeAscendingRow,
-	needsCalc []dal.ClientTrainingLogDataDateRangeAscendingRow,
+	data []dal.ClientTrainingLogDataDateRangeAscendingRow,
+	startCalcsIdx int64,
 	opts Opts,
 ) []dal.BulkCreateModelStatesParams {
-	if len(needsCalc) == 0 {
+	if len(data) == 0 {
 		return []dal.BulkCreateModelStatesParams{}
 	}
 
-	modelStates := make([]dal.BulkCreateModelStatesParams, len(needsCalc))
-	var needsCalcPntr *C.trainingLog_t
-	var historicalDataPntr *C.trainingLog_t
+	modelStates := make([]dal.BulkCreateModelStatesParams, len(data))
+	var dataPntr *C.trainingLog_t
 	var modelStatesPntr *C.modelState_t
-	if len(historicalData) > 0 {
-		historicalDataPntr = (*C.trainingLog_t)(unsafe.Pointer(&historicalData[0]))
-	}
-	if len(needsCalc) > 0 {
-		needsCalcPntr = (*C.trainingLog_t)(unsafe.Pointer(&needsCalc[0]))
+	if len(data) > 0 {
+		dataPntr = (*C.trainingLog_t)(unsafe.Pointer(&data[0]))
 	}
 	if len(modelStates) > 0 {
 		modelStatesPntr = (*C.modelState_t)(unsafe.Pointer(&modelStates[0]))
@@ -51,8 +49,8 @@ func ModelStates(
 	C.calcModelStates(
 		C.long(clientID),
 		C.int32_t(pubenums.ModelIDSimplifiedNegativeSpace),
-		historicalDataPntr, C.long(len(historicalData)),
-		needsCalcPntr, C.long(len(needsCalc)),
+		dataPntr, C.long(len(data)),
+		C.int64_t(startCalcsIdx),
 		modelStatesPntr, C.long(len(modelStates)),
 		(*C.opts_t)(unsafe.Pointer(&opts)),
 	)

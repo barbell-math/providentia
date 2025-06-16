@@ -85,7 +85,7 @@ func CalcSimplifiedNegativeSpaceModelStates(
 
 	// Where the real work is done...
 	modelStates := simplifiednegativespace.ModelStates(
-		clientID, allData[0:splitIdx], allData[splitIdx:],
+		clientID, allData, int64(splitIdx),
 		state.Conf.SimplifiedNegativeSpaceModel,
 	)
 

@@ -12,10 +12,9 @@ extern "C" {
 	void calcModelStates(
 		int64_t clientID,
 		int32_t modelID,
-		trainingLog_t *historicalData,
-		int64_t historicalDataLen,
-		trainingLog_t *needsCalc,
-		int64_t needsCalcLen,
+		trainingLog_t *data,
+		int64_t dataLen,
+		int64_t startCalcsIdx,
 		modelState_t *outValues,
 		int64_t outValuesLen,
 		opts_t *opts
