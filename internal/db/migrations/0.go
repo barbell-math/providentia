@@ -11,6 +11,7 @@ import (
 
 var (
 	SetupMissingDataErr = errors.New("Did not copy all setup values")
+	SerialUpdateCmdErr  = errors.New("Could not update the serial value")
 )
 
 func PostOp0(ctxt context.Context, tx pgx.Tx) error {
@@ -22,8 +23,14 @@ func PostOp0(ctxt context.Context, tx pgx.Tx) error {
 	} else if cnt != int64(len(ExerciseFocusSetupData)) {
 		return sberr.Wrap(
 			SetupMissingDataErr,
-			"Setting up the providentia.ExerciseFocus table: Expected %d rows to be created, got %d",
+			"Setting up the providentia.exercise_focus table: Expected %d rows to be created, got %d",
 			len(ExerciseFocusSetupData), cnt,
+		)
+	}
+	if err := q.UpdateExerciseFocusSerialCount(ctxt); err != nil {
+		return sberr.Wrap(
+			SerialUpdateCmdErr,
+			"Setting up the providentia.exercise_focus table",
 		)
 	}
 
@@ -33,8 +40,14 @@ func PostOp0(ctxt context.Context, tx pgx.Tx) error {
 	} else if cnt != int64(len(ExerciseKindSetupData)) {
 		return sberr.Wrap(
 			SetupMissingDataErr,
-			"Setting up the providentia.ExerciseKind table: Expected %d rows to be created, got %d",
+			"Setting up the providentia.exercise_kind table: Expected %d rows to be created, got %d",
 			len(ExerciseKindSetupData), cnt,
+		)
+	}
+	if err := q.UpdateExerciseKindSerialCount(ctxt); err != nil {
+		return sberr.Wrap(
+			SerialUpdateCmdErr,
+			"Setting up the providentia.exercise_kind table",
 		)
 	}
 
@@ -44,8 +57,14 @@ func PostOp0(ctxt context.Context, tx pgx.Tx) error {
 	} else if cnt != int64(len(ExerciseSetupData)) {
 		return sberr.Wrap(
 			SetupMissingDataErr,
-			"Setting up the providentia.Exercise table: Expected %d rows to be created, got %d",
+			"Setting up the providentia.exercise table: Expected %d rows to be created, got %d",
 			len(ExerciseSetupData), cnt,
+		)
+	}
+	if err := q.UpdateExerciseSerialCount(ctxt); err != nil {
+		return sberr.Wrap(
+			SerialUpdateCmdErr,
+			"Setting up the providentia.exercise table",
 		)
 	}
 
@@ -55,19 +74,31 @@ func PostOp0(ctxt context.Context, tx pgx.Tx) error {
 	} else if cnt != int64(len(VideoDataSetupData)) {
 		return sberr.Wrap(
 			SetupMissingDataErr,
-			"Setting up the providentia.VideoData table: Expected %d rows to be created, got %d",
+			"Setting up the providentia.video_data table: Expected %d rows to be created, got %d",
 			len(VideoDataSetupData), cnt,
 		)
 	}
+	if err := q.UpdateVideoDataSerialCount(ctxt); err != nil {
+		return sberr.Wrap(
+			SerialUpdateCmdErr,
+			"Setting up the providentia.video_data table",
+		)
+	}
 
-	cnt, err = q.BulkCreateModels(ctxt, ModelSetupData)
+	cnt, err = q.BulkCreateModelsWithID(ctxt, ModelSetupData)
 	if err != nil {
 		return err
 	} else if cnt != int64(len(ModelSetupData)) {
 		return sberr.Wrap(
 			SetupMissingDataErr,
-			"Setting up the providentia.Model table: Expected %d rows to be created, got %d",
+			"Setting up the providentia.model table: Expected %d rows to be created, got %d",
 			len(ModelSetupData), cnt,
+		)
+	}
+	if err := q.UpdateModelSerialCount(ctxt); err != nil {
+		return sberr.Wrap(
+			SerialUpdateCmdErr,
+			"Setting up the providentia.model table",
 		)
 	}
 

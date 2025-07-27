@@ -1,34 +1,121 @@
 -- name: BulkCreateExerciseFocusWithID :copyfrom
+-- This query is used for initilization by the migrations. The
+-- UpdateExerciseFocusSerialCount query will need to be run after this to update
+-- the serial counter.
 INSERT INTO providentia.exercise_focus (id, focus) VALUES ($1, $2);
 
+-- name: UpdateExerciseFocusSerialCount :exec
+SELECT SETVAL(
+	pg_get_serial_sequence('providentia.exercise_focus', 'id'),
+	(SELECT MAX(id) FROM providentia.exercise_focus) + 1
+);
+
+
+
 -- name: BulkCreateExerciseKindWithID :copyfrom
+-- This query is used for initilization by the migrations. The
+-- UpdateExerciseKindSerialCount query will need to be run after this to update
+-- the serial counter.
 INSERT INTO providentia.exercise_kind (id, kind, description) VALUES ($1, $2, $3);
 
--- name: BulkCreateModels :copyfrom
-INSERT INTO providentia.model (id, name, description) VALUES ($1, $2, $3);
+-- name: UpdateExerciseKindSerialCount :exec
+SELECT SETVAL(
+	pg_get_serial_sequence('providentia.exercise_kind', 'id'),
+	(SELECT MAX(id) FROM providentia.exercise_kind) + 1
+);
 
--- name: BulkCreateExerciseWithID :copyfrom
-INSERT INTO providentia.exercise(
-	id, name, kind_id, focus_id
-) VALUES ($1, $2, $3, $4);
 
--- name: BulkCreateVideoDataWithID :copyfrom
-INSERT INTO providentia.video_data (
-	id, path, position, velocity, acceleration, force, impulse
-) VALUES ($1, $2, $3, $4, $5, $6, $7);
 
 -- name: BulkCreateClients :copyfrom
 INSERT INTO providentia.client (first_name, last_name, email) VALUES ($1, $2, $3);
 
--- name: BulkCreateTraingLog :copyfrom
-INSERT INTO providentia.training_log(
-	exercise_id, exercise_kind_id, exercise_focus_id, client_id, video_id,
-	date_performed, weight, sets, reps, effort,
-	inter_session_cntr, inter_workout_cntr
-) VALUES (
-	$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+-- name: GetNumClients :one
+SELECT COUNT(*) FROM providentia.client;
+
+-- name: GetClientsByEmail :many
+SELECT first_name, last_name, email
+FROM providentia.client WHERE email = ANY($1::text[]);
+
+-- name: UpdateClientByEmail :exec
+UPDATE providentia.client SET first_name=$1, last_name=$2
+WHERE providentia.client.email=$3;
+
+-- name: DeleteClientsByEmail :one
+WITH deleted_clients AS (
+    DELETE FROM providentia.client
+    WHERE email = ANY($1::text[])
+    RETURNING id
+) SELECT COUNT(*) FROM deleted_clients;
+
+
+
+-- name: BulkCreateExerciseWithID :copyfrom
+-- This query is used for initilization by the migrations. The
+-- UpdateExerciseSerialCount query will need to be run after this to update
+-- the serial counter.
+INSERT INTO providentia.exercise(
+	id, name, kind_id, focus_id
+) VALUES ($1, $2, $3, $4);
+
+-- name: UpdateExerciseSerialCount :exec
+SELECT SETVAL(
+	pg_get_serial_sequence('providentia.exercise', 'id'),
+	(SELECT MAX(id) FROM providentia.exercise) + 1
 );
 
+-- name: BulkCreateExercises :copyfrom
+INSERT INTO providentia.exercise (name, kind_id, focus_id) VALUES ($1, $2, $3);
+
+-- name: GetNumExercises :one
+SELECT COUNT(*) FROM providentia.exercise;
+
+-- name: GetExercisesByName :many
+SELECT name, kind_id, focus_id
+FROM providentia.exercise WHERE name = ANY($1::text[]);
+
+-- name: UpdateExerciseByName :exec
+UPDATE providentia.exercise SET kind_id=$2, focus_id=$3
+WHERE providentia.exercise.name=$1;
+
+-- name: DeleteExercisesByName :one
+WITH deleted_exercises AS (
+    DELETE FROM providentia.exercise
+    WHERE name = ANY($1::text[])
+    RETURNING id
+) SELECT COUNT(*) FROM deleted_exercises;
+
+
+
+-- name: BulkCreateVideoDataWithID :copyfrom
+-- This query is used for initilization by the migrations. The
+-- UpdateVideoDataSerialCount query will need to be run after this to update
+-- the serial counter.
+INSERT INTO providentia.video_data (
+	id, path, position, velocity, acceleration, force, impulse
+) VALUES ($1, $2, $3, $4, $5, $6, $7);
+
+-- name: UpdateVideoDataSerialCount :exec
+SELECT SETVAL(
+	pg_get_serial_sequence('providentia.video_data', 'id'),
+	(SELECT MAX(id) FROM providentia.video_data) + 1
+);
+
+
+
+-- name: BulkCreateModelsWithID :copyfrom
+-- This query is used for initilization by the migrations. The
+-- UpdateModelSerialCount query will need to be run after this to update
+-- the serial counter.
+INSERT INTO providentia.model (id, name, description) VALUES ($1, $2, $3);
+
+-- name: UpdateModelSerialCount :exec
+SELECT SETVAL(
+	pg_get_serial_sequence('providentia.exercise', 'id'),
+	(SELECT MAX(id) FROM providentia.exercise) + 1
+);
+
+
+----- OLD ----------------------------------------------------------------------
 -- name: BulkCreateModelStates :copyfrom
 INSERT INTO providentia.model_state(
 	client_id, training_log_id, model_id,
@@ -38,8 +125,66 @@ INSERT INTO providentia.model_state(
 	$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
 );
 
+
+-- name: BulkCreateTrainingLog :copyfrom
+INSERT INTO providentia.training_log(
+	exercise_id, exercise_kind_id, exercise_focus_id, client_id, video_id,
+	date_performed, weight, sets, reps, effort,
+	inter_session_cntr, inter_workout_cntr
+) VALUES (
+	$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+);
+
+
 -- name: GetClientIDFromEmail :one
 SELECT ID FROM providentia.client WHERE email=$1;
+
+-- name: GetAllClientsTrainingLogData :many
+SELECT
+	providentia.client.email,
+	providentia.exercise.name,
+	providentia.training_log.date_performed,
+	providentia.training_log.inter_session_cntr,
+	providentia.training_log.weight,
+	providentia.training_log.sets,
+	providentia.training_log.reps,
+	providentia.training_log.effort,
+	providentia.training_log.volume,
+	providentia.training_log.exertion,
+	providentia.training_log.total_reps
+FROM providentia.training_log
+JOIN providentia.exercise
+	ON providentia.training_log.exercise_id=providentia.exercise.id
+JOIN providentia.client
+	ON providentia.training_log.client_id=providentia.client.id
+ORDER BY
+	-- These cannot be labeled with providentia.training_log because you will
+	-- get a `column reference "" not found` error.
+	client.id DESC,
+	training_log.date_performed DESC,
+	training_log.id DESC
+LIMIT $1;
+
+-- name: GetClientTrainingLogData :many
+SELECT
+	providentia.exercise.name,
+	providentia.training_log.date_performed,
+	providentia.training_log.inter_session_cntr,
+	providentia.training_log.weight,
+	providentia.training_log.sets,
+	providentia.training_log.reps,
+	providentia.training_log.effort
+FROM providentia.training_log
+JOIN providentia.exercise
+	ON providentia.training_log.exercise_id=providentia.exercise.id
+JOIN providentia.client
+	ON providentia.training_log.client_id=providentia.client.id
+WHERE providentia.client.email=$1
+ORDER BY
+	-- These cannot be labeled with providentia.training_log because you will
+	-- get a `column reference "" not found` error.
+	training_log.date_performed DESC, training_log.id DESC
+LIMIT $2;
 
 -- name: GetExerciseIDs :one
 SELECT

@@ -53,13 +53,14 @@ CREATE TABLE IF NOT EXISTS providentia.training_log (
 	weight FLOAT NOT NULL CHECK (weight>=0),
 	sets FLOAT NOT NULL CHECK (sets>=0),
 	reps INT NOT NULL CHECK (reps>=0),
-	effort FLOAT NOT NULL CHECK (effort >=0 AND effort<=10),
+	effort FLOAT NOT NULL CHECK (effort>=0 AND effort<=10),
 
 	inter_session_cntr INT NOT NULL CHECK (inter_session_cntr>0),
 	inter_workout_cntr INT NOT NULL CHECK (inter_workout_cntr>0),
 
 	volume FLOAT NOT NULL CHECK (volume>=0) GENERATED ALWAYS AS (weight*sets*reps) STORED,
-	exertion FLOAT NOT NULL CHECK (exertion>=0) GENERATED ALWAYS AS (effort*sets*reps) STORED
+	exertion FLOAT NOT NULL CHECK (exertion>=0) GENERATED ALWAYS AS (effort*sets*reps) STORED,
+	total_reps FLOAT NOT NULL CHECK (total_reps>=0) GENERATED ALWAYS AS (sets*reps) STORED
 );
 
 CREATE TABLE IF NOT EXISTS providentia.model_state (

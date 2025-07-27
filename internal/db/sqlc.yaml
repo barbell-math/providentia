@@ -10,6 +10,15 @@ sql:
         out: "dataAccessLayer"
         sql_package: "pgx/v5"
         emit_json_tags: true
+        overrides:
+          - column: providentia.exercise.kind_id
+            go_type:
+              import: "github.com/barbell-math/providentia/lib/types"
+              type: "ExerciseKind"
+          - column: providentia.exercise.focus_id
+            go_type:
+              import: "github.com/barbell-math/providentia/lib/types"
+              type: "ExerciseFocus"
 
 overrides:
  go:

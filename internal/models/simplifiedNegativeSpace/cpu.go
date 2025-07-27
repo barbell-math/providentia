@@ -2,7 +2,7 @@
 
 package simplifiednegativespace
 
-// #cgo CXXFLAGS: -O3 -march=native -std=c++23 -I../../../deps/eigen
+// #cgo CXXFLAGS: -O3 -march=native -std=c++23 -I../../../_deps/eigen
 // #cgo LDFLAGS: -lstdc++
 // #include "cpu.h"
 import "C"
@@ -10,7 +10,7 @@ import (
 	"unsafe"
 
 	dal "github.com/barbell-math/providentia/internal/db/dataAccessLayer"
-	pubenums "github.com/barbell-math/providentia/lib/pubEnums"
+	"github.com/barbell-math/providentia/lib/types"
 )
 
 //go:generate go run ./structGen/structGen.go
@@ -48,7 +48,7 @@ func ModelStates(
 
 	C.calcModelStates(
 		C.long(clientID),
-		C.int32_t(pubenums.ModelIDSimplifiedNegativeSpace),
+		C.int32_t(types.SimplifiedNegativeSpace),
 		dataPntr, C.long(len(data)),
 		C.int64_t(startCalcsIdx),
 		modelStatesPntr, C.long(len(modelStates)),

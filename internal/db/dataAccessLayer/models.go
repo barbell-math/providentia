@@ -5,6 +5,7 @@
 package dal
 
 import (
+	"github.com/barbell-math/providentia/lib/types"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -16,10 +17,10 @@ type Client struct {
 }
 
 type Exercise struct {
-	ID      int32  `json:"id"`
-	Name    string `json:"name"`
-	KindID  int32  `json:"kind_id"`
-	FocusID int32  `json:"focus_id"`
+	ID      int32               `json:"id"`
+	Name    string              `json:"name"`
+	KindID  types.ExerciseKind  `json:"kind_id"`
+	FocusID types.ExerciseFocus `json:"focus_id"`
 }
 
 type ExerciseFocus struct {
@@ -75,6 +76,7 @@ type TrainingLog struct {
 	InterWorkoutCntr int32       `json:"inter_workout_cntr"`
 	Volume           float64     `json:"volume"`
 	Exertion         float64     `json:"exertion"`
+	TotalReps        float64     `json:"total_reps"`
 }
 
 type VideoData struct {

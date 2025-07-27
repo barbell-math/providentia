@@ -4,7 +4,7 @@
 // Build Date: 2025-03-18T23:42:14Z
 // Built By: goreleaser
 
-package pubenums
+package types
 
 import (
 	"fmt"
@@ -12,25 +12,25 @@ import (
 )
 
 const (
-	// ExerciseFocusUnknown is a ExerciseFocus of type Unknown.
-	ExerciseFocusUnknown ExerciseFocus = iota
-	// ExerciseFocusSquat is a ExerciseFocus of type Squat.
-	ExerciseFocusSquat
-	// ExerciseFocusBench is a ExerciseFocus of type Bench.
-	ExerciseFocusBench
-	// ExerciseFocusDeadlift is a ExerciseFocus of type Deadlift.
-	ExerciseFocusDeadlift
+	// UnknownExerciseFocus is a ExerciseFocus of type UnknownExerciseFocus.
+	UnknownExerciseFocus ExerciseFocus = iota
+	// Squat is a ExerciseFocus of type Squat.
+	Squat
+	// Bench is a ExerciseFocus of type Bench.
+	Bench
+	// Deadlift is a ExerciseFocus of type Deadlift.
+	Deadlift
 )
 
 var ErrInvalidExerciseFocus = fmt.Errorf("not a valid ExerciseFocus, try [%s]", strings.Join(_ExerciseFocusNames, ", "))
 
-const _ExerciseFocusName = "UnknownSquatBenchDeadlift"
+const _ExerciseFocusName = "UnknownExerciseFocusSquatBenchDeadlift"
 
 var _ExerciseFocusNames = []string{
-	_ExerciseFocusName[0:7],
-	_ExerciseFocusName[7:12],
-	_ExerciseFocusName[12:17],
-	_ExerciseFocusName[17:25],
+	_ExerciseFocusName[0:20],
+	_ExerciseFocusName[20:25],
+	_ExerciseFocusName[25:30],
+	_ExerciseFocusName[30:38],
 }
 
 // ExerciseFocusNames returns a list of possible string values of ExerciseFocus.
@@ -43,18 +43,18 @@ func ExerciseFocusNames() []string {
 // ExerciseFocusValues returns a list of the values for ExerciseFocus
 func ExerciseFocusValues() []ExerciseFocus {
 	return []ExerciseFocus{
-		ExerciseFocusUnknown,
-		ExerciseFocusSquat,
-		ExerciseFocusBench,
-		ExerciseFocusDeadlift,
+		UnknownExerciseFocus,
+		Squat,
+		Bench,
+		Deadlift,
 	}
 }
 
 var _ExerciseFocusMap = map[ExerciseFocus]string{
-	ExerciseFocusUnknown:  _ExerciseFocusName[0:7],
-	ExerciseFocusSquat:    _ExerciseFocusName[7:12],
-	ExerciseFocusBench:    _ExerciseFocusName[12:17],
-	ExerciseFocusDeadlift: _ExerciseFocusName[17:25],
+	UnknownExerciseFocus: _ExerciseFocusName[0:20],
+	Squat:                _ExerciseFocusName[20:25],
+	Bench:                _ExerciseFocusName[25:30],
+	Deadlift:             _ExerciseFocusName[30:38],
 }
 
 // String implements the Stringer interface.
@@ -73,14 +73,14 @@ func (x ExerciseFocus) IsValid() bool {
 }
 
 var _ExerciseFocusValue = map[string]ExerciseFocus{
-	_ExerciseFocusName[0:7]:                    ExerciseFocusUnknown,
-	strings.ToLower(_ExerciseFocusName[0:7]):   ExerciseFocusUnknown,
-	_ExerciseFocusName[7:12]:                   ExerciseFocusSquat,
-	strings.ToLower(_ExerciseFocusName[7:12]):  ExerciseFocusSquat,
-	_ExerciseFocusName[12:17]:                  ExerciseFocusBench,
-	strings.ToLower(_ExerciseFocusName[12:17]): ExerciseFocusBench,
-	_ExerciseFocusName[17:25]:                  ExerciseFocusDeadlift,
-	strings.ToLower(_ExerciseFocusName[17:25]): ExerciseFocusDeadlift,
+	_ExerciseFocusName[0:20]:                   UnknownExerciseFocus,
+	strings.ToLower(_ExerciseFocusName[0:20]):  UnknownExerciseFocus,
+	_ExerciseFocusName[20:25]:                  Squat,
+	strings.ToLower(_ExerciseFocusName[20:25]): Squat,
+	_ExerciseFocusName[25:30]:                  Bench,
+	strings.ToLower(_ExerciseFocusName[25:30]): Bench,
+	_ExerciseFocusName[30:38]:                  Deadlift,
+	strings.ToLower(_ExerciseFocusName[30:38]): Deadlift,
 }
 
 // ParseExerciseFocus attempts to convert a string to a ExerciseFocus.
@@ -112,28 +112,25 @@ func (x *ExerciseFocus) UnmarshalText(text []byte) error {
 }
 
 const (
-	// ExerciseKindUnknown is a ExerciseKind of type Unknown.
-	ExerciseKindUnknown ExerciseKind = iota
-	// ExerciseKindMainCompound is a ExerciseKind of type MainCompound.
-	ExerciseKindMainCompound
-	// ExerciseKindMainCompoundAccessory is a ExerciseKind of type MainCompoundAccessory.
-	ExerciseKindMainCompoundAccessory
-	// ExerciseKindCompoundAccessory is a ExerciseKind of type CompoundAccessory.
-	ExerciseKindCompoundAccessory
-	// ExerciseKindAccessory is a ExerciseKind of type Accessory.
-	ExerciseKindAccessory
+	// MainCompound is a ExerciseKind of type MainCompound.
+	MainCompound ExerciseKind = iota + 1
+	// MainCompoundAccessory is a ExerciseKind of type MainCompoundAccessory.
+	MainCompoundAccessory
+	// CompoundAccessory is a ExerciseKind of type CompoundAccessory.
+	CompoundAccessory
+	// Accessory is a ExerciseKind of type Accessory.
+	Accessory
 )
 
 var ErrInvalidExerciseKind = fmt.Errorf("not a valid ExerciseKind, try [%s]", strings.Join(_ExerciseKindNames, ", "))
 
-const _ExerciseKindName = "UnknownMainCompoundMainCompoundAccessoryCompoundAccessoryAccessory"
+const _ExerciseKindName = "MainCompoundMainCompoundAccessoryCompoundAccessoryAccessory"
 
 var _ExerciseKindNames = []string{
-	_ExerciseKindName[0:7],
-	_ExerciseKindName[7:19],
-	_ExerciseKindName[19:40],
-	_ExerciseKindName[40:57],
-	_ExerciseKindName[57:66],
+	_ExerciseKindName[0:12],
+	_ExerciseKindName[12:33],
+	_ExerciseKindName[33:50],
+	_ExerciseKindName[50:59],
 }
 
 // ExerciseKindNames returns a list of possible string values of ExerciseKind.
@@ -146,20 +143,18 @@ func ExerciseKindNames() []string {
 // ExerciseKindValues returns a list of the values for ExerciseKind
 func ExerciseKindValues() []ExerciseKind {
 	return []ExerciseKind{
-		ExerciseKindUnknown,
-		ExerciseKindMainCompound,
-		ExerciseKindMainCompoundAccessory,
-		ExerciseKindCompoundAccessory,
-		ExerciseKindAccessory,
+		MainCompound,
+		MainCompoundAccessory,
+		CompoundAccessory,
+		Accessory,
 	}
 }
 
 var _ExerciseKindMap = map[ExerciseKind]string{
-	ExerciseKindUnknown:               _ExerciseKindName[0:7],
-	ExerciseKindMainCompound:          _ExerciseKindName[7:19],
-	ExerciseKindMainCompoundAccessory: _ExerciseKindName[19:40],
-	ExerciseKindCompoundAccessory:     _ExerciseKindName[40:57],
-	ExerciseKindAccessory:             _ExerciseKindName[57:66],
+	MainCompound:          _ExerciseKindName[0:12],
+	MainCompoundAccessory: _ExerciseKindName[12:33],
+	CompoundAccessory:     _ExerciseKindName[33:50],
+	Accessory:             _ExerciseKindName[50:59],
 }
 
 // String implements the Stringer interface.
@@ -178,16 +173,14 @@ func (x ExerciseKind) IsValid() bool {
 }
 
 var _ExerciseKindValue = map[string]ExerciseKind{
-	_ExerciseKindName[0:7]:                    ExerciseKindUnknown,
-	strings.ToLower(_ExerciseKindName[0:7]):   ExerciseKindUnknown,
-	_ExerciseKindName[7:19]:                   ExerciseKindMainCompound,
-	strings.ToLower(_ExerciseKindName[7:19]):  ExerciseKindMainCompound,
-	_ExerciseKindName[19:40]:                  ExerciseKindMainCompoundAccessory,
-	strings.ToLower(_ExerciseKindName[19:40]): ExerciseKindMainCompoundAccessory,
-	_ExerciseKindName[40:57]:                  ExerciseKindCompoundAccessory,
-	strings.ToLower(_ExerciseKindName[40:57]): ExerciseKindCompoundAccessory,
-	_ExerciseKindName[57:66]:                  ExerciseKindAccessory,
-	strings.ToLower(_ExerciseKindName[57:66]): ExerciseKindAccessory,
+	_ExerciseKindName[0:12]:                   MainCompound,
+	strings.ToLower(_ExerciseKindName[0:12]):  MainCompound,
+	_ExerciseKindName[12:33]:                  MainCompoundAccessory,
+	strings.ToLower(_ExerciseKindName[12:33]): MainCompoundAccessory,
+	_ExerciseKindName[33:50]:                  CompoundAccessory,
+	strings.ToLower(_ExerciseKindName[33:50]): CompoundAccessory,
+	_ExerciseKindName[50:59]:                  Accessory,
+	strings.ToLower(_ExerciseKindName[50:59]): Accessory,
 }
 
 // ParseExerciseKind attempts to convert a string to a ExerciseKind.
@@ -219,19 +212,19 @@ func (x *ExerciseKind) UnmarshalText(text []byte) error {
 }
 
 const (
-	// ModelIDUnknown is a ModelID of type Unknown.
-	ModelIDUnknown ModelID = iota
-	// ModelIDSimplifiedNegativeSpace is a ModelID of type SimplifiedNegativeSpace.
-	ModelIDSimplifiedNegativeSpace
+	// UnknownModel is a ModelID of type UnknownModel.
+	UnknownModel ModelID = iota
+	// SimplifiedNegativeSpace is a ModelID of type SimplifiedNegativeSpace.
+	SimplifiedNegativeSpace
 )
 
 var ErrInvalidModelID = fmt.Errorf("not a valid ModelID, try [%s]", strings.Join(_ModelIDNames, ", "))
 
-const _ModelIDName = "UnknownSimplifiedNegativeSpace"
+const _ModelIDName = "UnknownModelSimplifiedNegativeSpace"
 
 var _ModelIDNames = []string{
-	_ModelIDName[0:7],
-	_ModelIDName[7:30],
+	_ModelIDName[0:12],
+	_ModelIDName[12:35],
 }
 
 // ModelIDNames returns a list of possible string values of ModelID.
@@ -244,14 +237,14 @@ func ModelIDNames() []string {
 // ModelIDValues returns a list of the values for ModelID
 func ModelIDValues() []ModelID {
 	return []ModelID{
-		ModelIDUnknown,
-		ModelIDSimplifiedNegativeSpace,
+		UnknownModel,
+		SimplifiedNegativeSpace,
 	}
 }
 
 var _ModelIDMap = map[ModelID]string{
-	ModelIDUnknown:                 _ModelIDName[0:7],
-	ModelIDSimplifiedNegativeSpace: _ModelIDName[7:30],
+	UnknownModel:            _ModelIDName[0:12],
+	SimplifiedNegativeSpace: _ModelIDName[12:35],
 }
 
 // String implements the Stringer interface.
@@ -270,10 +263,10 @@ func (x ModelID) IsValid() bool {
 }
 
 var _ModelIDValue = map[string]ModelID{
-	_ModelIDName[0:7]:                   ModelIDUnknown,
-	strings.ToLower(_ModelIDName[0:7]):  ModelIDUnknown,
-	_ModelIDName[7:30]:                  ModelIDSimplifiedNegativeSpace,
-	strings.ToLower(_ModelIDName[7:30]): ModelIDSimplifiedNegativeSpace,
+	_ModelIDName[0:12]:                   UnknownModel,
+	strings.ToLower(_ModelIDName[0:12]):  UnknownModel,
+	_ModelIDName[12:35]:                  SimplifiedNegativeSpace,
+	strings.ToLower(_ModelIDName[12:35]): SimplifiedNegativeSpace,
 }
 
 // ParseModelID attempts to convert a string to a ModelID.

@@ -72,6 +72,9 @@ func (r iteratorForBulkCreateExerciseFocusWithID) Err() error {
 	return nil
 }
 
+// This query is used for initilization by the migrations. The
+// UpdateExerciseFocusSerialCount query will need to be run after this to update
+// the serial counter.
 func (q *Queries) BulkCreateExerciseFocusWithID(ctx context.Context, arg []BulkCreateExerciseFocusWithIDParams) (int64, error) {
 	return q.db.CopyFrom(ctx, []string{"providentia", "exercise_focus"}, []string{"id", "focus"}, &iteratorForBulkCreateExerciseFocusWithID{rows: arg})
 }
@@ -106,6 +109,9 @@ func (r iteratorForBulkCreateExerciseKindWithID) Err() error {
 	return nil
 }
 
+// This query is used for initilization by the migrations. The
+// UpdateExerciseKindSerialCount query will need to be run after this to update
+// the serial counter.
 func (q *Queries) BulkCreateExerciseKindWithID(ctx context.Context, arg []BulkCreateExerciseKindWithIDParams) (int64, error) {
 	return q.db.CopyFrom(ctx, []string{"providentia", "exercise_kind"}, []string{"id", "kind", "description"}, &iteratorForBulkCreateExerciseKindWithID{rows: arg})
 }
@@ -141,8 +147,45 @@ func (r iteratorForBulkCreateExerciseWithID) Err() error {
 	return nil
 }
 
+// This query is used for initilization by the migrations. The
+// UpdateExerciseSerialCount query will need to be run after this to update
+// the serial counter.
 func (q *Queries) BulkCreateExerciseWithID(ctx context.Context, arg []BulkCreateExerciseWithIDParams) (int64, error) {
 	return q.db.CopyFrom(ctx, []string{"providentia", "exercise"}, []string{"id", "name", "kind_id", "focus_id"}, &iteratorForBulkCreateExerciseWithID{rows: arg})
+}
+
+// iteratorForBulkCreateExercises implements pgx.CopyFromSource.
+type iteratorForBulkCreateExercises struct {
+	rows                 []BulkCreateExercisesParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForBulkCreateExercises) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForBulkCreateExercises) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].Name,
+		r.rows[0].KindID,
+		r.rows[0].FocusID,
+	}, nil
+}
+
+func (r iteratorForBulkCreateExercises) Err() error {
+	return nil
+}
+
+func (q *Queries) BulkCreateExercises(ctx context.Context, arg []BulkCreateExercisesParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"providentia", "exercise"}, []string{"name", "kind_id", "focus_id"}, &iteratorForBulkCreateExercises{rows: arg})
 }
 
 // iteratorForBulkCreateModelStates implements pgx.CopyFromSource.
@@ -188,17 +231,18 @@ func (r iteratorForBulkCreateModelStates) Err() error {
 	return nil
 }
 
+// --- OLD ----------------------------------------------------------------------
 func (q *Queries) BulkCreateModelStates(ctx context.Context, arg []BulkCreateModelStatesParams) (int64, error) {
 	return q.db.CopyFrom(ctx, []string{"providentia", "model_state"}, []string{"client_id", "training_log_id", "model_id", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "time_frame", "mse", "pred_weight"}, &iteratorForBulkCreateModelStates{rows: arg})
 }
 
-// iteratorForBulkCreateModels implements pgx.CopyFromSource.
-type iteratorForBulkCreateModels struct {
-	rows                 []BulkCreateModelsParams
+// iteratorForBulkCreateModelsWithID implements pgx.CopyFromSource.
+type iteratorForBulkCreateModelsWithID struct {
+	rows                 []BulkCreateModelsWithIDParams
 	skippedFirstNextCall bool
 }
 
-func (r *iteratorForBulkCreateModels) Next() bool {
+func (r *iteratorForBulkCreateModelsWithID) Next() bool {
 	if len(r.rows) == 0 {
 		return false
 	}
@@ -210,7 +254,7 @@ func (r *iteratorForBulkCreateModels) Next() bool {
 	return len(r.rows) > 0
 }
 
-func (r iteratorForBulkCreateModels) Values() ([]interface{}, error) {
+func (r iteratorForBulkCreateModelsWithID) Values() ([]interface{}, error) {
 	return []interface{}{
 		r.rows[0].ID,
 		r.rows[0].Name,
@@ -218,21 +262,24 @@ func (r iteratorForBulkCreateModels) Values() ([]interface{}, error) {
 	}, nil
 }
 
-func (r iteratorForBulkCreateModels) Err() error {
+func (r iteratorForBulkCreateModelsWithID) Err() error {
 	return nil
 }
 
-func (q *Queries) BulkCreateModels(ctx context.Context, arg []BulkCreateModelsParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"providentia", "model"}, []string{"id", "name", "description"}, &iteratorForBulkCreateModels{rows: arg})
+// This query is used for initilization by the migrations. The
+// UpdateModelSerialCount query will need to be run after this to update
+// the serial counter.
+func (q *Queries) BulkCreateModelsWithID(ctx context.Context, arg []BulkCreateModelsWithIDParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"providentia", "model"}, []string{"id", "name", "description"}, &iteratorForBulkCreateModelsWithID{rows: arg})
 }
 
-// iteratorForBulkCreateTraingLog implements pgx.CopyFromSource.
-type iteratorForBulkCreateTraingLog struct {
-	rows                 []BulkCreateTraingLogParams
+// iteratorForBulkCreateTrainingLog implements pgx.CopyFromSource.
+type iteratorForBulkCreateTrainingLog struct {
+	rows                 []BulkCreateTrainingLogParams
 	skippedFirstNextCall bool
 }
 
-func (r *iteratorForBulkCreateTraingLog) Next() bool {
+func (r *iteratorForBulkCreateTrainingLog) Next() bool {
 	if len(r.rows) == 0 {
 		return false
 	}
@@ -244,7 +291,7 @@ func (r *iteratorForBulkCreateTraingLog) Next() bool {
 	return len(r.rows) > 0
 }
 
-func (r iteratorForBulkCreateTraingLog) Values() ([]interface{}, error) {
+func (r iteratorForBulkCreateTrainingLog) Values() ([]interface{}, error) {
 	return []interface{}{
 		r.rows[0].ExerciseID,
 		r.rows[0].ExerciseKindID,
@@ -261,12 +308,12 @@ func (r iteratorForBulkCreateTraingLog) Values() ([]interface{}, error) {
 	}, nil
 }
 
-func (r iteratorForBulkCreateTraingLog) Err() error {
+func (r iteratorForBulkCreateTrainingLog) Err() error {
 	return nil
 }
 
-func (q *Queries) BulkCreateTraingLog(ctx context.Context, arg []BulkCreateTraingLogParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"providentia", "training_log"}, []string{"exercise_id", "exercise_kind_id", "exercise_focus_id", "client_id", "video_id", "date_performed", "weight", "sets", "reps", "effort", "inter_session_cntr", "inter_workout_cntr"}, &iteratorForBulkCreateTraingLog{rows: arg})
+func (q *Queries) BulkCreateTrainingLog(ctx context.Context, arg []BulkCreateTrainingLogParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"providentia", "training_log"}, []string{"exercise_id", "exercise_kind_id", "exercise_focus_id", "client_id", "video_id", "date_performed", "weight", "sets", "reps", "effort", "inter_session_cntr", "inter_workout_cntr"}, &iteratorForBulkCreateTrainingLog{rows: arg})
 }
 
 // iteratorForBulkCreateVideoDataWithID implements pgx.CopyFromSource.
@@ -303,6 +350,9 @@ func (r iteratorForBulkCreateVideoDataWithID) Err() error {
 	return nil
 }
 
+// This query is used for initilization by the migrations. The
+// UpdateVideoDataSerialCount query will need to be run after this to update
+// the serial counter.
 func (q *Queries) BulkCreateVideoDataWithID(ctx context.Context, arg []BulkCreateVideoDataWithIDParams) (int64, error) {
 	return q.db.CopyFrom(ctx, []string{"providentia", "video_data"}, []string{"id", "path", "position", "velocity", "acceleration", "force", "impulse"}, &iteratorForBulkCreateVideoDataWithID{rows: arg})
 }

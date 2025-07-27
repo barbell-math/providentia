@@ -8,6 +8,7 @@ package dal
 import (
 	"context"
 
+	"github.com/barbell-math/providentia/lib/types"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -29,10 +30,16 @@ type BulkCreateExerciseKindWithIDParams struct {
 }
 
 type BulkCreateExerciseWithIDParams struct {
-	ID      int32  `json:"id"`
-	Name    string `json:"name"`
-	KindID  int32  `json:"kind_id"`
-	FocusID int32  `json:"focus_id"`
+	ID      int32               `json:"id"`
+	Name    string              `json:"name"`
+	KindID  types.ExerciseKind  `json:"kind_id"`
+	FocusID types.ExerciseFocus `json:"focus_id"`
+}
+
+type BulkCreateExercisesParams struct {
+	Name    string              `json:"name"`
+	KindID  types.ExerciseKind  `json:"kind_id"`
+	FocusID types.ExerciseFocus `json:"focus_id"`
 }
 
 type BulkCreateModelStatesParams struct {
@@ -54,13 +61,13 @@ type BulkCreateModelStatesParams struct {
 	PredWeight    float64 `json:"pred_weight"`
 }
 
-type BulkCreateModelsParams struct {
+type BulkCreateModelsWithIDParams struct {
 	ID          int32  `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
 
-type BulkCreateTraingLogParams struct {
+type BulkCreateTrainingLogParams struct {
 	ExerciseID       int32       `json:"exercise_id"`
 	ExerciseKindID   int32       `json:"exercise_kind_id"`
 	ExerciseFocusID  int32       `json:"exercise_focus_id"`
@@ -171,6 +178,109 @@ func (q *Queries) ClientTrainingLogDataDateRangeAscending(ctx context.Context, a
 	return items, nil
 }
 
+const deleteClientsByEmail = `-- name: DeleteClientsByEmail :one
+WITH deleted_clients AS (
+    DELETE FROM providentia.client
+    WHERE email = ANY($1::text[])
+    RETURNING id
+) SELECT COUNT(*) FROM deleted_clients
+`
+
+func (q *Queries) DeleteClientsByEmail(ctx context.Context, dollar_1 []string) (int64, error) {
+	row := q.db.QueryRow(ctx, deleteClientsByEmail, dollar_1)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const deleteExercisesByName = `-- name: DeleteExercisesByName :one
+WITH deleted_exercises AS (
+    DELETE FROM providentia.exercise
+    WHERE name = ANY($1::text[])
+    RETURNING id
+) SELECT COUNT(*) FROM deleted_exercises
+`
+
+func (q *Queries) DeleteExercisesByName(ctx context.Context, dollar_1 []string) (int64, error) {
+	row := q.db.QueryRow(ctx, deleteExercisesByName, dollar_1)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const getAllClientsTrainingLogData = `-- name: GetAllClientsTrainingLogData :many
+SELECT
+	providentia.client.email,
+	providentia.exercise.name,
+	providentia.training_log.date_performed,
+	providentia.training_log.inter_session_cntr,
+	providentia.training_log.weight,
+	providentia.training_log.sets,
+	providentia.training_log.reps,
+	providentia.training_log.effort,
+	providentia.training_log.volume,
+	providentia.training_log.exertion,
+	providentia.training_log.total_reps
+FROM providentia.training_log
+JOIN providentia.exercise
+	ON providentia.training_log.exercise_id=providentia.exercise.id
+JOIN providentia.client
+	ON providentia.training_log.client_id=providentia.client.id
+ORDER BY
+	-- These cannot be labeled with providentia.training_log because you will
+	-- get a ` + "`" + `column reference "" not found` + "`" + ` error.
+	client.id DESC,
+	training_log.date_performed DESC,
+	training_log.id DESC
+LIMIT $1
+`
+
+type GetAllClientsTrainingLogDataRow struct {
+	Email            string      `json:"email"`
+	Name             string      `json:"name"`
+	DatePerformed    pgtype.Date `json:"date_performed"`
+	InterSessionCntr int32       `json:"inter_session_cntr"`
+	Weight           float64     `json:"weight"`
+	Sets             float64     `json:"sets"`
+	Reps             int32       `json:"reps"`
+	Effort           float64     `json:"effort"`
+	Volume           float64     `json:"volume"`
+	Exertion         float64     `json:"exertion"`
+	TotalReps        float64     `json:"total_reps"`
+}
+
+func (q *Queries) GetAllClientsTrainingLogData(ctx context.Context, limit int32) ([]GetAllClientsTrainingLogDataRow, error) {
+	rows, err := q.db.Query(ctx, getAllClientsTrainingLogData, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllClientsTrainingLogDataRow
+	for rows.Next() {
+		var i GetAllClientsTrainingLogDataRow
+		if err := rows.Scan(
+			&i.Email,
+			&i.Name,
+			&i.DatePerformed,
+			&i.InterSessionCntr,
+			&i.Weight,
+			&i.Sets,
+			&i.Reps,
+			&i.Effort,
+			&i.Volume,
+			&i.Exertion,
+			&i.TotalReps,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getClientIDFromEmail = `-- name: GetClientIDFromEmail :one
 SELECT ID FROM providentia.client WHERE email=$1
 `
@@ -180,6 +290,102 @@ func (q *Queries) GetClientIDFromEmail(ctx context.Context, email string) (int64
 	var id int64
 	err := row.Scan(&id)
 	return id, err
+}
+
+const getClientTrainingLogData = `-- name: GetClientTrainingLogData :many
+SELECT
+	providentia.exercise.name,
+	providentia.training_log.date_performed,
+	providentia.training_log.inter_session_cntr,
+	providentia.training_log.weight,
+	providentia.training_log.sets,
+	providentia.training_log.reps,
+	providentia.training_log.effort
+FROM providentia.training_log
+JOIN providentia.exercise
+	ON providentia.training_log.exercise_id=providentia.exercise.id
+JOIN providentia.client
+	ON providentia.training_log.client_id=providentia.client.id
+WHERE providentia.client.email=$1
+ORDER BY
+	-- These cannot be labeled with providentia.training_log because you will
+	-- get a ` + "`" + `column reference "" not found` + "`" + ` error.
+	training_log.date_performed DESC, training_log.id DESC
+LIMIT $2
+`
+
+type GetClientTrainingLogDataParams struct {
+	Email string `json:"email"`
+	Limit int32  `json:"limit"`
+}
+
+type GetClientTrainingLogDataRow struct {
+	Name             string      `json:"name"`
+	DatePerformed    pgtype.Date `json:"date_performed"`
+	InterSessionCntr int32       `json:"inter_session_cntr"`
+	Weight           float64     `json:"weight"`
+	Sets             float64     `json:"sets"`
+	Reps             int32       `json:"reps"`
+	Effort           float64     `json:"effort"`
+}
+
+func (q *Queries) GetClientTrainingLogData(ctx context.Context, arg GetClientTrainingLogDataParams) ([]GetClientTrainingLogDataRow, error) {
+	rows, err := q.db.Query(ctx, getClientTrainingLogData, arg.Email, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetClientTrainingLogDataRow
+	for rows.Next() {
+		var i GetClientTrainingLogDataRow
+		if err := rows.Scan(
+			&i.Name,
+			&i.DatePerformed,
+			&i.InterSessionCntr,
+			&i.Weight,
+			&i.Sets,
+			&i.Reps,
+			&i.Effort,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getClientsByEmail = `-- name: GetClientsByEmail :many
+SELECT first_name, last_name, email
+FROM providentia.client WHERE email = ANY($1::text[])
+`
+
+type GetClientsByEmailRow struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
+}
+
+func (q *Queries) GetClientsByEmail(ctx context.Context, dollar_1 []string) ([]GetClientsByEmailRow, error) {
+	rows, err := q.db.Query(ctx, getClientsByEmail, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetClientsByEmailRow
+	for rows.Next() {
+		var i GetClientsByEmailRow
+		if err := rows.Scan(&i.FirstName, &i.LastName, &i.Email); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getExerciseIDs = `-- name: GetExerciseIDs :one
@@ -206,4 +412,149 @@ func (q *Queries) GetExerciseIDs(ctx context.Context, name string) (GetExerciseI
 	var i GetExerciseIDsRow
 	err := row.Scan(&i.ExerciseID, &i.KindID, &i.FocusID)
 	return i, err
+}
+
+const getExercisesByName = `-- name: GetExercisesByName :many
+SELECT name, kind_id, focus_id
+FROM providentia.exercise WHERE name = ANY($1::text[])
+`
+
+type GetExercisesByNameRow struct {
+	Name    string              `json:"name"`
+	KindID  types.ExerciseKind  `json:"kind_id"`
+	FocusID types.ExerciseFocus `json:"focus_id"`
+}
+
+func (q *Queries) GetExercisesByName(ctx context.Context, dollar_1 []string) ([]GetExercisesByNameRow, error) {
+	rows, err := q.db.Query(ctx, getExercisesByName, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetExercisesByNameRow
+	for rows.Next() {
+		var i GetExercisesByNameRow
+		if err := rows.Scan(&i.Name, &i.KindID, &i.FocusID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getNumClients = `-- name: GetNumClients :one
+SELECT COUNT(*) FROM providentia.client
+`
+
+func (q *Queries) GetNumClients(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, getNumClients)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const getNumExercises = `-- name: GetNumExercises :one
+SELECT COUNT(*) FROM providentia.exercise
+`
+
+func (q *Queries) GetNumExercises(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, getNumExercises)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const updateClientByEmail = `-- name: UpdateClientByEmail :exec
+UPDATE providentia.client SET first_name=$1, last_name=$2
+WHERE providentia.client.email=$3
+`
+
+type UpdateClientByEmailParams struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
+}
+
+func (q *Queries) UpdateClientByEmail(ctx context.Context, arg UpdateClientByEmailParams) error {
+	_, err := q.db.Exec(ctx, updateClientByEmail, arg.FirstName, arg.LastName, arg.Email)
+	return err
+}
+
+const updateExerciseByName = `-- name: UpdateExerciseByName :exec
+UPDATE providentia.exercise SET kind_id=$2, focus_id=$3
+WHERE providentia.exercise.name=$1
+`
+
+type UpdateExerciseByNameParams struct {
+	Name    string              `json:"name"`
+	KindID  types.ExerciseKind  `json:"kind_id"`
+	FocusID types.ExerciseFocus `json:"focus_id"`
+}
+
+func (q *Queries) UpdateExerciseByName(ctx context.Context, arg UpdateExerciseByNameParams) error {
+	_, err := q.db.Exec(ctx, updateExerciseByName, arg.Name, arg.KindID, arg.FocusID)
+	return err
+}
+
+const updateExerciseFocusSerialCount = `-- name: UpdateExerciseFocusSerialCount :exec
+SELECT SETVAL(
+	pg_get_serial_sequence('providentia.exercise_focus', 'id'),
+	(SELECT MAX(id) FROM providentia.exercise_focus) + 1
+)
+`
+
+func (q *Queries) UpdateExerciseFocusSerialCount(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, updateExerciseFocusSerialCount)
+	return err
+}
+
+const updateExerciseKindSerialCount = `-- name: UpdateExerciseKindSerialCount :exec
+SELECT SETVAL(
+	pg_get_serial_sequence('providentia.exercise_kind', 'id'),
+	(SELECT MAX(id) FROM providentia.exercise_kind) + 1
+)
+`
+
+func (q *Queries) UpdateExerciseKindSerialCount(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, updateExerciseKindSerialCount)
+	return err
+}
+
+const updateExerciseSerialCount = `-- name: UpdateExerciseSerialCount :exec
+SELECT SETVAL(
+	pg_get_serial_sequence('providentia.exercise', 'id'),
+	(SELECT MAX(id) FROM providentia.exercise) + 1
+)
+`
+
+func (q *Queries) UpdateExerciseSerialCount(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, updateExerciseSerialCount)
+	return err
+}
+
+const updateModelSerialCount = `-- name: UpdateModelSerialCount :exec
+SELECT SETVAL(
+	pg_get_serial_sequence('providentia.exercise', 'id'),
+	(SELECT MAX(id) FROM providentia.exercise) + 1
+)
+`
+
+func (q *Queries) UpdateModelSerialCount(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, updateModelSerialCount)
+	return err
+}
+
+const updateVideoDataSerialCount = `-- name: UpdateVideoDataSerialCount :exec
+SELECT SETVAL(
+	pg_get_serial_sequence('providentia.video_data', 'id'),
+	(SELECT MAX(id) FROM providentia.video_data) + 1
+)
+`
+
+func (q *Queries) UpdateVideoDataSerialCount(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, updateVideoDataSerialCount)
+	return err
 }

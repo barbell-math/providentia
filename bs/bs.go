@@ -10,12 +10,12 @@ func main() {
 	sbbs.RegisterGoMarkDocTargets()
 	sbbs.RegisterSqlcTargets("./internal/db")
 	sbbs.RegisterGoEnumTargets()
-	sbbs.RegisterCommonGoCmdTargets(sbbs.GoTargets{
-		GenericTestTarget:     true,
-		GenericBenchTarget:    true,
-		GenericFmtTarget:      true,
-		GenericGenerateTarget: true,
-	})
+	sbbs.RegisterCommonGoCmdTargets(sbbs.NewGoTargets().
+		DefaultFmtTarget().
+		DefaultGenerateTarget().
+		// TODO - eventually replace with default target once old is deleted
+		SetTestTarget(sbbs.DefaultTestTargetName, "-v", "./lib/logic/..."),
+	)
 	sbbs.RegisterMergegateTarget(sbbs.MergegateTargets{
 		PreStages: []sbbs.StageFunc{
 			sbbs.TargetAsStage("goenumInstall"),
@@ -23,9 +23,9 @@ func main() {
 		},
 		CheckDepsUpdated:     true,
 		CheckReadmeGomarkdoc: true,
-		CheckFmt:             true,
-		CheckUnitTests:       true,
-		CheckGeneratedCode:   true,
+		FmtTarget:            sbbs.DefaultFmtTargetName,
+		TestTarget:           sbbs.DefaultTestTargetName,
+		GenerateTarget:       sbbs.DefaultGenerateTargetName,
 	})
 
 	sbbs.Main("bs")

@@ -1,4 +1,4 @@
-package provlib
+package types
 
 import (
 	"context"
@@ -7,11 +7,8 @@ import (
 	"log/slog"
 	"runtime"
 
-	"github.com/barbell-math/providentia/internal/db"
-	simplifiednegativespace "github.com/barbell-math/providentia/internal/models/simplifiedNegativeSpace"
 	sbargp "github.com/barbell-math/smoothbrain-argparse"
 	sblog "github.com/barbell-math/smoothbrain-logging"
-	sbsqlm "github.com/barbell-math/smoothbrain-sqlmigrate"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -33,9 +30,9 @@ type (
 	// Configuration that the rest of providentia will use. Setup with care as
 	// the values have the ability to control how providentia behaves.
 	Conf struct {
-		NumWorkers                   uint
-		BatchSize                    uint
-		SimplifiedNegativeSpaceModel simplifiednegativespace.Opts
+		NumWorkers uint
+		BatchSize  uint
+		// SimplifiedNegativeSpaceModel simplifiednegativespace.Opts
 	}
 
 	// The state the rest of providentia will use. Almost all functions
@@ -124,30 +121,30 @@ func Parse(ctxt context.Context, args []string) (context.Context, func(), error)
 				"The batch size the library functions will work with. Smaller will use less memory but may be slightly slower",
 			)
 
-			fs.Float64Var(
-				&conf.SimplifiedNegativeSpaceModel.Alpha,
-				"SimplifiedNegativeSpaceModel.Alpha",
-				1,
-				"The value to use for alpha in the simplified negative space model",
-			)
-			fs.Float64Var(
-				&conf.SimplifiedNegativeSpaceModel.Beta,
-				"SimplifiedNegativeSpaceModel.Beta",
-				2,
-				"The value to use for beta in the simplified negative space model",
-			)
-			fs.Float64Var(
-				&conf.SimplifiedNegativeSpaceModel.Gamma,
-				"SimplifiedNegativeSpaceModel.Gamma",
-				2,
-				"The value to use for gamma in the simplified negative space model",
-			)
-			fs.Uint64Var(
-				&conf.SimplifiedNegativeSpaceModel.MaxIters,
-				"SimplifiedNegativeSpaceModel.MaxIters",
-				1e6,
-				"The maximum number of iterations that each model state can go through before exiting",
-			)
+			// fs.Float64Var(
+			// 	&conf.SimplifiedNegativeSpaceModel.Alpha,
+			// 	"SimplifiedNegativeSpaceModel.Alpha",
+			// 	1,
+			// 	"The value to use for alpha in the simplified negative space model",
+			// )
+			// fs.Float64Var(
+			// 	&conf.SimplifiedNegativeSpaceModel.Beta,
+			// 	"SimplifiedNegativeSpaceModel.Beta",
+			// 	2,
+			// 	"The value to use for beta in the simplified negative space model",
+			// )
+			// fs.Float64Var(
+			// 	&conf.SimplifiedNegativeSpaceModel.Gamma,
+			// 	"SimplifiedNegativeSpaceModel.Gamma",
+			// 	2,
+			// 	"The value to use for gamma in the simplified negative space model",
+			// )
+			// fs.Uint64Var(
+			// 	&conf.SimplifiedNegativeSpaceModel.MaxIters,
+			// 	"SimplifiedNegativeSpaceModel.MaxIters",
+			// 	1e6,
+			// 	"The maximum number of iterations that each model state can go through before exiting",
+			// )
 			return nil
 		},
 	}); err != nil {
@@ -181,15 +178,6 @@ func Parse(ctxt context.Context, args []string) (context.Context, func(), error)
 		goto done
 	}
 	if err = state.DB.Ping(ctxt); err != nil {
-		goto done
-	}
-
-	if err = sbsqlm.Load(
-		db.SqlMigrations, "migrations", db.PostOps,
-	); err != nil {
-		goto done
-	}
-	if err = sbsqlm.Run(ctxt, state.DB); err != nil {
 		goto done
 	}
 
