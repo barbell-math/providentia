@@ -1,10 +1,16 @@
 [ DB ]
-User="postgres"
-PswdEnvVar="DB_PSWD"
-Name="provlib_tests"
+User = "postgres"
+PswdEnvVar = "DB_PSWD"
+Name = "provlib_tests"
 Host = "localhost"
 Port = 5432
 
 [ Logging ]
 Verbosity = 3
 SaveTo = "../../bs/logs"
+
+[ Global ]
+BatchSize = 5
+
+[ Physics ]
+MinNumSamples = 5

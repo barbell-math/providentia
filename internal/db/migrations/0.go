@@ -68,23 +68,6 @@ func PostOp0(ctxt context.Context, tx pgx.Tx) error {
 		)
 	}
 
-	cnt, err = q.BulkCreateVideoDataWithID(ctxt, VideoDataSetupData)
-	if err != nil {
-		return err
-	} else if cnt != int64(len(VideoDataSetupData)) {
-		return sberr.Wrap(
-			SetupMissingDataErr,
-			"Setting up the providentia.video_data table: Expected %d rows to be created, got %d",
-			len(VideoDataSetupData), cnt,
-		)
-	}
-	if err := q.UpdateVideoDataSerialCount(ctxt); err != nil {
-		return sberr.Wrap(
-			SerialUpdateCmdErr,
-			"Setting up the providentia.video_data table",
-		)
-	}
-
 	cnt, err = q.BulkCreateModelsWithID(ctxt, ModelSetupData)
 	if err != nil {
 		return err

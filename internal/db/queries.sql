@@ -69,6 +69,9 @@ INSERT INTO providentia.exercise (name, kind_id, focus_id) VALUES ($1, $2, $3);
 -- name: GetNumExercises :one
 SELECT COUNT(*) FROM providentia.exercise;
 
+-- name: GetExerciseId :one
+SELECT id FROM providentia.exercise WHERE name=$1;
+
 -- name: GetExercisesByName :many
 SELECT name, kind_id, focus_id
 FROM providentia.exercise WHERE name = ANY($1::text[]);
@@ -86,22 +89,6 @@ WITH deleted_exercises AS (
 
 
 
--- name: BulkCreateVideoDataWithID :copyfrom
--- This query is used for initilization by the migrations. The
--- UpdateVideoDataSerialCount query will need to be run after this to update
--- the serial counter.
-INSERT INTO providentia.video_data (
-	id, path, position, velocity, acceleration, force, impulse
-) VALUES ($1, $2, $3, $4, $5, $6, $7);
-
--- name: UpdateVideoDataSerialCount :exec
-SELECT SETVAL(
-	pg_get_serial_sequence('providentia.video_data', 'id'),
-	(SELECT MAX(id) FROM providentia.video_data) + 1
-);
-
-
-
 -- name: BulkCreateModelsWithID :copyfrom
 -- This query is used for initilization by the migrations. The
 -- UpdateModelSerialCount query will need to be run after this to update
@@ -113,6 +100,8 @@ SELECT SETVAL(
 	pg_get_serial_sequence('providentia.exercise', 'id'),
 	(SELECT MAX(id) FROM providentia.exercise) + 1
 );
+
+
 
 
 ----- OLD ----------------------------------------------------------------------
@@ -128,11 +117,11 @@ INSERT INTO providentia.model_state(
 
 -- name: BulkCreateTrainingLog :copyfrom
 INSERT INTO providentia.training_log(
-	exercise_id, exercise_kind_id, exercise_focus_id, client_id, video_id,
+	exercise_id, client_id, physics_id,
 	date_performed, weight, sets, reps, effort,
 	inter_session_cntr, inter_workout_cntr
 ) VALUES (
-	$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+	$1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 );
 
 
@@ -207,8 +196,6 @@ ORDER BY date_performed DESC LIMIT 1;
 SELECT
 	providentia.training_log.id,
 	providentia.training_log.exercise_id,
-	providentia.training_log.exercise_kind_id,
-	providentia.training_log.exercise_focus_id,
 	(sqlc.arg(date_performed)::date-providentia.training_log.date_performed) AS days_since,
 	providentia.training_log.weight,
 	providentia.training_log.sets,

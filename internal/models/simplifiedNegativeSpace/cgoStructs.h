@@ -40,8 +40,6 @@ extern "C" {
 	typedef struct trainingLog{
 		int64_t ID;
 		int32_t ExerciseID;
-		int32_t ExerciseKindID;
-		int32_t ExerciseFocusID;
 		int32_t DaysSince;
 		double_t Weight;
 		double_t Sets;

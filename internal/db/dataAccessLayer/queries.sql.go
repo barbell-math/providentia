@@ -69,10 +69,8 @@ type BulkCreateModelsWithIDParams struct {
 
 type BulkCreateTrainingLogParams struct {
 	ExerciseID       int32       `json:"exercise_id"`
-	ExerciseKindID   int32       `json:"exercise_kind_id"`
-	ExerciseFocusID  int32       `json:"exercise_focus_id"`
 	ClientID         int64       `json:"client_id"`
-	VideoID          int64       `json:"video_id"`
+	PhysicsID        pgtype.Int8 `json:"physics_id"`
 	DatePerformed    pgtype.Date `json:"date_performed"`
 	Weight           float64     `json:"weight"`
 	Sets             float64     `json:"sets"`
@@ -80,16 +78,6 @@ type BulkCreateTrainingLogParams struct {
 	Effort           float64     `json:"effort"`
 	InterSessionCntr int32       `json:"inter_session_cntr"`
 	InterWorkoutCntr int32       `json:"inter_workout_cntr"`
-}
-
-type BulkCreateVideoDataWithIDParams struct {
-	ID           int64       `json:"id"`
-	Path         string      `json:"path"`
-	Position     [][]float64 `json:"position"`
-	Velocity     [][]float64 `json:"velocity"`
-	Acceleration [][]float64 `json:"acceleration"`
-	Force        [][]float64 `json:"force"`
-	Impulse      [][]float64 `json:"impulse"`
 }
 
 const clientLastWorkoutDate = `-- name: ClientLastWorkoutDate :one
@@ -109,8 +97,6 @@ const clientTrainingLogDataDateRangeAscending = `-- name: ClientTrainingLogDataD
 SELECT
 	providentia.training_log.id,
 	providentia.training_log.exercise_id,
-	providentia.training_log.exercise_kind_id,
-	providentia.training_log.exercise_focus_id,
 	($2::date-providentia.training_log.date_performed) AS days_since,
 	providentia.training_log.weight,
 	providentia.training_log.sets,
@@ -135,8 +121,6 @@ type ClientTrainingLogDataDateRangeAscendingParams struct {
 type ClientTrainingLogDataDateRangeAscendingRow struct {
 	ID               int64   `json:"id"`
 	ExerciseID       int32   `json:"exercise_id"`
-	ExerciseKindID   int32   `json:"exercise_kind_id"`
-	ExerciseFocusID  int32   `json:"exercise_focus_id"`
 	DaysSince        int32   `json:"days_since"`
 	Weight           float64 `json:"weight"`
 	Sets             float64 `json:"sets"`
@@ -158,8 +142,6 @@ func (q *Queries) ClientTrainingLogDataDateRangeAscending(ctx context.Context, a
 		if err := rows.Scan(
 			&i.ID,
 			&i.ExerciseID,
-			&i.ExerciseKindID,
-			&i.ExerciseFocusID,
 			&i.DaysSince,
 			&i.Weight,
 			&i.Sets,
@@ -414,6 +396,17 @@ func (q *Queries) GetExerciseIDs(ctx context.Context, name string) (GetExerciseI
 	return i, err
 }
 
+const getExerciseId = `-- name: GetExerciseId :one
+SELECT id FROM providentia.exercise WHERE name=$1
+`
+
+func (q *Queries) GetExerciseId(ctx context.Context, name string) (int32, error) {
+	row := q.db.QueryRow(ctx, getExerciseId, name)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getExercisesByName = `-- name: GetExercisesByName :many
 SELECT name, kind_id, focus_id
 FROM providentia.exercise WHERE name = ANY($1::text[])
@@ -544,17 +537,5 @@ SELECT SETVAL(
 
 func (q *Queries) UpdateModelSerialCount(ctx context.Context) error {
 	_, err := q.db.Exec(ctx, updateModelSerialCount)
-	return err
-}
-
-const updateVideoDataSerialCount = `-- name: UpdateVideoDataSerialCount :exec
-SELECT SETVAL(
-	pg_get_serial_sequence('providentia.video_data', 'id'),
-	(SELECT MAX(id) FROM providentia.video_data) + 1
-)
-`
-
-func (q *Queries) UpdateVideoDataSerialCount(ctx context.Context) error {
-	_, err := q.db.Exec(ctx, updateVideoDataSerialCount)
 	return err
 }

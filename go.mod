@@ -3,13 +3,13 @@ module github.com/barbell-math/providentia
 go 1.24.1
 
 require (
-	github.com/barbell-math/smoothbrain-argparse v0.0.0-20250723071238-8da5bc22108e
+	github.com/barbell-math/smoothbrain-argparse v0.0.0-20250803193336-f91f082af7d9
 	github.com/barbell-math/smoothbrain-bs v0.0.0-20250723065839-bed764397213
-	github.com/barbell-math/smoothbrain-cgostructgen v0.0.0-20250723072432-d012397089eb
-	github.com/barbell-math/smoothbrain-errs v0.0.0-20250723070428-fd86bcc11533
-	github.com/barbell-math/smoothbrain-logging v0.0.0-20250723071012-9ac4feaa356e
-	github.com/barbell-math/smoothbrain-sqlmigrate v0.0.0-20250723071628-e76e915204bc
-	github.com/barbell-math/smoothbrain-test v0.0.0-20250723070109-ff7cc4fb999d
+	github.com/barbell-math/smoothbrain-cgostructgen v0.0.0-20250803193358-35afb70f34bb
+	github.com/barbell-math/smoothbrain-errs v0.0.0-20250803193132-d7f7893b8d80
+	github.com/barbell-math/smoothbrain-logging v0.0.0-20250803193504-de4a0ad1fafa
+	github.com/barbell-math/smoothbrain-sqlmigrate v0.0.0-20250803193530-a8eca1467aad
+	github.com/barbell-math/smoothbrain-test v0.0.0-20250803193045-0a30be41bb31
 	github.com/jackc/pgx/v5 v5.7.5
 )
 

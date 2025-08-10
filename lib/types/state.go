@@ -8,6 +8,7 @@ import (
 	"runtime"
 
 	sbargp "github.com/barbell-math/smoothbrain-argparse"
+	sberr "github.com/barbell-math/smoothbrain-errs"
 	sblog "github.com/barbell-math/smoothbrain-logging"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -24,24 +25,33 @@ type (
 	fullConf struct {
 		Logging sbargp.LoggingConf
 		DB      sbargp.DBConf
-		Conf
+		Physics PhysicsConf
+		Global  GlobalConf
 	}
 
 	// Configuration that the rest of providentia will use. Setup with care as
 	// the values have the ability to control how providentia behaves.
-	Conf struct {
+	GlobalConf struct {
 		NumWorkers uint
 		BatchSize  uint
 		// SimplifiedNegativeSpaceModel simplifiednegativespace.Opts
+	}
+
+	// Configuration that is used when parsing, generating, and utilizing
+	// physics data.
+	PhysicsConf struct {
+		MinNumSamples uint
+		TimeDeltaEps  float64
 	}
 
 	// The state the rest of providentia will use. Almost all functions
 	// available for external use from this library will require this state to
 	// be available in the passed in context.
 	State struct {
-		Conf Conf
-		DB   *pgxpool.Pool
-		Log  *slog.Logger
+		Physics PhysicsConf
+		Global  GlobalConf
+		DB      *pgxpool.Pool
+		Log     *slog.Logger
 	}
 
 	ctxtKey struct{}
@@ -109,16 +119,29 @@ func Parse(ctxt context.Context, args []string) (context.Context, func(), error)
 				Port: 5432,
 			})
 			fs.UintVar(
-				&conf.Conf.NumWorkers,
-				"numWorkers",
+				&conf.Global.NumWorkers,
+				"Global.NumWorkers",
 				uint(runtime.NumCPU()),
 				"The number of worker threads a single library function can use",
 			)
 			fs.UintVar(
-				&conf.Conf.BatchSize,
-				"batchSize",
+				&conf.Global.BatchSize,
+				"Global.BatchSize",
 				1e6,
 				"The batch size the library functions will work with. Smaller will use less memory but may be slightly slower",
+			)
+
+			fs.UintVar(
+				&conf.Physics.MinNumSamples,
+				"Physics.MinNumSamples",
+				20,
+				"The minimum number of samples that should be present in physics data",
+			)
+			fs.Float64Var(
+				&conf.Physics.TimeDeltaEps,
+				"Physics.TimeDeltaEps",
+				1e6,
+				"The maximum acceptable variance between time sample deltas",
 			)
 
 			// fs.Float64Var(
@@ -150,7 +173,17 @@ func Parse(ctxt context.Context, args []string) (context.Context, func(), error)
 	}); err != nil {
 		goto done
 	}
-	state.Conf = _fullConf.Conf
+
+	if _fullConf.Physics.MinNumSamples < 2 {
+		err = sberr.Wrap(
+			InvalidMinNumSamplesErr,
+			"Must be >=2. Got: %d", _fullConf.Physics.MinNumSamples,
+		)
+		goto done
+	}
+
+	state.Physics = _fullConf.Physics
+	state.Global = _fullConf.Global
 
 	if state.Log, err = sblog.New(sblog.Opts{
 		CurVerbosityLevel: uint(_fullConf.Logging.Verbosity),

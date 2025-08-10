@@ -17,7 +17,7 @@ func CreateClients(
 	queries *dal.Queries,
 	clients ...dal.BulkCreateClientsParams,
 ) (opErr error) {
-	for start, end := range batchIndexes(clients, int(state.Conf.BatchSize)) {
+	for start, end := range batchIndexes(clients, int(state.Global.BatchSize)) {
 		for i := start; i < end; i++ {
 			iterCd := clients[i]
 			if iterCd.FirstName == "" {
@@ -89,7 +89,7 @@ func ReadClientsByEmail(
 ) (res []types.Client, opErr error) {
 	res = make([]types.Client, len(emails))
 
-	for start, end := range batchIndexes(emails, int(state.Conf.BatchSize)) {
+	for start, end := range batchIndexes(emails, int(state.Global.BatchSize)) {
 		var rawData []dal.GetClientsByEmailRow
 		rawData, opErr = queries.GetClientsByEmail(ctxt, emails[start:end])
 		if opErr != nil {

@@ -54,6 +54,19 @@ type ModelState struct {
 	PredWeight    float64 `json:"pred_weight"`
 }
 
+type PhysicsData struct {
+	ID           int64       `json:"id"`
+	Path         string      `json:"path"`
+	Time         [][]float64 `json:"time"`
+	Position     [][]float64 `json:"position"`
+	Velocity     [][]float64 `json:"velocity"`
+	Acceleration [][]float64 `json:"acceleration"`
+	Jerk         [][]float64 `json:"jerk"`
+	Force        [][]float64 `json:"force"`
+	Impulse      [][]float64 `json:"impulse"`
+	Work         [][]float64 `json:"work"`
+}
+
 type ProvidentiaModel struct {
 	ID          int32  `json:"id"`
 	Name        string `json:"name"`
@@ -63,28 +76,16 @@ type ProvidentiaModel struct {
 type TrainingLog struct {
 	ID               int64       `json:"id"`
 	ExerciseID       int32       `json:"exercise_id"`
-	ExerciseKindID   int32       `json:"exercise_kind_id"`
-	ExerciseFocusID  int32       `json:"exercise_focus_id"`
 	ClientID         int64       `json:"client_id"`
-	VideoID          int64       `json:"video_id"`
+	PhysicsID        pgtype.Int8 `json:"physics_id"`
 	DatePerformed    pgtype.Date `json:"date_performed"`
+	InterSessionCntr int32       `json:"inter_session_cntr"`
+	InterWorkoutCntr int32       `json:"inter_workout_cntr"`
 	Weight           float64     `json:"weight"`
 	Sets             float64     `json:"sets"`
 	Reps             int32       `json:"reps"`
 	Effort           float64     `json:"effort"`
-	InterSessionCntr int32       `json:"inter_session_cntr"`
-	InterWorkoutCntr int32       `json:"inter_workout_cntr"`
 	Volume           float64     `json:"volume"`
 	Exertion         float64     `json:"exertion"`
 	TotalReps        float64     `json:"total_reps"`
-}
-
-type VideoData struct {
-	ID           int64       `json:"id"`
-	Path         string      `json:"path"`
-	Position     [][]float64 `json:"position"`
-	Velocity     [][]float64 `json:"velocity"`
-	Acceleration [][]float64 `json:"acceleration"`
-	Force        [][]float64 `json:"force"`
-	Impulse      [][]float64 `json:"impulse"`
 }

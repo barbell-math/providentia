@@ -294,10 +294,8 @@ func (r *iteratorForBulkCreateTrainingLog) Next() bool {
 func (r iteratorForBulkCreateTrainingLog) Values() ([]interface{}, error) {
 	return []interface{}{
 		r.rows[0].ExerciseID,
-		r.rows[0].ExerciseKindID,
-		r.rows[0].ExerciseFocusID,
 		r.rows[0].ClientID,
-		r.rows[0].VideoID,
+		r.rows[0].PhysicsID,
 		r.rows[0].DatePerformed,
 		r.rows[0].Weight,
 		r.rows[0].Sets,
@@ -313,46 +311,5 @@ func (r iteratorForBulkCreateTrainingLog) Err() error {
 }
 
 func (q *Queries) BulkCreateTrainingLog(ctx context.Context, arg []BulkCreateTrainingLogParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"providentia", "training_log"}, []string{"exercise_id", "exercise_kind_id", "exercise_focus_id", "client_id", "video_id", "date_performed", "weight", "sets", "reps", "effort", "inter_session_cntr", "inter_workout_cntr"}, &iteratorForBulkCreateTrainingLog{rows: arg})
-}
-
-// iteratorForBulkCreateVideoDataWithID implements pgx.CopyFromSource.
-type iteratorForBulkCreateVideoDataWithID struct {
-	rows                 []BulkCreateVideoDataWithIDParams
-	skippedFirstNextCall bool
-}
-
-func (r *iteratorForBulkCreateVideoDataWithID) Next() bool {
-	if len(r.rows) == 0 {
-		return false
-	}
-	if !r.skippedFirstNextCall {
-		r.skippedFirstNextCall = true
-		return true
-	}
-	r.rows = r.rows[1:]
-	return len(r.rows) > 0
-}
-
-func (r iteratorForBulkCreateVideoDataWithID) Values() ([]interface{}, error) {
-	return []interface{}{
-		r.rows[0].ID,
-		r.rows[0].Path,
-		r.rows[0].Position,
-		r.rows[0].Velocity,
-		r.rows[0].Acceleration,
-		r.rows[0].Force,
-		r.rows[0].Impulse,
-	}, nil
-}
-
-func (r iteratorForBulkCreateVideoDataWithID) Err() error {
-	return nil
-}
-
-// This query is used for initilization by the migrations. The
-// UpdateVideoDataSerialCount query will need to be run after this to update
-// the serial counter.
-func (q *Queries) BulkCreateVideoDataWithID(ctx context.Context, arg []BulkCreateVideoDataWithIDParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"providentia", "video_data"}, []string{"id", "path", "position", "velocity", "acceleration", "force", "impulse"}, &iteratorForBulkCreateVideoDataWithID{rows: arg})
+	return q.db.CopyFrom(ctx, []string{"providentia", "training_log"}, []string{"exercise_id", "client_id", "physics_id", "date_performed", "weight", "sets", "reps", "effort", "inter_session_cntr", "inter_workout_cntr"}, &iteratorForBulkCreateTrainingLog{rows: arg})
 }

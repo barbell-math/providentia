@@ -11,12 +11,12 @@ import (
 // TODO - add comment
 func CreateWorkouts(
 	ctxt context.Context,
-	data ...types.Workout,
+	workouts ...types.Workout,
 ) (opErr error) {
-	if len(data) == 0 {
+	if len(workouts) == 0 {
 		return
 	}
 	return runOp(ctxt, func(state *types.State, queries *dal.Queries) error {
-		return ops.CreateWorkouts(ctxt, state, queries, data...)
+		return ops.CreateWorkouts(ctxt, state, queries, workouts...)
 	})
 }

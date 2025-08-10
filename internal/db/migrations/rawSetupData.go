@@ -6,18 +6,6 @@ import (
 )
 
 var (
-	VideoDataSetupData = []dal.BulkCreateVideoDataWithIDParams{
-		{
-			ID:           0,
-			Path:         "",
-			Position:     [][]float64{},
-			Velocity:     [][]float64{},
-			Acceleration: [][]float64{},
-			Force:        [][]float64{},
-			Impulse:      [][]float64{},
-		},
-	}
-
 	ModelSetupData = []dal.BulkCreateModelsWithIDParams{
 		{
 			ID:          int32(types.SimplifiedNegativeSpace),

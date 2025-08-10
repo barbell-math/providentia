@@ -25,7 +25,7 @@ overrides:
   rename:
     providentia_exercise_focu: ExerciseFocus
     providentia_exercise_kind: ExerciseKind
-    providentia_video_datum: VideoData
+    providentia_physics_datum: PhysicsData
     providentia_exercise: Exercise
     providentia_client: Client
     providentia_training_log: TrainingLog
