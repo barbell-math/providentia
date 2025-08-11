@@ -1,0 +1,32 @@
+version: "2"
+
+sql:
+  - engine: "postgresql"
+    queries: "./queries.sql"
+    schema: "./schema.sql"
+    gen:
+      go:
+        package: "dal"
+        out: "dataAccessLayer"
+        sql_package: "pgx/v5"
+        emit_json_tags: true
+        overrides:
+          - column: providentia.exercise.kind_id
+            go_type:
+              import: "code.barbellmath.net/barbell-math/providentia/lib/types"
+              type: "ExerciseKind"
+          - column: providentia.exercise.focus_id
+            go_type:
+              import: "code.barbellmath.net/barbell-math/providentia/lib/types"
+              type: "ExerciseFocus"
+
+overrides:
+ go:
+  rename:
+    providentia_exercise_focu: ExerciseFocus
+    providentia_exercise_kind: ExerciseKind
+    providentia_physics_datum: PhysicsData
+    providentia_exercise: Exercise
+    providentia_client: Client
+    providentia_training_log: TrainingLog
+    providentia_model_state: ModelState

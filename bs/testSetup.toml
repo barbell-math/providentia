@@ -1,0 +1,10 @@
+[ DB ]
+User = "postgres"
+PswdEnvVar = "DB_PSWD"
+Name = "postgres"
+Host = "localhost"
+Port = 5432
+
+[ Logging ]
+Verbosity = 3
+SaveTo = "../../bs/logs"
