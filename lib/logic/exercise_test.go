@@ -6,10 +6,10 @@ import (
 	"math"
 	"testing"
 
-	dal "github.com/barbell-math/providentia/internal/db/dataAccessLayer"
-	"github.com/barbell-math/providentia/internal/db/migrations"
-	"github.com/barbell-math/providentia/lib/types"
-	sbtest "github.com/barbell-math/smoothbrain-test"
+	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
+	"code.barbellmath.net/barbell-math/providentia/internal/db/migrations"
+	"code.barbellmath.net/barbell-math/providentia/lib/types"
+	sbtest "code.barbellmath.net/barbell-math/smoothbrain-test"
 )
 
 func TestExercisesTypeConversions(t *testing.T) {

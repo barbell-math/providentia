@@ -5,10 +5,10 @@ import (
 	"net/mail"
 	"unsafe"
 
-	dal "github.com/barbell-math/providentia/internal/db/dataAccessLayer"
-	"github.com/barbell-math/providentia/lib/types"
-	sberr "github.com/barbell-math/smoothbrain-errs"
-	sblog "github.com/barbell-math/smoothbrain-logging"
+	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
+	"code.barbellmath.net/barbell-math/providentia/lib/types"
+	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
+	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
 )
 
 func CreateClients(

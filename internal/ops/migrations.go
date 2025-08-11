@@ -3,9 +3,9 @@ package ops
 import (
 	"context"
 
-	"github.com/barbell-math/providentia/internal/db"
-	"github.com/barbell-math/providentia/lib/types"
-	sbsqlm "github.com/barbell-math/smoothbrain-sqlmigrate"
+	"code.barbellmath.net/barbell-math/providentia/internal/db"
+	"code.barbellmath.net/barbell-math/providentia/lib/types"
+	sbsqlm "code.barbellmath.net/barbell-math/smoothbrain-sqlmigrate"
 )
 
 func RunMigrations(ctxt context.Context, state *types.State) (opErr error) {

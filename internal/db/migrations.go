@@ -3,8 +3,8 @@ package db
 import (
 	"embed"
 
-	migrations "github.com/barbell-math/providentia/internal/db/migrations"
-	sbsqlm "github.com/barbell-math/smoothbrain-sqlmigrate"
+	migrations "code.barbellmath.net/barbell-math/providentia/internal/db/migrations"
+	sbsqlm "code.barbellmath.net/barbell-math/smoothbrain-sqlmigrate"
 )
 
 //go:embed migrations/*.sql

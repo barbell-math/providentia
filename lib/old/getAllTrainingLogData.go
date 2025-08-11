@@ -4,8 +4,8 @@ import (
 	"context"
 	"unsafe"
 
-	dal "github.com/barbell-math/providentia/internal/db/dataAccessLayer"
-	sblog "github.com/barbell-math/smoothbrain-logging"
+	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
+	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
 )
 
 type (

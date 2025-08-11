@@ -3,9 +3,9 @@ package main
 import (
 	"reflect"
 
-	dal "github.com/barbell-math/providentia/internal/db/dataAccessLayer"
-	simplifiednegativespace "github.com/barbell-math/providentia/internal/models/simplifiedNegativeSpace"
-	structgen "github.com/barbell-math/smoothbrain-cgostructgen"
+	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
+	simplifiednegativespace "code.barbellmath.net/barbell-math/providentia/internal/models/simplifiedNegativeSpace"
+	structgen "code.barbellmath.net/barbell-math/smoothbrain-cgostructgen"
 )
 
 func main() {

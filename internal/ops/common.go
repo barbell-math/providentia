@@ -5,7 +5,7 @@ import (
 	"iter"
 	"strings"
 
-	"github.com/barbell-math/providentia/lib/types"
+	"code.barbellmath.net/barbell-math/providentia/lib/types"
 )
 
 func batchIndexes[S ~[]E, E any](s S, step int) iter.Seq2[int, int] {

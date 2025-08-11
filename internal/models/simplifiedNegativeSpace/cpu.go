@@ -9,8 +9,8 @@ import "C"
 import (
 	"unsafe"
 
-	dal "github.com/barbell-math/providentia/internal/db/dataAccessLayer"
-	"github.com/barbell-math/providentia/lib/types"
+	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
+	"code.barbellmath.net/barbell-math/providentia/lib/types"
 )
 
 //go:generate go run ./structGen/structGen.go

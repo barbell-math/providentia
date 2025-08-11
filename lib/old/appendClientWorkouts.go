@@ -6,9 +6,9 @@ import (
 	"os"
 	"time"
 
-	dal "github.com/barbell-math/providentia/internal/db/dataAccessLayer"
-	sberr "github.com/barbell-math/smoothbrain-errs"
-	sblog "github.com/barbell-math/smoothbrain-logging"
+	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
+	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
+	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )

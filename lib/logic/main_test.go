@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/barbell-math/providentia/lib/types"
+	"code.barbellmath.net/barbell-math/providentia/lib/types"
 )
 
 func resetDB(ctxtIn context.Context) (context.Context, func()) {

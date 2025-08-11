@@ -3,9 +3,9 @@ package logic
 import (
 	"context"
 
-	dal "github.com/barbell-math/providentia/internal/db/dataAccessLayer"
-	"github.com/barbell-math/providentia/lib/types"
-	sberr "github.com/barbell-math/smoothbrain-errs"
+	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
+	"code.barbellmath.net/barbell-math/providentia/lib/types"
+	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
 	"github.com/jackc/pgx/v5"
 )
 

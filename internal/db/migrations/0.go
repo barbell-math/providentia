@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	dal "github.com/barbell-math/providentia/internal/db/dataAccessLayer"
-	sberr "github.com/barbell-math/smoothbrain-errs"
+	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
+	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
 	"github.com/jackc/pgx/v5"
 )
 

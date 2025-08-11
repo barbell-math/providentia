@@ -7,9 +7,9 @@ import (
 	"log/slog"
 	"runtime"
 
-	sbargp "github.com/barbell-math/smoothbrain-argparse"
-	sberr "github.com/barbell-math/smoothbrain-errs"
-	sblog "github.com/barbell-math/smoothbrain-logging"
+	sbargp "code.barbellmath.net/barbell-math/smoothbrain-argparse"
+	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
+	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 

@@ -5,7 +5,7 @@
 package dal
 
 import (
-	"github.com/barbell-math/providentia/lib/types"
+	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 

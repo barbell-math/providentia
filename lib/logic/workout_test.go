@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/barbell-math/providentia/lib/types"
-	sbtest "github.com/barbell-math/smoothbrain-test"
+	"code.barbellmath.net/barbell-math/providentia/lib/types"
+	sbtest "code.barbellmath.net/barbell-math/smoothbrain-test"
 )
 
 // TODO - eventually look into running tests in parallel - will need multiple dbs

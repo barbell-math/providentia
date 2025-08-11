@@ -8,9 +8,9 @@ import (
 	"math"
 	"unsafe"
 
-	dal "github.com/barbell-math/providentia/internal/db/dataAccessLayer"
-	"github.com/barbell-math/providentia/internal/mat"
-	pubenums "github.com/barbell-math/providentia/lib/pubEnums"
+	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
+	"code.barbellmath.net/barbell-math/providentia/internal/mat"
+	pubenums "code.barbellmath.net/barbell-math/providentia/lib/pubEnums"
 )
 
 type (

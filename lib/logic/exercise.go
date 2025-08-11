@@ -4,9 +4,9 @@ import (
 	"context"
 	"unsafe"
 
-	dal "github.com/barbell-math/providentia/internal/db/dataAccessLayer"
-	"github.com/barbell-math/providentia/internal/ops"
-	"github.com/barbell-math/providentia/lib/types"
+	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
+	"code.barbellmath.net/barbell-math/providentia/internal/ops"
+	"code.barbellmath.net/barbell-math/providentia/lib/types"
 )
 
 // Adds the supplied exercises to the database. The supplied name for each
