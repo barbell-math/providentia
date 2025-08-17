@@ -263,6 +263,99 @@ func (q *Queries) GetAllClientsTrainingLogData(ctx context.Context, limit int32)
 	return items, nil
 }
 
+const getAllWorkoutData = `-- name: GetAllWorkoutData :many
+SELECT
+	providentia.exercise.name,
+	providentia.training_log.weight,
+	providentia.training_log.sets,
+	providentia.training_log.reps,
+	providentia.training_log.effort,
+	providentia.training_log.volume,
+	providentia.training_log.exertion,
+	providentia.training_log.total_reps,
+	providentia.physics_data.time,
+	providentia.physics_data.position,
+	providentia.physics_data.velocity,
+	providentia.physics_data.acceleration,
+	providentia.physics_data.jerk,
+	providentia.physics_data.force,
+	providentia.physics_data.impulse,
+	providentia.physics_data.work
+FROM providentia.training_log
+JOIN providentia.exercise
+	ON providentia.training_log.exercise_id=providentia.exercise.id
+JOIN providentia.client
+	ON providentia.training_log.client_id=providentia.client.id
+LEFT JOIN providentia.physics_data
+	ON providentia.training_log.physics_id=providentia.physics_data.id
+WHERE
+	providentia.client.email = $1 AND
+	providentia.training_log.inter_session_cntr = $2 AND
+	providentia.training_log.date_performed = $3
+`
+
+type GetAllWorkoutDataParams struct {
+	Email            string      `json:"email"`
+	InterSessionCntr int32       `json:"inter_session_cntr"`
+	DatePerformed    pgtype.Date `json:"date_performed"`
+}
+
+type GetAllWorkoutDataRow struct {
+	Name         string      `json:"name"`
+	Weight       float64     `json:"weight"`
+	Sets         float64     `json:"sets"`
+	Reps         int32       `json:"reps"`
+	Effort       float64     `json:"effort"`
+	Volume       float64     `json:"volume"`
+	Exertion     float64     `json:"exertion"`
+	TotalReps    float64     `json:"total_reps"`
+	Time         [][]float64 `json:"time"`
+	Position     [][]float64 `json:"position"`
+	Velocity     [][]float64 `json:"velocity"`
+	Acceleration [][]float64 `json:"acceleration"`
+	Jerk         [][]float64 `json:"jerk"`
+	Force        [][]float64 `json:"force"`
+	Impulse      [][]float64 `json:"impulse"`
+	Work         [][]float64 `json:"work"`
+}
+
+func (q *Queries) GetAllWorkoutData(ctx context.Context, arg GetAllWorkoutDataParams) ([]GetAllWorkoutDataRow, error) {
+	rows, err := q.db.Query(ctx, getAllWorkoutData, arg.Email, arg.InterSessionCntr, arg.DatePerformed)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllWorkoutDataRow
+	for rows.Next() {
+		var i GetAllWorkoutDataRow
+		if err := rows.Scan(
+			&i.Name,
+			&i.Weight,
+			&i.Sets,
+			&i.Reps,
+			&i.Effort,
+			&i.Volume,
+			&i.Exertion,
+			&i.TotalReps,
+			&i.Time,
+			&i.Position,
+			&i.Velocity,
+			&i.Acceleration,
+			&i.Jerk,
+			&i.Force,
+			&i.Impulse,
+			&i.Work,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getClientIDFromEmail = `-- name: GetClientIDFromEmail :one
 SELECT ID FROM providentia.client WHERE email=$1
 `
@@ -455,6 +548,38 @@ SELECT COUNT(*) FROM providentia.exercise
 
 func (q *Queries) GetNumExercises(ctx context.Context) (int64, error) {
 	row := q.db.QueryRow(ctx, getNumExercises)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const getNumWorkoutsForClient = `-- name: GetNumWorkoutsForClient :one
+SELECT COUNT(*) FROM (
+	SELECT date_performed, inter_session_cntr
+	FROM providentia.training_log
+	JOIN providentia.client
+		ON providentia.training_log.client_id = providentia.client.id
+	WHERE providentia.client.email = $1
+	GROUP BY date_performed, inter_session_cntr
+) AS result
+`
+
+func (q *Queries) GetNumWorkoutsForClient(ctx context.Context, email string) (int64, error) {
+	row := q.db.QueryRow(ctx, getNumWorkoutsForClient, email)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const getTotalNumExercisesForClient = `-- name: GetTotalNumExercisesForClient :one
+SELECT COUNT(*) FROM providentia.training_log
+JOIN providentia.client
+	ON providentia.training_log.client_id = providentia.client.id
+WHERE providentia.client.email = $1
+`
+
+func (q *Queries) GetTotalNumExercisesForClient(ctx context.Context, email string) (int64, error) {
+	row := q.db.QueryRow(ctx, getTotalNumExercisesForClient, email)
 	var count int64
 	err := row.Scan(&count)
 	return count, err

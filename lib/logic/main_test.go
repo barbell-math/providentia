@@ -75,7 +75,10 @@ func initTestState(testCtxt context.Context) (context.Context, func()) {
 		panic(err)
 	}
 	pollerCtxt, cancel := context.WithCancel(testCtxt)
-	go sbjobqueue.Poll(pollerCtxt, provState.PhysicsJobQueue) //, state.VideoJobQueue)
+	go sbjobqueue.Poll(
+		pollerCtxt,
+		provState.PhysicsJobQueue, provState.VideoJobQueue,
+	)
 
 	testSetupState.Log.Info("Setting up tests database... done.")
 

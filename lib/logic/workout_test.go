@@ -10,10 +10,10 @@ import (
 )
 
 // TODO - eventually look into running tests in parallel - will need multiple dbs
-func TestWorkout(t *testing.T) {
+func TestRawWorkout(t *testing.T) {
 	t.Run("failingNoWrites", workoutFailingNoWrites)
-	// TODO - add test for adding duplicated workout - this will fail when inserting
 	t.Run("workoutCreateReadNoPhysicsData", workoutCreateReadNoPhysicsData)
+	// TODO - add test for adding duplicated workout - will fail when inserting
 	// TODO - test that phys data is not saved in db when some fail
 	// t.Run("transactionRollback", clientTransactionRollback)
 	// t.Run("addGet", clientAddGet)
@@ -44,14 +44,20 @@ func workoutFailingNoWrites(t *testing.T) {
 	t.Run("setInvalidVideoFile", workoutSetInvalidVideoFile(ctxt))
 	t.Run("setFractionalSetsAndPhysDataLen", workoutSetFractionalSetsAndPhysDataLen(ctxt))
 
-	// numClients, err := ReadNumClients(ctxt)
-	// sbtest.Nil(t, err)
-	// sbtest.Eq(t, 0, numClients)
+	numClients, err = ReadNumClients(ctxt)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 1, numClients)
+	numExercises, err := ReadClientTotalNumExercises(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 0, numExercises)
+	numRawWorkouts, err := ReadClientNumWorkouts(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 0, numRawWorkouts)
 }
 
 func workoutInvalidSession(ctxt context.Context) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := CreateWorkouts(ctxt, types.Workout{
+		err := CreateWorkouts(ctxt, types.RawWorkout{
 			WorkoutID: types.WorkoutID{
 				ClientEmail: "email@email.com", Session: 0,
 			},
@@ -63,7 +69,7 @@ func workoutInvalidSession(ctxt context.Context) func(t *testing.T) {
 
 func workoutInvalidClient(ctxt context.Context) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := CreateWorkouts(ctxt, types.Workout{
+		err := CreateWorkouts(ctxt, types.RawWorkout{
 			WorkoutID: types.WorkoutID{
 				ClientEmail: "bad@email.com",
 				Session:     1,
@@ -76,7 +82,7 @@ func workoutInvalidClient(ctxt context.Context) func(t *testing.T) {
 
 func workoutUnknownExercise(ctxt context.Context) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := CreateWorkouts(ctxt, types.Workout{
+		err := CreateWorkouts(ctxt, types.RawWorkout{
 			WorkoutID: types.WorkoutID{
 				ClientEmail: "email@email.com",
 				Session:     1,
@@ -95,7 +101,7 @@ func workoutUnknownExercise(ctxt context.Context) func(t *testing.T) {
 
 func workoutSetTimeAndPosDiffLen(ctxt context.Context) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := CreateWorkouts(ctxt, types.Workout{
+		err := CreateWorkouts(ctxt, types.RawWorkout{
 			WorkoutID: types.WorkoutID{
 				ClientEmail: "email@email.com",
 				Session:     1,
@@ -125,7 +131,7 @@ func workoutSetTimeAndPosDiffLen(ctxt context.Context) func(t *testing.T) {
 
 func workoutSetNotEnoughSamples(ctxt context.Context) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := CreateWorkouts(ctxt, types.Workout{
+		err := CreateWorkouts(ctxt, types.RawWorkout{
 			WorkoutID: types.WorkoutID{
 				ClientEmail: "email@email.com",
 				Session:     1,
@@ -155,7 +161,7 @@ func workoutSetNotEnoughSamples(ctxt context.Context) func(t *testing.T) {
 
 func workoutSetBackwardsTime(ctxt context.Context) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := CreateWorkouts(ctxt, types.Workout{
+		err := CreateWorkouts(ctxt, types.RawWorkout{
 			WorkoutID: types.WorkoutID{
 				ClientEmail: "email@email.com",
 				Session:     1,
@@ -186,7 +192,7 @@ func workoutSetBackwardsTime(ctxt context.Context) func(t *testing.T) {
 
 func workoutSetDiffTimeDelta(ctxt context.Context) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := CreateWorkouts(ctxt, types.Workout{
+		err := CreateWorkouts(ctxt, types.RawWorkout{
 			WorkoutID: types.WorkoutID{
 				ClientEmail: "email@email.com",
 				Session:     1,
@@ -217,7 +223,7 @@ func workoutSetDiffTimeDelta(ctxt context.Context) func(t *testing.T) {
 
 func workoutSetDirInsteadOfVideoFile(ctxt context.Context) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := CreateWorkouts(ctxt, types.Workout{
+		err := CreateWorkouts(ctxt, types.RawWorkout{
 			WorkoutID: types.WorkoutID{
 				ClientEmail: "email@email.com",
 				Session:     1,
@@ -240,7 +246,7 @@ func workoutSetDirInsteadOfVideoFile(ctxt context.Context) func(t *testing.T) {
 
 func workoutSetInvalidVideoFile(ctxt context.Context) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := CreateWorkouts(ctxt, types.Workout{
+		err := CreateWorkouts(ctxt, types.RawWorkout{
 			WorkoutID: types.WorkoutID{
 				ClientEmail: "email@email.com",
 				Session:     1,
@@ -267,7 +273,7 @@ func workoutSetNotEnoughBarPathEntries(
 	ctxt context.Context,
 ) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := CreateWorkouts(ctxt, types.Workout{
+		err := CreateWorkouts(ctxt, types.RawWorkout{
 			WorkoutID: types.WorkoutID{
 				ClientEmail: "email@email.com",
 				Session:     1,
@@ -305,7 +311,7 @@ func workoutSetFractionalSetsAndPhysDataLen(
 	ctxt context.Context,
 ) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := CreateWorkouts(ctxt, types.Workout{
+		err := CreateWorkouts(ctxt, types.RawWorkout{
 			WorkoutID: types.WorkoutID{
 				ClientEmail: "email@email.com",
 				Session:     1,
@@ -347,9 +353,9 @@ func workoutSetFractionalSetsAndPhysDataLen(
 // 		FirstName: "FName", LastName: "LName", Email: "email@email.com",
 // 	})
 //
-// 	exercises := [8]types.WorkoutExercise{}
+// 	exercises := [8]types.RawWorkoutExercise{}
 // 	for i := range len(exercises) {
-// 		exercises[i] = types.WorkoutExercise{
+// 		exercises[i] = types.RawWorkoutExercise{
 // 			Name:      "Squat",
 // 			Weight:    float64(i * 3),
 // 			Sets:      float64(i*3 + 1),
@@ -359,7 +365,7 @@ func workoutSetFractionalSetsAndPhysDataLen(
 // 		}
 // 	}
 //
-// 	err = CreateWorkouts(ctxt, types.Workout{
+// 	err = CreateRawWorkouts(ctxt, types.RawWorkout{
 // 		WorkoutID: types.WorkoutID{
 // 			ClientEmail:   "email@email.com",
 // 			Session:       1,
@@ -380,8 +386,8 @@ func workoutCreateReadNoPhysicsData(t *testing.T) {
 		FirstName: "FName", LastName: "LName", Email: "email@email.com",
 	})
 
-	workouts := [2]types.Workout{
-		types.Workout{
+	workouts := [2]types.RawWorkout{
+		types.RawWorkout{
 			WorkoutID: types.WorkoutID{
 				ClientEmail:   "email@email.com",
 				Session:       1,
@@ -404,7 +410,7 @@ func workoutCreateReadNoPhysicsData(t *testing.T) {
 				},
 			},
 		},
-		types.Workout{
+		types.RawWorkout{
 			WorkoutID: types.WorkoutID{
 				ClientEmail:   "email@email.com",
 				Session:       1,
@@ -424,6 +430,49 @@ func workoutCreateReadNoPhysicsData(t *testing.T) {
 
 	err = CreateWorkouts(ctxt, workouts[:]...)
 	sbtest.Nil(t, err)
+	numExercises, err := ReadClientTotalNumExercises(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 3, numExercises)
+	numRawWorkouts, err := ReadClientNumWorkouts(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 2, numRawWorkouts)
 
-	// TODO - test num training logs?
+	res, err := ReadWorkoutsByID(ctxt, workouts[0].WorkoutID, workouts[1].WorkoutID)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, len(res), 2)
+	sbtest.Eq(t, len(res[0].BasicData), 2)
+	sbtest.Eq(t, len(res[0].PhysData), 2)
+	sbtest.Eq(t, len(res[1].BasicData), 1)
+	sbtest.Eq(t, len(res[1].PhysData), 1)
+
+	sbtest.Eq(t, res[0].BasicData[0], types.BasicData{
+		Name:      workouts[0].Exercises[0].Name,
+		Weight:    workouts[0].Exercises[0].Weight,
+		Sets:      workouts[0].Exercises[0].Sets,
+		Reps:      workouts[0].Exercises[0].Reps,
+		Effort:    workouts[0].Exercises[0].Effort,
+		Volume:    workouts[0].Exercises[0].Sets * float64(workouts[0].Exercises[0].Reps) * workouts[0].Exercises[0].Weight,
+		Exertion:  workouts[0].Exercises[0].Sets * float64(workouts[0].Exercises[0].Reps) * workouts[0].Exercises[0].Effort,
+		TotalReps: workouts[0].Exercises[0].Sets * float64(workouts[0].Exercises[0].Reps),
+	})
+	sbtest.Eq(t, res[0].BasicData[1], types.BasicData{
+		Name:      workouts[0].Exercises[1].Name,
+		Weight:    workouts[0].Exercises[1].Weight,
+		Sets:      workouts[0].Exercises[1].Sets,
+		Reps:      workouts[0].Exercises[1].Reps,
+		Effort:    workouts[0].Exercises[1].Effort,
+		Volume:    workouts[0].Exercises[1].Sets * float64(workouts[0].Exercises[1].Reps) * workouts[0].Exercises[1].Weight,
+		Exertion:  workouts[0].Exercises[1].Sets * float64(workouts[0].Exercises[1].Reps) * workouts[0].Exercises[1].Effort,
+		TotalReps: workouts[0].Exercises[1].Sets * float64(workouts[0].Exercises[1].Reps),
+	})
+	sbtest.Eq(t, res[1].BasicData[0], types.BasicData{
+		Name:      workouts[1].Exercises[0].Name,
+		Weight:    workouts[1].Exercises[0].Weight,
+		Sets:      workouts[1].Exercises[0].Sets,
+		Reps:      workouts[1].Exercises[0].Reps,
+		Effort:    workouts[1].Exercises[0].Effort,
+		Volume:    workouts[1].Exercises[0].Sets * float64(workouts[1].Exercises[0].Reps) * workouts[1].Exercises[0].Weight,
+		Exertion:  workouts[1].Exercises[0].Sets * float64(workouts[1].Exercises[0].Reps) * workouts[1].Exercises[0].Effort,
+		TotalReps: workouts[1].Exercises[0].Sets * float64(workouts[1].Exercises[0].Reps),
+	})
 }

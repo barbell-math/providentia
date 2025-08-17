@@ -50,7 +50,8 @@ func ReadNumExercises(ctxt context.Context) (res int64, opErr error) {
 }
 
 // Gets the exercise data associated with the supplied names if they exist. If
-// they do not exist an error will be returned.
+// they do not exist an error will be returned. The order of the returned
+// exercises may not match the order of the supplied exercise names.
 //
 // The context must have a [State] variable.
 //

@@ -28,7 +28,7 @@ type (
 	}
 
 	// Represents a workout that will be uploaded to the database
-	Workout struct {
+	RawWorkout struct {
 		WorkoutID           // The ID for the workout
 		Exercises []RawData // All raw data about the workout provided by the user
 	}
@@ -42,11 +42,14 @@ type (
 		BarPath []BarPathVariant
 	}
 
-	CalculatedData struct {
+	// Represents a workout with all calculated data that is in the database
+	Workout struct {
 		WorkoutID
 		BasicData []BasicData
 		PhysData  []PhysicsData
 	}
+	// Represents basic data about a exercise within a workout with some basic
+	// calculated fields such as volume
 	BasicData struct {
 		Name      string
 		Weight    float64
@@ -57,6 +60,8 @@ type (
 		Exertion  float64
 		TotalReps float64
 	}
+	// Represents the calculated physics data for each set and rep of a given
+	// exercsise
 	PhysicsData struct {
 		Time         [][]float64
 		Position     [][]float64
@@ -90,11 +95,11 @@ var (
 	CouldNotUpdateRequestedExerciseErr = errors.New("Could not update requested exercise")
 	CouldNotDeleteRequestedExerciseErr = errors.New("Could not delete requested exercise")
 
-	InvalidWorkoutErr           = errors.New("Invalid workout")
-	InvalidSessionErr           = errors.New("Invalid session num")
-	MalformedWorkoutExerciseErr = errors.New("Malformed exercise")
-	CouldNotAddWorkoutErr       = errors.New("Could not add the requested workouts")
-	// NewClientDataNotSortedErr             = errors.New("New client data must be sorted by date and session ascending")
-	// CannotAppendDataBeforeExistingDataErr = errors.New("Cannot append training log data if date performed is before the date of the clients last workout")
-	// CouldNotAddTrainingDataErr            = errors.New("Could not add the requested training data")
+	InvalidWorkoutErr               = errors.New("Invalid workout")
+	InvalidSessionErr               = errors.New("Invalid session num")
+	MalformedWorkoutExerciseErr     = errors.New("Malformed exercise")
+	CouldNotAddWorkoutErr           = errors.New("Could not add the requested workouts")
+	CouldNotGetNumWorkoutsErr       = errors.New("Could not get num workouts")
+	CouldNotGetTotalNumExercisesErr = errors.New("Could not get total num exercises")
+	CouldNotFindRequestedWorkoutErr = errors.New("Could not find requested workout")
 )

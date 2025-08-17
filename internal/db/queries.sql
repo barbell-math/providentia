@@ -111,6 +111,54 @@ INSERT INTO providentia.training_log(
 ) VALUES (
 	$1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 );
+
+-- name: GetTotalNumExercisesForClient :one
+SELECT COUNT(*) FROM providentia.training_log
+JOIN providentia.client
+	ON providentia.training_log.client_id = providentia.client.id
+WHERE providentia.client.email = $1;
+
+-- name: GetNumWorkoutsForClient :one
+SELECT COUNT(*) FROM (
+	SELECT date_performed, inter_session_cntr
+	FROM providentia.training_log
+	JOIN providentia.client
+		ON providentia.training_log.client_id = providentia.client.id
+	WHERE providentia.client.email = $1
+	GROUP BY date_performed, inter_session_cntr
+) AS result;
+
+-- name: GetAllWorkoutData :many
+SELECT
+	providentia.exercise.name,
+	providentia.training_log.weight,
+	providentia.training_log.sets,
+	providentia.training_log.reps,
+	providentia.training_log.effort,
+	providentia.training_log.volume,
+	providentia.training_log.exertion,
+	providentia.training_log.total_reps,
+	providentia.physics_data.time,
+	providentia.physics_data.position,
+	providentia.physics_data.velocity,
+	providentia.physics_data.acceleration,
+	providentia.physics_data.jerk,
+	providentia.physics_data.force,
+	providentia.physics_data.impulse,
+	providentia.physics_data.work
+FROM providentia.training_log
+JOIN providentia.exercise
+	ON providentia.training_log.exercise_id=providentia.exercise.id
+JOIN providentia.client
+	ON providentia.training_log.client_id=providentia.client.id
+LEFT JOIN providentia.physics_data
+	ON providentia.training_log.physics_id=providentia.physics_data.id
+WHERE
+	providentia.client.email = $1 AND
+	providentia.training_log.inter_session_cntr = $2 AND
+	providentia.training_log.date_performed = $3;
+
+
 ----- OLD ----------------------------------------------------------------------
 -- name: BulkCreateModelStates :copyfrom
 INSERT INTO providentia.model_state(

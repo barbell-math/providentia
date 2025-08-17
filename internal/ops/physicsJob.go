@@ -30,8 +30,6 @@ func (p *physicsJob) Run(ctxt context.Context) error {
 		return sberr.AppendError(types.PhysicsJobQueueErr, err)
 	}
 
-	// call c algo to calculate all derivatives and such
-
 	// Upload final physics data to db, returning id
 	// Set video id in tl params
 
@@ -59,6 +57,8 @@ func (p *physicsJob) processTimeSeriesData() error {
 					)
 				}
 			}
+
+			// call c algo to calculate all derivatives and such
 		}
 	}
 

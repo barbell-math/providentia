@@ -11,6 +11,7 @@ import (
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
 	sbjobqueue "code.barbellmath.net/barbell-math/smoothbrain-jobQueue"
+	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -18,7 +19,7 @@ func CreateWorkouts(
 	ctxt context.Context,
 	state *types.State,
 	queries *dal.Queries,
-	data ...types.Workout,
+	data ...types.RawWorkout,
 ) (opErr error) {
 	batch, _ := sbjobqueue.BatchWithContext(ctxt)
 	clientIdCache := map[string]int64{}
@@ -93,7 +94,7 @@ func CreateWorkouts(
 				return
 			}
 
-			if rawDataHasPhysData(&iterE) {
+			if len(iterE.BarPath) > 0 {
 				state.PhysicsJobQueue.Schedule(&physicsJob{
 					BarPath: iterE.BarPath,
 					Tl:      bufWriter.Last(),
@@ -109,6 +110,11 @@ func CreateWorkouts(
 		return
 	}
 
+	state.Log.Log(
+		ctxt, sblog.VLevel(3),
+		"Added new workouts",
+		"NumWorkouts", len(data),
+	)
 	return
 }
 
@@ -116,7 +122,7 @@ func validateWorkout(
 	ctxt context.Context,
 	state *types.State,
 	queries *dal.Queries,
-	w *types.Workout,
+	w *types.RawWorkout,
 	exerciseCache map[string]int32,
 ) (opErr error) {
 	curExercise := -1
@@ -148,7 +154,7 @@ func validateWorkout(
 			exerciseCache[iterE.Name] = iterId
 		}
 
-		if !rawDataHasPhysData(&iterE) {
+		if len(iterE.BarPath) == 0 {
 			// Not supplying any physics or bar path data is valid
 			continue
 		}
@@ -204,52 +210,118 @@ func validateWorkout(
 	return
 }
 
-func rawDataHasPhysData(e *types.RawData) bool {
-	return len(e.BarPath) != 0
-}
-
-func ReadWorkouts(
-	ctxt context.Context,
-	state *types.State,
-	queries *dal.Queries,
-	id ...types.WorkoutID,
-) (opErr error) {
-	return
-}
-
-func ReadWorkout(
-	ctxt context.Context,
-	state *types.State,
-	queries *dal.Queries,
-	id types.WorkoutID,
-) (opErr error) {
-	return
-}
-
-func ReadNumWorkouts(
+func ReadClientTotalNumExercises(
 	ctxt context.Context,
 	state *types.State,
 	queries *dal.Queries,
 	clientEmail string,
-) (opErr error) {
+) (res int64, opErr error) {
+	res, opErr = queries.GetTotalNumExercisesForClient(ctxt, clientEmail)
+	if opErr != nil {
+		opErr = sberr.AppendError(types.CouldNotGetTotalNumExercisesErr, opErr)
+		return
+	}
+	state.Log.Log(
+		ctxt, sblog.VLevel(3),
+		"Read total num exercises for client",
+	)
 	return
 }
 
-// Intent is to read number of exercises a given client has performed
-// func ReadNumExercises(
-// 	ctxt context.Context,
-// 	state *types.State,
-// 	queries *dal.Queries,
-// 	clientEmail string,
-// ) (opErr error) {
-// 	return
-// }
+func ReadClientNumWorkouts(
+	ctxt context.Context,
+	state *types.State,
+	queries *dal.Queries,
+	clientEmail string,
+) (res int64, opErr error) {
+	res, opErr = queries.GetNumWorkoutsForClient(ctxt, clientEmail)
+	if opErr != nil {
+		opErr = sberr.AppendError(types.CouldNotGetNumWorkoutsErr, opErr)
+		return
+	}
+	state.Log.Log(
+		ctxt, sblog.VLevel(3),
+		"Read num workouts for client",
+	)
+	return
+}
+
+func ReadWorkoutsByID(
+	ctxt context.Context,
+	state *types.State,
+	queries *dal.Queries,
+	ids ...types.WorkoutID,
+) (res []types.Workout, opErr error) {
+	res = make([]types.Workout, len(ids))
+
+	for i, id := range ids {
+		var rawData []dal.GetAllWorkoutDataRow
+		rawData, opErr = queries.GetAllWorkoutData(
+			ctxt,
+			dal.GetAllWorkoutDataParams{
+				Email:            id.ClientEmail,
+				InterSessionCntr: int32(id.Session),
+				DatePerformed: pgtype.Date{
+					Time:             id.DatePerformed,
+					InfinityModifier: pgtype.Finite,
+					Valid:            true,
+				},
+			},
+		)
+		if opErr != nil {
+			opErr = sberr.AppendError(
+				types.CouldNotFindRequestedWorkoutErr, opErr,
+			)
+			return
+		}
+		if len(rawData) == 0 {
+			opErr = sberr.Wrap(
+				types.CouldNotFindRequestedWorkoutErr,
+				"No data found for %+v", id,
+			)
+			return
+		}
+		res[i].WorkoutID = id
+		res[i].BasicData = make([]types.BasicData, len(rawData))
+		res[i].PhysData = make([]types.PhysicsData, len(rawData))
+		for j := 0; j < len(rawData); j++ {
+			res[i].BasicData[j] = types.BasicData{
+				Name:      rawData[j].Name,
+				Weight:    rawData[j].Weight,
+				Sets:      rawData[j].Sets,
+				Reps:      rawData[j].Reps,
+				Effort:    rawData[j].Effort,
+				Volume:    rawData[j].Volume,
+				Exertion:  rawData[j].Exertion,
+				TotalReps: rawData[j].TotalReps,
+			}
+			res[i].PhysData[j] = types.PhysicsData{
+				Time:         rawData[j].Time,
+				Position:     rawData[j].Position,
+				Velocity:     rawData[j].Velocity,
+				Acceleration: rawData[j].Acceleration,
+				Jerk:         rawData[j].Jerk,
+				Force:        rawData[j].Force,
+				Impulse:      rawData[j].Impulse,
+				Work:         rawData[j].Work,
+			}
+		}
+	}
+
+	state.Log.Log(
+		ctxt, sblog.VLevel(3),
+		"Read workouts from client",
+		"Num", len(ids),
+	)
+
+	return
+}
 
 func UpdateWorkouts(
 	ctxt context.Context,
 	state *types.State,
 	queries *dal.Queries,
-	data ...types.Workout,
+	data ...types.RawWorkout,
 ) (opErr error) {
 	return
 }
@@ -260,7 +332,7 @@ func UpdateWorkoutPhysicsData(
 	ctxt context.Context,
 	state *types.State,
 	queries *dal.Queries,
-	data ...types.Workout,
+	data ...types.RawWorkout,
 ) (opErr error) {
 	return
 }
@@ -269,7 +341,7 @@ func DeleteWorkouts(
 	ctxt context.Context,
 	state *types.State,
 	queries *dal.Queries,
-	data ...types.Workout,
+	data ...types.RawWorkout,
 ) (opErr error) {
 	return
 }
