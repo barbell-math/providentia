@@ -27,7 +27,7 @@ func TestExercise(t *testing.T) {
 }
 
 func exerciseFailingNoWrites(t *testing.T) {
-	ctxt, cleanup := resetDB(context.Background())
+	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 	t.Run("missingName", exerciseMissingName(ctxt))
 	t.Run("invalidFocusID", exerciseInvalidFocusID(ctxt))
@@ -71,7 +71,7 @@ func exerciseInvalidKindID(ctxt context.Context) func(t *testing.T) {
 }
 
 func exerciseDuplicateName(t *testing.T) {
-	ctxt, cleanup := resetDB(context.Background())
+	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 
 	exercises := make([]types.Exercise, 13)
@@ -95,7 +95,7 @@ func exerciseDuplicateName(t *testing.T) {
 }
 
 func exerciseTransactionRollback(t *testing.T) {
-	ctxt, cleanup := resetDB(context.Background())
+	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 
 	exercises := make([]types.Exercise, 13)
@@ -125,7 +125,7 @@ func exerciseTransactionRollback(t *testing.T) {
 }
 
 func exerciseAddGet(t *testing.T) {
-	ctxt, cleanup := resetDB(context.Background())
+	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 
 	exercises := make([]types.Exercise, 13)
@@ -158,7 +158,7 @@ func exerciseAddGet(t *testing.T) {
 }
 
 func exerciseAddUpdateGet(t *testing.T) {
-	ctxt, cleanup := resetDB(context.Background())
+	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 
 	exercises := make([]types.Exercise, 13)
@@ -204,7 +204,7 @@ func exerciseAddUpdateGet(t *testing.T) {
 }
 
 func exerciseAddDeleteGet(t *testing.T) {
-	ctxt, cleanup := resetDB(context.Background())
+	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 
 	exercises := make([]types.Exercise, 13)

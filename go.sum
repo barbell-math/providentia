@@ -6,12 +6,14 @@ code.barbellmath.net/barbell-math/smoothbrain-cgostructgen v0.0.0-20250811220508
 code.barbellmath.net/barbell-math/smoothbrain-cgostructgen v0.0.0-20250811220508-517b6b3b87c9/go.mod h1:gDGBbZCHTvgyZuo94wGw5q+CqiHI+CTao55q5TH5KsA=
 code.barbellmath.net/barbell-math/smoothbrain-errs v0.0.0-20250811220313-b34a6bfdb1a9 h1:iLR/NVKf1/8mfgnqO1rsFQ46aFkJ2/H5nu7tyj/YNfo=
 code.barbellmath.net/barbell-math/smoothbrain-errs v0.0.0-20250811220313-b34a6bfdb1a9/go.mod h1:Zu//w5nS3Fjv4rP+s7dNeJgmVqSUC+DMthObBpLORbg=
+code.barbellmath.net/barbell-math/smoothbrain-jobQueue v0.0.0-20250817020416-f9ed14b8533c h1:f5mhbmyDSNw0RS2268LM3iMSzN/zaJtscMv4Ao9hpsE=
+code.barbellmath.net/barbell-math/smoothbrain-jobQueue v0.0.0-20250817020416-f9ed14b8533c/go.mod h1:1vNvWKu4zwdqU6OUbVRs1Ghfv4hadtbIsa3McioOS9M=
 code.barbellmath.net/barbell-math/smoothbrain-logging v0.0.0-20250811220414-70c4106e5e59 h1:4atJFJNgDd2VAtkmjzAFDTYYKCXvV1jCpHbQZIVcuKQ=
 code.barbellmath.net/barbell-math/smoothbrain-logging v0.0.0-20250811220414-70c4106e5e59/go.mod h1:Y4QPXQ7slCM2d9Mjejdr2UP+eanN7/5cetURJRUUkp0=
 code.barbellmath.net/barbell-math/smoothbrain-sqlmigrate v0.0.0-20250811220447-357ac3e7cf40 h1:0DcFWQOWv2KbIqZO/btk/dCvJbx4nBdIWwxtbc5e1RI=
 code.barbellmath.net/barbell-math/smoothbrain-sqlmigrate v0.0.0-20250811220447-357ac3e7cf40/go.mod h1:u+EfQvqxoyaSjectmQqctYRVtWwGiFSD+1H7FO7LNG4=
-code.barbellmath.net/barbell-math/smoothbrain-test v0.0.0-20250811220254-eb7ffc974b2c h1:DmgOTK36TeOUjATL/ti4DiBFKvYmPns0DNmshHAc83U=
-code.barbellmath.net/barbell-math/smoothbrain-test v0.0.0-20250811220254-eb7ffc974b2c/go.mod h1:ZochFdfd1B9IdWaSZLNhwsHNp1NvP2/rjoeDGf4dSz4=
+code.barbellmath.net/barbell-math/smoothbrain-test v0.0.0-20250814053052-4d9ece60856b h1:bH3FIHRvzuK5F6COPeP4VqPDy2rMUpKFjagdecz5G6k=
+code.barbellmath.net/barbell-math/smoothbrain-test v0.0.0-20250814053052-4d9ece60856b/go.mod h1:ZochFdfd1B9IdWaSZLNhwsHNp1NvP2/rjoeDGf4dSz4=
 github.com/BurntSushi/toml v1.5.0 h1:W5quZX/G/csjUnuI8SUYlsHs9M38FC7znL0lIO+DvMg=
 github.com/BurntSushi/toml v1.5.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -34,8 +36,8 @@ github.com/stretchr/testify v1.8.1 h1:w7B6lhMri9wdJUVmEZPGGhZzrYTPvgJArz7wNPgYKs
 github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
 golang.org/x/crypto v0.41.0 h1:WKYxWedPGCTVVl5+WHSSrOBT0O8lx32+zxmHxijgXp4=
 golang.org/x/crypto v0.41.0/go.mod h1:pO5AFd7FA68rFak7rOAGVuygIISepHftHnr8dr6+sUc=
-golang.org/x/exp v0.0.0-20250811191247-51f88131bc50 h1:3yiSh9fhy5/RhCSntf4Sy0Tnx50DmMpQ4MQdKKk4yg4=
-golang.org/x/exp v0.0.0-20250811191247-51f88131bc50/go.mod h1:rT6SFzZ7oxADUDx58pcaKFTcZ+inxAa9fTrYx/uVYwg=
+golang.org/x/exp v0.0.0-20250813145105-42675adae3e6 h1:SbTAbRFnd5kjQXbczszQ0hdk3ctwYf3qBNH9jIsGclE=
+golang.org/x/exp v0.0.0-20250813145105-42675adae3e6/go.mod h1:4QTo5u+SEIbbKW1RacMZq1YEfOBqeXa19JeshGi+zc4=
 golang.org/x/sync v0.16.0 h1:ycBJEhp9p4vXvUZNszeOq0kGTPghopOL8q0fq3vstxw=
 golang.org/x/sync v0.16.0/go.mod h1:1dzgHSNfp02xaA81J2MS99Qcpr2w7fw1gpm99rleRqA=
 golang.org/x/text v0.28.0 h1:rhazDwis8INMIwQ4tpjLDzUhx6RlXqZNPEM0huQojng=

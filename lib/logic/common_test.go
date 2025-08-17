@@ -17,7 +17,7 @@ func TestCancelation(t *testing.T) {
 	)
 	defer cancel()
 
-	ctxt, cleanup := resetDB(timeoutCtxt)
+	ctxt, cleanup := resetApp(timeoutCtxt)
 	t.Cleanup(cleanup)
 
 	err := runOp(ctxt, func(state *types.State, queries *dal.Queries) error {

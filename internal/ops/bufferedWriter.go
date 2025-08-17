@@ -10,6 +10,7 @@ import (
 
 var (
 	IncorrectNumberOfRowsErr = errors.New("Incorrect number of rows were written")
+	IndexOutOfRangeErr       = errors.New("Index out of range")
 )
 
 type (
@@ -45,6 +46,23 @@ func (b *BufferedWriter[T]) Write(ctxt context.Context, data ...T) error {
 		} else if err := b.Flush(ctxt); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (b *BufferedWriter[T]) Pntr(idx int) (*T, error) {
+	if idx < 0 || idx > b.curIdx {
+		return nil, sberr.Wrap(
+			IndexOutOfRangeErr,
+			"Must be in range [0, %d], Got: %d", b.curIdx, idx,
+		)
+	}
+	return &b.data[idx], nil
+}
+
+func (b *BufferedWriter[T]) Last() *T {
+	if b.curIdx > 0 {
+		return &b.data[b.curIdx]
 	}
 	return nil
 }

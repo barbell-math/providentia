@@ -34,18 +34,12 @@ type (
 	}
 	// Contains all raw data that can be provided by the user
 	RawData struct {
-		Name   string  // The unique name of the exercise
-		Weight float64 // The weight the exercise was performed with
-		Sets   float64 // The number sets that were performed
-		Reps   int32   // The number of reps that were performed
-		Effort float64 //The effort the exercise was performed at
-		// The VideoPath and TimeData,PositionData fields are mutually exclusive
-		// for each set. For each set, either supply a video path *or* time data
-		// and position data. The time and position data will be gathered from
-		// the video if it is supplied.
-		VideoPaths   []string    // The video path for each set
-		TimeData     [][]float64 // The time data for each set
-		PositionData [][]float64 // The position data for each set
+		Name    string  // The unique name of the exercise
+		Weight  float64 // The weight the exercise was performed with
+		Sets    float64 // The number sets that were performed
+		Reps    int32   // The number of reps that were performed
+		Effort  float64 //The effort the exercise was performed at
+		BarPath []BarPathVariant
 	}
 
 	CalculatedData struct {
@@ -76,8 +70,11 @@ type (
 )
 
 var (
-	InvalidCtxtErr          = errors.New("Invalid context")
-	InvalidMinNumSamplesErr = errors.New("Invalid min num samples")
+	InvalidCtxtErr = errors.New("Invalid context")
+
+	PhysicsJobQueueErr        = errors.New("Could not process physics job")
+	TimeSeriesDecreaseErr     = errors.New("Time series data must not decrease")
+	TimeSeriesNotMonotonicErr = errors.New("Time series must increase mononically")
 
 	InvalidClientErr                 = errors.New("Invalid client")
 	CouldNotAddClientsErr            = errors.New("Could not add the requested clients")

@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"code.barbellmath.net/barbell-math/providentia/lib/types"
+	sbjobqueue "code.barbellmath.net/barbell-math/smoothbrain-jobQueue"
 )
 
-func resetDB(ctxtIn context.Context) (context.Context, func()) {
-	ctxt, stateCleanup, err := types.Parse(
+func resetApp(ctxtIn context.Context) (context.Context, func()) {
+	testCtxt, stateCleanup, err := ParseState(
 		ctxtIn,
 		[]string{"-conf", "../../bs/testSetup.toml"},
 	)
@@ -16,13 +16,13 @@ func resetDB(ctxtIn context.Context) (context.Context, func()) {
 	if err != nil {
 		panic(err)
 	}
-	dropDatabase(ctxt)
-	addDatabase(ctxt)
-	return initDatabase(ctxt)
+	dropDatabase(testCtxt)
+	addDatabase(testCtxt)
+	return initTestState(testCtxt)
 }
 
 func dropDatabase(ctxt context.Context) {
-	state, ok := types.FromContext(ctxt)
+	state, ok := StateFromContext(ctxt)
 	if ok != true {
 		panic("Could not find state in context!")
 	}
@@ -36,7 +36,7 @@ func dropDatabase(ctxt context.Context) {
 }
 
 func addDatabase(ctxt context.Context) {
-	state, ok := types.FromContext(ctxt)
+	state, ok := StateFromContext(ctxt)
 	if ok != true {
 		panic("Could not find state in context!")
 	}
@@ -49,28 +49,38 @@ func addDatabase(ctxt context.Context) {
 	}
 }
 
-func initDatabase(ctxt context.Context) (context.Context, func()) {
-	state, ok := types.FromContext(ctxt)
+func initTestState(testCtxt context.Context) (context.Context, func()) {
+	testSetupState, ok := StateFromContext(testCtxt)
 	if ok != true {
 		panic("Could not find state in context!")
 	}
 
-	state.Log.Info("Setting up tests database...")
-	testCtxt, stateCleanup, err := types.Parse(
-		ctxt,
-		[]string{
-			"-conf", "../../bs/testsDB.toml",
-			"--Logging.Name", "setup",
-		},
+	// Note - this is sort of how setup would need to occur in an application
+	// as well.
+	// :AppSetup - Notice how cancelation can be derived from the testCtxt
+	testSetupState.Log.Info("Setting up tests database...")
+	provCtxt, provCleanup, err := ParseState(
+		testCtxt,
+		[]string{"-conf", "../../bs/testsDB.toml"},
 	)
 	if err != nil {
 		panic(err)
 	}
-	if err := RunMigrations(testCtxt); err != nil {
-		panic(err)
+	provState, ok := StateFromContext(provCtxt)
+	if ok != true {
+		panic("Could not find state in context!")
 	}
 
-	state.Log.Info("Setting up tests database... done.")
+	if err := RunMigrations(provCtxt); err != nil {
+		panic(err)
+	}
+	pollerCtxt, cancel := context.WithCancel(testCtxt)
+	go sbjobqueue.Poll(pollerCtxt, provState.PhysicsJobQueue) //, state.VideoJobQueue)
 
-	return testCtxt, stateCleanup
+	testSetupState.Log.Info("Setting up tests database... done.")
+
+	return provCtxt, func() {
+		cancel()
+		provCleanup()
+	}
 }

@@ -103,7 +103,14 @@ SELECT SETVAL(
 
 
 
-
+-- name: BulkCreateTrainingLog :copyfrom
+INSERT INTO providentia.training_log(
+	exercise_id, client_id, physics_id,
+	date_performed, weight, sets, reps, effort,
+	inter_session_cntr, inter_workout_cntr
+) VALUES (
+	$1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+);
 ----- OLD ----------------------------------------------------------------------
 -- name: BulkCreateModelStates :copyfrom
 INSERT INTO providentia.model_state(
@@ -115,14 +122,6 @@ INSERT INTO providentia.model_state(
 );
 
 
--- name: BulkCreateTrainingLog :copyfrom
-INSERT INTO providentia.training_log(
-	exercise_id, client_id, physics_id,
-	date_performed, weight, sets, reps, effort,
-	inter_session_cntr, inter_workout_cntr
-) VALUES (
-	$1, $2, $3, $4, $5, $6, $7, $8, $9, $10
-);
 
 
 -- name: GetClientIDFromEmail :one

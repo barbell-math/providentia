@@ -13,7 +13,7 @@ func runOp(
 	ctxt context.Context,
 	op func(state *types.State, queries *dal.Queries) (err error),
 ) (opErr error) {
-	state, ok := types.FromContext(ctxt)
+	state, ok := StateFromContext(ctxt)
 	if !ok {
 		opErr = sberr.Wrap(types.InvalidCtxtErr, "missing State struct")
 		return

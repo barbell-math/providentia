@@ -19,7 +19,7 @@ func TestClient(t *testing.T) {
 }
 
 func clientFailingNoWrites(t *testing.T) {
-	ctxt, cleanup := resetDB(context.Background())
+	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 	t.Run("missingFirstName", clientMissingFirstName(ctxt))
 	t.Run("missingLastName", clientMissingLastName(ctxt))
@@ -73,7 +73,7 @@ func clientInvalidEmail(ctxt context.Context) func(t *testing.T) {
 }
 
 func clientDuplicateEmail(t *testing.T) {
-	ctxt, cleanup := resetDB(context.Background())
+	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 
 	clients := make([]types.Client, 13)
@@ -97,7 +97,7 @@ func clientDuplicateEmail(t *testing.T) {
 }
 
 func clientTransactionRollback(t *testing.T) {
-	ctxt, cleanup := resetDB(context.Background())
+	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 
 	clients := make([]types.Client, 13)
@@ -127,7 +127,7 @@ func clientTransactionRollback(t *testing.T) {
 }
 
 func clientAddGet(t *testing.T) {
-	ctxt, cleanup := resetDB(context.Background())
+	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 
 	clients := make([]types.Client, 13)
@@ -160,7 +160,7 @@ func clientAddGet(t *testing.T) {
 }
 
 func clientAddUpdateGet(t *testing.T) {
-	ctxt, cleanup := resetDB(context.Background())
+	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 
 	clients := make([]types.Client, 13)
@@ -206,7 +206,7 @@ func clientAddUpdateGet(t *testing.T) {
 }
 
 func clientAddDeleteGet(t *testing.T) {
-	ctxt, cleanup := resetDB(context.Background())
+	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 
 	clients := make([]types.Client, 13)
