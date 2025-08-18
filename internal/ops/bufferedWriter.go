@@ -15,7 +15,7 @@ var (
 
 type (
 	bulkCreateTypes interface {
-		dal.BulkCreateClientsParams | dal.BulkCreateTrainingLogParams
+		dal.BulkCreateClientsParams | dal.BulkCreateTrainingLogsParams
 	}
 
 	BufferedWriter[T bulkCreateTypes] struct {
@@ -61,7 +61,7 @@ func (b *BufferedWriter[T]) Pntr(idx int) (*T, error) {
 }
 
 func (b *BufferedWriter[T]) Last() *T {
-	if b.curIdx > 0 {
+	if b.curIdx >= 0 {
 		return &b.data[b.curIdx]
 	}
 	return nil

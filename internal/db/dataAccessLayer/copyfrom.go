@@ -273,13 +273,13 @@ func (q *Queries) BulkCreateModelsWithID(ctx context.Context, arg []BulkCreateMo
 	return q.db.CopyFrom(ctx, []string{"providentia", "model"}, []string{"id", "name", "description"}, &iteratorForBulkCreateModelsWithID{rows: arg})
 }
 
-// iteratorForBulkCreateTrainingLog implements pgx.CopyFromSource.
-type iteratorForBulkCreateTrainingLog struct {
-	rows                 []BulkCreateTrainingLogParams
+// iteratorForBulkCreateTrainingLogs implements pgx.CopyFromSource.
+type iteratorForBulkCreateTrainingLogs struct {
+	rows                 []BulkCreateTrainingLogsParams
 	skippedFirstNextCall bool
 }
 
-func (r *iteratorForBulkCreateTrainingLog) Next() bool {
+func (r *iteratorForBulkCreateTrainingLogs) Next() bool {
 	if len(r.rows) == 0 {
 		return false
 	}
@@ -291,7 +291,7 @@ func (r *iteratorForBulkCreateTrainingLog) Next() bool {
 	return len(r.rows) > 0
 }
 
-func (r iteratorForBulkCreateTrainingLog) Values() ([]interface{}, error) {
+func (r iteratorForBulkCreateTrainingLogs) Values() ([]interface{}, error) {
 	return []interface{}{
 		r.rows[0].ExerciseID,
 		r.rows[0].ClientID,
@@ -306,10 +306,10 @@ func (r iteratorForBulkCreateTrainingLog) Values() ([]interface{}, error) {
 	}, nil
 }
 
-func (r iteratorForBulkCreateTrainingLog) Err() error {
+func (r iteratorForBulkCreateTrainingLogs) Err() error {
 	return nil
 }
 
-func (q *Queries) BulkCreateTrainingLog(ctx context.Context, arg []BulkCreateTrainingLogParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"providentia", "training_log"}, []string{"exercise_id", "client_id", "physics_id", "date_performed", "weight", "sets", "reps", "effort", "inter_session_cntr", "inter_workout_cntr"}, &iteratorForBulkCreateTrainingLog{rows: arg})
+func (q *Queries) BulkCreateTrainingLogs(ctx context.Context, arg []BulkCreateTrainingLogsParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"providentia", "training_log"}, []string{"exercise_id", "client_id", "physics_id", "date_performed", "weight", "sets", "reps", "effort", "inter_session_cntr", "inter_workout_cntr"}, &iteratorForBulkCreateTrainingLogs{rows: arg})
 }

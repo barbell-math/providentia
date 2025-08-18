@@ -43,6 +43,8 @@ type (
 	}
 
 	// Represents a workout with all calculated data that is in the database
+	// The `BasicData` and `PhysData` fields are associated arrays where each
+	// index represents an exercise.
 	Workout struct {
 		WorkoutID
 		BasicData []BasicData

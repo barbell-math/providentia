@@ -8,6 +8,7 @@ import (
 	"os"
 
 	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
+	"code.barbellmath.net/barbell-math/providentia/internal/jobs"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
 	sbjobqueue "code.barbellmath.net/barbell-math/smoothbrain-jobQueue"
@@ -21,23 +22,32 @@ func CreateWorkouts(
 	queries *dal.Queries,
 	data ...types.RawWorkout,
 ) (opErr error) {
+	syncQueries := dal.NewSyncQueries(queries)
 	batch, _ := sbjobqueue.BatchWithContext(ctxt)
+
+	// TODO - make caches separate - part of init state??
 	clientIdCache := map[string]int64{}
 	exerciseCache := map[string]int32{}
-	bufWriter := NewBufferedWriter[dal.BulkCreateTrainingLogParams](
+
+	bufWriter := NewBufferedWriter[dal.BulkCreateTrainingLogsParams](
 		state.Global.BatchSize,
 		func(
 			ctxt context.Context,
-			arg []dal.BulkCreateTrainingLogParams,
-		) (int64, error) {
+			arg []dal.BulkCreateTrainingLogsParams,
+		) (count int64, err error) {
 			if err := batch.Wait(); err != nil {
 				return 0, err
 			}
-			return queries.BulkCreateTrainingLog(ctxt, arg)
+			syncQueries.Run(func(q *dal.Queries) {
+				count, err = q.BulkCreateTrainingLogs(ctxt, arg)
+			})
+			return
 		},
 	)
 
 	for _, iterW := range data {
+		// TODO - check if supplied ctxt was canceled; if it was break; look into
+		// similar things in other ops
 		if iterW.Session <= 0 {
 			opErr = sberr.AppendError(
 				types.InvalidWorkoutErr,
@@ -50,7 +60,11 @@ func CreateWorkouts(
 		}
 		if _, ok := clientIdCache[iterW.ClientEmail]; !ok {
 			var clientID int64
-			clientID, opErr = queries.GetClientIDFromEmail(ctxt, iterW.ClientEmail)
+			syncQueries.Run(func(q *dal.Queries) {
+				clientID, opErr = q.GetClientIDFromEmail(
+					ctxt, iterW.ClientEmail,
+				)
+			})
 			if opErr != nil {
 				opErr = sberr.AppendError(
 					types.InvalidWorkoutErr,
@@ -64,7 +78,7 @@ func CreateWorkouts(
 		}
 
 		if opErr = validateWorkout(
-			ctxt, state, queries,
+			ctxt, state, syncQueries,
 			&iterW, exerciseCache,
 		); opErr != nil {
 			opErr = sberr.AppendError(types.InvalidWorkoutErr, opErr)
@@ -72,7 +86,7 @@ func CreateWorkouts(
 		}
 
 		for i, iterE := range iterW.Exercises {
-			if opErr = bufWriter.Write(ctxt, dal.BulkCreateTrainingLogParams{
+			if opErr = bufWriter.Write(ctxt, dal.BulkCreateTrainingLogsParams{
 				ClientID: clientIdCache[iterW.ClientEmail],
 				// exerciseCache is populated by validateWorkout
 				ExerciseID: exerciseCache[iterE.Name],
@@ -95,11 +109,12 @@ func CreateWorkouts(
 			}
 
 			if len(iterE.BarPath) > 0 {
-				state.PhysicsJobQueue.Schedule(&physicsJob{
+				state.PhysicsJobQueue.Schedule(&jobs.Physics{
 					BarPath: iterE.BarPath,
 					Tl:      bufWriter.Last(),
 					B:       batch,
 					S:       state,
+					Q:       syncQueries,
 				})
 			}
 		}
@@ -121,7 +136,7 @@ func CreateWorkouts(
 func validateWorkout(
 	ctxt context.Context,
 	state *types.State,
-	queries *dal.Queries,
+	queries *dal.SyncQueries,
 	w *types.RawWorkout,
 	exerciseCache map[string]int32,
 ) (opErr error) {
@@ -140,7 +155,9 @@ func validateWorkout(
 		iterE := w.Exercises[curExercise]
 
 		if iterId, ok := exerciseCache[iterE.Name]; !ok {
-			iterId, opErr = queries.GetExerciseId(ctxt, iterE.Name)
+			queries.Run(func(q *dal.Queries) {
+				iterId, opErr = q.GetExerciseId(ctxt, iterE.Name)
+			})
 			if opErr != nil {
 				opErr = sberr.AppendError(
 					wrapErr(""),
@@ -256,6 +273,7 @@ func ReadWorkoutsByID(
 
 	for i, id := range ids {
 		var rawData []dal.GetAllWorkoutDataRow
+		// TODO - make sure exercises are returned in the correct order!!!
 		rawData, opErr = queries.GetAllWorkoutData(
 			ctxt,
 			dal.GetAllWorkoutDataParams{
@@ -326,16 +344,16 @@ func UpdateWorkouts(
 	return
 }
 
-// Eh?? -might make for quicker physics data updates but would require another
-// user facing api type UpdatePhysData struct { WorkoutID, PhysData }
-func UpdateWorkoutPhysicsData(
-	ctxt context.Context,
-	state *types.State,
-	queries *dal.Queries,
-	data ...types.RawWorkout,
-) (opErr error) {
-	return
-}
+// // Eh?? -might make for quicker physics data updates but would require another
+// // user facing api type UpdatePhysData struct { WorkoutID, PhysData }
+// func UpdateWorkoutPhysicsData(
+// 	ctxt context.Context,
+// 	state *types.State,
+// 	queries *dal.Queries,
+// 	data ...types.RawWorkout,
+// ) (opErr error) {
+// 	return
+// }
 
 func DeleteWorkouts(
 	ctxt context.Context,

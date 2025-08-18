@@ -32,8 +32,8 @@ CREATE TABLE IF NOT EXISTS providentia.client (
 );
 
 CREATE TABLE IF NOT EXISTS providentia.physics_data (
-	id BIGINT NOT NULL PRIMARY KEY CHECK (id>=0),
-	path TEXT NOT NULL UNIQUE,
+	id BIGSERIAL NOT NULL PRIMARY KEY,
+	path TEXT[] UNIQUE,
 
 	time FLOAT[][] NOT NULL,
 	position FLOAT[][] NOT NULL,

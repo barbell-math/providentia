@@ -7,6 +7,8 @@ import (
 	sbsqlm "code.barbellmath.net/barbell-math/smoothbrain-sqlmigrate"
 )
 
+//go:generate sqlc generate
+
 //go:embed migrations/*.sql
 var SqlMigrations embed.FS
 var PostOps = map[sbsqlm.Migration]sbsqlm.PostMigrationOp{

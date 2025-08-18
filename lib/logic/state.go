@@ -127,7 +127,7 @@ func ParseState(
 			fs.Float64Var(
 				&conf.PhysicsData.TimeDeltaEps,
 				"PhysicsData.TimeDeltaEps",
-				1e6,
+				1e-6,
 				"The maximum acceptable variance between time sample deltas",
 			)
 

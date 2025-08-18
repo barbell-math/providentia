@@ -67,7 +67,7 @@ type BulkCreateModelsWithIDParams struct {
 	Description string `json:"description"`
 }
 
-type BulkCreateTrainingLogParams struct {
+type BulkCreateTrainingLogsParams struct {
 	ExerciseID       int32       `json:"exercise_id"`
 	ClientID         int64       `json:"client_id"`
 	PhysicsID        pgtype.Int8 `json:"physics_id"`
@@ -158,6 +158,45 @@ func (q *Queries) ClientTrainingLogDataDateRangeAscending(ctx context.Context, a
 		return nil, err
 	}
 	return items, nil
+}
+
+const createPhysicsData = `-- name: CreatePhysicsData :one
+INSERT INTO providentia.physics_data(
+	path,
+	time, position, velocity, acceleration, jerk,
+	force, impulse, work
+) VALUES (
+	$1, $2, $3, $4, $5, $6, $7, $8, $9
+) RETURNING id
+`
+
+type CreatePhysicsDataParams struct {
+	Path         pgtype.Text `json:"path"`
+	Time         [][]float64 `json:"time"`
+	Position     [][]float64 `json:"position"`
+	Velocity     [][]float64 `json:"velocity"`
+	Acceleration [][]float64 `json:"acceleration"`
+	Jerk         [][]float64 `json:"jerk"`
+	Force        [][]float64 `json:"force"`
+	Impulse      [][]float64 `json:"impulse"`
+	Work         [][]float64 `json:"work"`
+}
+
+func (q *Queries) CreatePhysicsData(ctx context.Context, arg CreatePhysicsDataParams) (int64, error) {
+	row := q.db.QueryRow(ctx, createPhysicsData,
+		arg.Path,
+		arg.Time,
+		arg.Position,
+		arg.Velocity,
+		arg.Acceleration,
+		arg.Jerk,
+		arg.Force,
+		arg.Impulse,
+		arg.Work,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
 const deleteClientsByEmail = `-- name: DeleteClientsByEmail :one

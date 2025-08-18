@@ -103,7 +103,7 @@ SELECT SETVAL(
 
 
 
--- name: BulkCreateTrainingLog :copyfrom
+-- name: BulkCreateTrainingLogs :copyfrom
 INSERT INTO providentia.training_log(
 	exercise_id, client_id, physics_id,
 	date_performed, weight, sets, reps, effort,
@@ -158,6 +158,15 @@ WHERE
 	providentia.training_log.inter_session_cntr = $2 AND
 	providentia.training_log.date_performed = $3;
 
+
+-- name: CreatePhysicsData :one
+INSERT INTO providentia.physics_data(
+	path,
+	time, position, velocity, acceleration, jerk,
+	force, impulse, work
+) VALUES (
+	$1, $2, $3, $4, $5, $6, $7, $8, $9
+) RETURNING id;
 
 ----- OLD ----------------------------------------------------------------------
 -- name: BulkCreateModelStates :copyfrom
