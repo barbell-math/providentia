@@ -6,6 +6,8 @@ import (
 	"io/fs"
 	"math"
 	"os"
+	"time"
+	"unsafe"
 
 	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
 	"code.barbellmath.net/barbell-math/providentia/internal/jobs"
@@ -273,7 +275,6 @@ func ReadWorkoutsByID(
 
 	for i, id := range ids {
 		var rawData []dal.GetAllWorkoutDataRow
-		// TODO - make sure exercises are returned in the correct order!!!
 		rawData, opErr = queries.GetAllWorkoutData(
 			ctxt,
 			dal.GetAllWorkoutDataParams{
@@ -300,30 +301,12 @@ func ReadWorkoutsByID(
 			return
 		}
 		res[i].WorkoutID = id
-		res[i].BasicData = make([]types.BasicData, len(rawData))
-		res[i].PhysData = make([]types.PhysicsData, len(rawData))
-		for j := 0; j < len(rawData); j++ {
-			res[i].BasicData[j] = types.BasicData{
-				Name:      rawData[j].Name,
-				Weight:    rawData[j].Weight,
-				Sets:      rawData[j].Sets,
-				Reps:      rawData[j].Reps,
-				Effort:    rawData[j].Effort,
-				Volume:    rawData[j].Volume,
-				Exertion:  rawData[j].Exertion,
-				TotalReps: rawData[j].TotalReps,
-			}
-			res[i].PhysData[j] = types.PhysicsData{
-				Time:         rawData[j].Time,
-				Position:     rawData[j].Position,
-				Velocity:     rawData[j].Velocity,
-				Acceleration: rawData[j].Acceleration,
-				Jerk:         rawData[j].Jerk,
-				Force:        rawData[j].Force,
-				Impulse:      rawData[j].Impulse,
-				Work:         rawData[j].Work,
-			}
-		}
+		res[i].Exercises = make([]types.ExerciseData, len(rawData))
+		_ = dal.GetAllWorkoutDataRow(types.ExerciseData{})
+		copy(
+			res[i].Exercises,
+			*(*[]types.ExerciseData)(unsafe.Pointer(&rawData)),
+		)
 	}
 
 	state.Log.Log(
@@ -332,6 +315,16 @@ func ReadWorkoutsByID(
 		"Num", len(ids),
 	)
 
+	return
+}
+
+func ReadWorkoutsInDateRange(
+	ctxt context.Context,
+	state *types.State,
+	queries *dal.Queries,
+	start time.Time,
+	end time.Time,
+) (res []types.Workout, opErr error) {
 	return
 }
 

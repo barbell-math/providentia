@@ -56,7 +56,7 @@ type ModelState struct {
 
 type PhysicsData struct {
 	ID           int64       `json:"id"`
-	Path         pgtype.Text `json:"path"`
+	Path         []string    `json:"path"`
 	Time         [][]float64 `json:"time"`
 	Position     [][]float64 `json:"position"`
 	Velocity     [][]float64 `json:"velocity"`

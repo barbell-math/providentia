@@ -44,7 +44,7 @@ func workoutFailingNoWrites(t *testing.T) {
 	t.Run("setDiffTimeDelta", workoutSetDiffTimeDelta(ctxt))
 	t.Run("setDirInsteadOfVideoFile", workoutSetDirInsteadOfVideoFile(ctxt))
 	t.Run("setInvalidVideoFile", workoutSetInvalidVideoFile(ctxt))
-	t.Run("setFractionalSetsAndPhysDataLen", workoutSetFractionalSetsAndPhysDataLen(ctxt))
+	t.Run("setFractionalSetsAndExercisesLen", workoutSetFractionalSetsAndExercisesLen(ctxt))
 
 	numClients, err = ReadNumClients(ctxt)
 	sbtest.Nil(t, err)
@@ -309,7 +309,7 @@ func workoutSetNotEnoughBarPathEntries(
 	}
 }
 
-func workoutSetFractionalSetsAndPhysDataLen(
+func workoutSetFractionalSetsAndExercisesLen(
 	ctxt context.Context,
 ) func(t *testing.T) {
 	return func(t *testing.T) {
@@ -409,41 +409,69 @@ func workoutAddGetNoPhysicsData(t *testing.T) {
 	res, err := ReadWorkoutsByID(ctxt, workouts[0].WorkoutID, workouts[1].WorkoutID)
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, len(res), 2)
-	sbtest.Eq(t, len(res[0].BasicData), 2)
-	sbtest.Eq(t, len(res[0].PhysData), 2)
-	sbtest.Eq(t, len(res[1].BasicData), 1)
-	sbtest.Eq(t, len(res[1].PhysData), 1)
+	sbtest.Eq(t, len(res[0].Exercises), 2)
+	sbtest.Eq(t, len(res[1].Exercises), 1)
 
-	sbtest.Eq(t, res[0].BasicData[0], types.BasicData{
-		Name:      workouts[0].Exercises[0].Name,
-		Weight:    workouts[0].Exercises[0].Weight,
-		Sets:      workouts[0].Exercises[0].Sets,
-		Reps:      workouts[0].Exercises[0].Reps,
-		Effort:    workouts[0].Exercises[0].Effort,
-		Volume:    workouts[0].Exercises[0].Sets * float64(workouts[0].Exercises[0].Reps) * workouts[0].Exercises[0].Weight,
-		Exertion:  workouts[0].Exercises[0].Sets * float64(workouts[0].Exercises[0].Reps) * workouts[0].Exercises[0].Effort,
-		TotalReps: workouts[0].Exercises[0].Sets * float64(workouts[0].Exercises[0].Reps),
-	})
-	sbtest.Eq(t, res[0].BasicData[1], types.BasicData{
-		Name:      workouts[0].Exercises[1].Name,
-		Weight:    workouts[0].Exercises[1].Weight,
-		Sets:      workouts[0].Exercises[1].Sets,
-		Reps:      workouts[0].Exercises[1].Reps,
-		Effort:    workouts[0].Exercises[1].Effort,
-		Volume:    workouts[0].Exercises[1].Sets * float64(workouts[0].Exercises[1].Reps) * workouts[0].Exercises[1].Weight,
-		Exertion:  workouts[0].Exercises[1].Sets * float64(workouts[0].Exercises[1].Reps) * workouts[0].Exercises[1].Effort,
-		TotalReps: workouts[0].Exercises[1].Sets * float64(workouts[0].Exercises[1].Reps),
-	})
-	sbtest.Eq(t, res[1].BasicData[0], types.BasicData{
-		Name:      workouts[1].Exercises[0].Name,
-		Weight:    workouts[1].Exercises[0].Weight,
-		Sets:      workouts[1].Exercises[0].Sets,
-		Reps:      workouts[1].Exercises[0].Reps,
-		Effort:    workouts[1].Exercises[0].Effort,
-		Volume:    workouts[1].Exercises[0].Sets * float64(workouts[1].Exercises[0].Reps) * workouts[1].Exercises[0].Weight,
-		Exertion:  workouts[1].Exercises[0].Sets * float64(workouts[1].Exercises[0].Reps) * workouts[1].Exercises[0].Effort,
-		TotalReps: workouts[1].Exercises[0].Sets * float64(workouts[1].Exercises[0].Reps),
-	})
+	sbtest.Eq(t, res[0].Exercises[0].Name, workouts[0].Exercises[0].Name)
+	sbtest.Eq(t, res[0].Exercises[0].Weight, workouts[0].Exercises[0].Weight)
+	sbtest.Eq(t, res[0].Exercises[0].Sets, workouts[0].Exercises[0].Sets)
+	sbtest.Eq(t, res[0].Exercises[0].Reps, workouts[0].Exercises[0].Reps)
+	sbtest.Eq(t, res[0].Exercises[0].Effort, workouts[0].Exercises[0].Effort)
+	sbtest.Eq(
+		t, res[0].Exercises[0].Volume,
+		workouts[0].Exercises[0].Sets*float64(workouts[0].Exercises[0].Reps)*workouts[0].Exercises[0].Weight,
+	)
+	sbtest.Eq(
+		t, res[0].Exercises[0].Exertion,
+		workouts[0].Exercises[0].Sets*float64(workouts[0].Exercises[0].Reps)*workouts[0].Exercises[0].Effort,
+	)
+	sbtest.Eq(
+		t, res[0].Exercises[0].TotalReps,
+		workouts[0].Exercises[0].Sets*float64(workouts[0].Exercises[0].Reps),
+	)
+
+	sbtest.Eq(t, res[0].Exercises[1].Name, workouts[0].Exercises[1].Name)
+	sbtest.Eq(t, res[0].Exercises[1].Weight, workouts[0].Exercises[1].Weight)
+	sbtest.Eq(t, res[0].Exercises[1].Sets, workouts[0].Exercises[1].Sets)
+	sbtest.Eq(t, res[0].Exercises[1].Reps, workouts[0].Exercises[1].Reps)
+	sbtest.Eq(t, res[0].Exercises[1].Effort, workouts[0].Exercises[1].Effort)
+	sbtest.Eq(
+		t, res[0].Exercises[1].Volume,
+		workouts[0].Exercises[1].Sets*float64(workouts[0].Exercises[1].Reps)*workouts[0].Exercises[1].Weight,
+	)
+	sbtest.Eq(
+		t, res[0].Exercises[1].Exertion,
+		workouts[0].Exercises[1].Sets*float64(workouts[0].Exercises[1].Reps)*workouts[0].Exercises[1].Effort,
+	)
+	sbtest.Eq(
+		t, res[0].Exercises[1].TotalReps,
+		workouts[0].Exercises[1].Sets*float64(workouts[0].Exercises[1].Reps),
+	)
+
+	sbtest.Eq(t, res[1].Exercises[0].Name, workouts[1].Exercises[0].Name)
+	sbtest.Eq(t, res[1].Exercises[0].Weight, workouts[1].Exercises[0].Weight)
+	sbtest.Eq(t, res[1].Exercises[0].Sets, workouts[1].Exercises[0].Sets)
+	sbtest.Eq(t, res[1].Exercises[0].Reps, workouts[1].Exercises[0].Reps)
+	sbtest.Eq(t, res[1].Exercises[0].Effort, workouts[1].Exercises[0].Effort)
+	sbtest.Eq(
+		t, res[1].Exercises[0].Volume,
+		workouts[1].Exercises[0].Sets*float64(workouts[1].Exercises[0].Reps)*workouts[1].Exercises[0].Weight,
+	)
+	sbtest.Eq(
+		t, res[1].Exercises[0].Exertion,
+		workouts[1].Exercises[0].Sets*float64(workouts[1].Exercises[0].Reps)*workouts[1].Exercises[0].Effort,
+	)
+	sbtest.Eq(
+		t, res[1].Exercises[0].TotalReps,
+		workouts[1].Exercises[0].Sets*float64(workouts[1].Exercises[0].Reps),
+	)
+
+	sbtest.Eq(t, len(res[0].Exercises[0].Time), 0)
+	sbtest.Eq(t, len(res[0].Exercises[0].Position), 0)
+	sbtest.Eq(t, len(res[0].Exercises[1].Time), 0)
+	sbtest.Eq(t, len(res[0].Exercises[1].Position), 0)
+	sbtest.Eq(t, len(res[1].Exercises[0].Time), 0)
+	sbtest.Eq(t, len(res[1].Exercises[0].Position), 0)
 }
 
 func workoutAddGetTimeSeriesPhysicsData(t *testing.T) {
@@ -534,55 +562,77 @@ func workoutAddGetTimeSeriesPhysicsData(t *testing.T) {
 	res, err := ReadWorkoutsByID(ctxt, workouts[0].WorkoutID, workouts[1].WorkoutID)
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, len(res), 2)
-	sbtest.Eq(t, len(res[0].BasicData), 2)
-	sbtest.Eq(t, len(res[0].PhysData), 2)
-	sbtest.Eq(t, len(res[1].BasicData), 1)
-	sbtest.Eq(t, len(res[1].PhysData), 1)
+	sbtest.Eq(t, len(res[0].Exercises), 2)
+	sbtest.Eq(t, len(res[1].Exercises), 1)
 
-	sbtest.Eq(t, res[0].BasicData[0], types.BasicData{
-		Name:      workouts[0].Exercises[0].Name,
-		Weight:    workouts[0].Exercises[0].Weight,
-		Sets:      workouts[0].Exercises[0].Sets,
-		Reps:      workouts[0].Exercises[0].Reps,
-		Effort:    workouts[0].Exercises[0].Effort,
-		Volume:    workouts[0].Exercises[0].Sets * float64(workouts[0].Exercises[0].Reps) * workouts[0].Exercises[0].Weight,
-		Exertion:  workouts[0].Exercises[0].Sets * float64(workouts[0].Exercises[0].Reps) * workouts[0].Exercises[0].Effort,
-		TotalReps: workouts[0].Exercises[0].Sets * float64(workouts[0].Exercises[0].Reps),
-	})
-	sbtest.Eq(t, res[0].BasicData[1], types.BasicData{
-		Name:      workouts[0].Exercises[1].Name,
-		Weight:    workouts[0].Exercises[1].Weight,
-		Sets:      workouts[0].Exercises[1].Sets,
-		Reps:      workouts[0].Exercises[1].Reps,
-		Effort:    workouts[0].Exercises[1].Effort,
-		Volume:    workouts[0].Exercises[1].Sets * float64(workouts[0].Exercises[1].Reps) * workouts[0].Exercises[1].Weight,
-		Exertion:  workouts[0].Exercises[1].Sets * float64(workouts[0].Exercises[1].Reps) * workouts[0].Exercises[1].Effort,
-		TotalReps: workouts[0].Exercises[1].Sets * float64(workouts[0].Exercises[1].Reps),
-	})
-	sbtest.Eq(t, res[1].BasicData[0], types.BasicData{
-		Name:      workouts[1].Exercises[0].Name,
-		Weight:    workouts[1].Exercises[0].Weight,
-		Sets:      workouts[1].Exercises[0].Sets,
-		Reps:      workouts[1].Exercises[0].Reps,
-		Effort:    workouts[1].Exercises[0].Effort,
-		Volume:    workouts[1].Exercises[0].Sets * float64(workouts[1].Exercises[0].Reps) * workouts[1].Exercises[0].Weight,
-		Exertion:  workouts[1].Exercises[0].Sets * float64(workouts[1].Exercises[0].Reps) * workouts[1].Exercises[0].Effort,
-		TotalReps: workouts[1].Exercises[0].Sets * float64(workouts[1].Exercises[0].Reps),
-	})
-	sbtest.Eq(t, len(res[0].PhysData[0].Time), 2)
-	sbtest.Eq(t, len(res[0].PhysData[0].Time[0]), 7)
-	sbtest.Eq(t, len(res[0].PhysData[0].Time[1]), 7)
-	sbtest.Eq(t, len(res[0].PhysData[0].Position), 2)
-	sbtest.Eq(t, len(res[0].PhysData[0].Position[0]), 7)
-	sbtest.Eq(t, len(res[0].PhysData[0].Position[1]), 7)
-	sbtest.Eq(t, len(res[0].PhysData[1].Time), 1)
-	sbtest.Eq(t, len(res[0].PhysData[1].Time[0]), 7)
-	sbtest.Eq(t, len(res[0].PhysData[1].Position), 1)
-	sbtest.Eq(t, len(res[0].PhysData[1].Position[0]), 7)
-	sbtest.Eq(t, len(res[1].PhysData[0].Time), 2)
-	sbtest.Eq(t, len(res[1].PhysData[0].Time[0]), 7)
-	sbtest.Eq(t, len(res[1].PhysData[0].Time[1]), 7)
-	sbtest.Eq(t, len(res[1].PhysData[0].Position), 2)
-	sbtest.Eq(t, len(res[1].PhysData[0].Position[0]), 7)
-	sbtest.Eq(t, len(res[1].PhysData[0].Position[1]), 7)
+	sbtest.Eq(t, res[0].Exercises[0].Name, workouts[0].Exercises[0].Name)
+	sbtest.Eq(t, res[0].Exercises[0].Weight, workouts[0].Exercises[0].Weight)
+	sbtest.Eq(t, res[0].Exercises[0].Sets, workouts[0].Exercises[0].Sets)
+	sbtest.Eq(t, res[0].Exercises[0].Reps, workouts[0].Exercises[0].Reps)
+	sbtest.Eq(t, res[0].Exercises[0].Effort, workouts[0].Exercises[0].Effort)
+	sbtest.Eq(
+		t, res[0].Exercises[0].Volume,
+		workouts[0].Exercises[0].Sets*float64(workouts[0].Exercises[0].Reps)*workouts[0].Exercises[0].Weight,
+	)
+	sbtest.Eq(
+		t, res[0].Exercises[0].Exertion,
+		workouts[0].Exercises[0].Sets*float64(workouts[0].Exercises[0].Reps)*workouts[0].Exercises[0].Effort,
+	)
+	sbtest.Eq(
+		t, res[0].Exercises[0].TotalReps,
+		workouts[0].Exercises[0].Sets*float64(workouts[0].Exercises[0].Reps),
+	)
+
+	sbtest.Eq(t, res[0].Exercises[1].Name, workouts[0].Exercises[1].Name)
+	sbtest.Eq(t, res[0].Exercises[1].Weight, workouts[0].Exercises[1].Weight)
+	sbtest.Eq(t, res[0].Exercises[1].Sets, workouts[0].Exercises[1].Sets)
+	sbtest.Eq(t, res[0].Exercises[1].Reps, workouts[0].Exercises[1].Reps)
+	sbtest.Eq(t, res[0].Exercises[1].Effort, workouts[0].Exercises[1].Effort)
+	sbtest.Eq(
+		t, res[0].Exercises[1].Volume,
+		workouts[0].Exercises[1].Sets*float64(workouts[0].Exercises[1].Reps)*workouts[0].Exercises[1].Weight,
+	)
+	sbtest.Eq(
+		t, res[0].Exercises[1].Exertion,
+		workouts[0].Exercises[1].Sets*float64(workouts[0].Exercises[1].Reps)*workouts[0].Exercises[1].Effort,
+	)
+	sbtest.Eq(
+		t, res[0].Exercises[1].TotalReps,
+		workouts[0].Exercises[1].Sets*float64(workouts[0].Exercises[1].Reps),
+	)
+
+	sbtest.Eq(t, res[1].Exercises[0].Name, workouts[1].Exercises[0].Name)
+	sbtest.Eq(t, res[1].Exercises[0].Weight, workouts[1].Exercises[0].Weight)
+	sbtest.Eq(t, res[1].Exercises[0].Sets, workouts[1].Exercises[0].Sets)
+	sbtest.Eq(t, res[1].Exercises[0].Reps, workouts[1].Exercises[0].Reps)
+	sbtest.Eq(t, res[1].Exercises[0].Effort, workouts[1].Exercises[0].Effort)
+	sbtest.Eq(
+		t, res[1].Exercises[0].Volume,
+		workouts[1].Exercises[0].Sets*float64(workouts[1].Exercises[0].Reps)*workouts[1].Exercises[0].Weight,
+	)
+	sbtest.Eq(
+		t, res[1].Exercises[0].Exertion,
+		workouts[1].Exercises[0].Sets*float64(workouts[1].Exercises[0].Reps)*workouts[1].Exercises[0].Effort,
+	)
+	sbtest.Eq(
+		t, res[1].Exercises[0].TotalReps,
+		workouts[1].Exercises[0].Sets*float64(workouts[1].Exercises[0].Reps),
+	)
+
+	sbtest.Eq(t, len(res[0].Exercises[0].Time), 2)
+	sbtest.Eq(t, len(res[0].Exercises[0].Time[0]), 7)
+	sbtest.Eq(t, len(res[0].Exercises[0].Time[1]), 7)
+	sbtest.Eq(t, len(res[0].Exercises[0].Position), 2)
+	sbtest.Eq(t, len(res[0].Exercises[0].Position[0]), 7)
+	sbtest.Eq(t, len(res[0].Exercises[0].Position[1]), 7)
+	sbtest.Eq(t, len(res[0].Exercises[1].Time), 1)
+	sbtest.Eq(t, len(res[0].Exercises[1].Time[0]), 7)
+	sbtest.Eq(t, len(res[0].Exercises[1].Position), 1)
+	sbtest.Eq(t, len(res[0].Exercises[1].Position[0]), 7)
+	sbtest.Eq(t, len(res[1].Exercises[0].Time), 2)
+	sbtest.Eq(t, len(res[1].Exercises[0].Time[0]), 7)
+	sbtest.Eq(t, len(res[1].Exercises[0].Time[1]), 7)
+	sbtest.Eq(t, len(res[1].Exercises[0].Position), 2)
+	sbtest.Eq(t, len(res[1].Exercises[0].Position[0]), 7)
+	sbtest.Eq(t, len(res[1].Exercises[0].Position[1]), 7)
 }

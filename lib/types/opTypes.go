@@ -47,24 +47,19 @@ type (
 	// index represents an exercise.
 	Workout struct {
 		WorkoutID
-		BasicData []BasicData
-		PhysData  []PhysicsData
+		Exercises []ExerciseData
 	}
 	// Represents basic data about a exercise within a workout with some basic
 	// calculated fields such as volume
-	BasicData struct {
-		Name      string
-		Weight    float64
-		Sets      float64
-		Reps      int32
-		Effort    float64
-		Volume    float64
-		Exertion  float64
-		TotalReps float64
-	}
-	// Represents the calculated physics data for each set and rep of a given
-	// exercsise
-	PhysicsData struct {
+	ExerciseData struct {
+		Name         string
+		Weight       float64
+		Sets         float64
+		Reps         int32
+		Effort       float64
+		Volume       float64
+		Exertion     float64
+		TotalReps    float64
 		Time         [][]float64
 		Position     [][]float64
 		Velocity     [][]float64

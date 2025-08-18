@@ -171,7 +171,7 @@ INSERT INTO providentia.physics_data(
 `
 
 type CreatePhysicsDataParams struct {
-	Path         pgtype.Text `json:"path"`
+	Path         []string    `json:"path"`
 	Time         [][]float64 `json:"time"`
 	Position     [][]float64 `json:"position"`
 	Velocity     [][]float64 `json:"velocity"`
@@ -331,6 +331,7 @@ WHERE
 	providentia.client.email = $1 AND
 	providentia.training_log.inter_session_cntr = $2 AND
 	providentia.training_log.date_performed = $3
+ORDER BY training_log.inter_workout_cntr ASC
 `
 
 type GetAllWorkoutDataParams struct {

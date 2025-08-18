@@ -156,7 +156,8 @@ LEFT JOIN providentia.physics_data
 WHERE
 	providentia.client.email = $1 AND
 	providentia.training_log.inter_session_cntr = $2 AND
-	providentia.training_log.date_performed = $3;
+	providentia.training_log.date_performed = $3
+ORDER BY training_log.inter_workout_cntr ASC;
 
 
 -- name: CreatePhysicsData :one
