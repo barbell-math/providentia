@@ -50,6 +50,8 @@ func CreateWorkouts(
 	for _, iterW := range data {
 		// TODO - check if supplied ctxt was canceled; if it was break; look into
 		// similar things in other ops
+
+		// TODO - move to validate workout...
 		if iterW.Session <= 0 {
 			opErr = sberr.AppendError(
 				types.InvalidWorkoutErr,

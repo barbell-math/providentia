@@ -29,11 +29,11 @@ type (
 
 	// Represents a workout that will be uploaded to the database
 	RawWorkout struct {
-		WorkoutID           // The ID for the workout
-		Exercises []RawData // All raw data about the workout provided by the user
+		WorkoutID                   // The ID for the workout
+		Exercises []RawExerciseData // All raw data about the workout provided by the user
 	}
 	// Contains all raw data that can be provided by the user
-	RawData struct {
+	RawExerciseData struct {
 		Name    string  // The unique name of the exercise
 		Weight  float64 // The weight the exercise was performed with
 		Sets    float64 // The number sets that were performed

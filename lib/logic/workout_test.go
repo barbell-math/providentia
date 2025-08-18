@@ -9,7 +9,6 @@ import (
 	sbtest "code.barbellmath.net/barbell-math/smoothbrain-test"
 )
 
-// TODO - eventually look into running tests in parallel - will need multiple dbs
 func TestRawWorkout(t *testing.T) {
 	t.Run("failingNoWrites", workoutFailingNoWrites)
 	// TODO - add test for adding duplicated workout - will fail when inserting
@@ -44,7 +43,10 @@ func workoutFailingNoWrites(t *testing.T) {
 	t.Run("setDiffTimeDelta", workoutSetDiffTimeDelta(ctxt))
 	t.Run("setDirInsteadOfVideoFile", workoutSetDirInsteadOfVideoFile(ctxt))
 	t.Run("setInvalidVideoFile", workoutSetInvalidVideoFile(ctxt))
-	t.Run("setFractionalSetsAndExercisesLen", workoutSetFractionalSetsAndExercisesLen(ctxt))
+	t.Run(
+		"setFractionalSetsAndExercisesLen",
+		workoutSetFractionalSetsAndExercisesLen(ctxt),
+	)
 
 	numClients, err = ReadNumClients(ctxt)
 	sbtest.Nil(t, err)
@@ -89,7 +91,7 @@ func workoutUnknownExercise(ctxt context.Context) func(t *testing.T) {
 				ClientEmail: "email@email.com",
 				Session:     1,
 			},
-			Exercises: []types.RawData{
+			Exercises: []types.RawExerciseData{
 				{
 					Sets: 2,
 					Name: "badExercise",
@@ -108,7 +110,7 @@ func workoutSetTimeAndPosDiffLen(ctxt context.Context) func(t *testing.T) {
 				ClientEmail: "email@email.com",
 				Session:     1,
 			},
-			Exercises: []types.RawData{
+			Exercises: []types.RawExerciseData{
 				{
 					Sets: 1,
 					Name: "Squat",
@@ -138,7 +140,7 @@ func workoutSetNotEnoughSamples(ctxt context.Context) func(t *testing.T) {
 				ClientEmail: "email@email.com",
 				Session:     1,
 			},
-			Exercises: []types.RawData{
+			Exercises: []types.RawExerciseData{
 				{
 					Sets: 1,
 					Name: "Squat",
@@ -168,7 +170,7 @@ func workoutSetBackwardsTime(ctxt context.Context) func(t *testing.T) {
 				ClientEmail: "email@email.com",
 				Session:     1,
 			},
-			Exercises: []types.RawData{
+			Exercises: []types.RawExerciseData{
 				{
 					Sets: 1,
 					Name: "Squat",
@@ -199,7 +201,7 @@ func workoutSetDiffTimeDelta(ctxt context.Context) func(t *testing.T) {
 				ClientEmail: "email@email.com",
 				Session:     1,
 			},
-			Exercises: []types.RawData{
+			Exercises: []types.RawExerciseData{
 				{
 					Sets: 1,
 					Name: "Squat",
@@ -230,7 +232,7 @@ func workoutSetDirInsteadOfVideoFile(ctxt context.Context) func(t *testing.T) {
 				ClientEmail: "email@email.com",
 				Session:     1,
 			},
-			Exercises: []types.RawData{
+			Exercises: []types.RawExerciseData{
 				{
 					Sets:    1,
 					Name:    "Squat",
@@ -253,7 +255,7 @@ func workoutSetInvalidVideoFile(ctxt context.Context) func(t *testing.T) {
 				ClientEmail: "email@email.com",
 				Session:     1,
 			},
-			Exercises: []types.RawData{
+			Exercises: []types.RawExerciseData{
 				{
 					Sets: 1,
 					Name: "Squat",
@@ -280,7 +282,7 @@ func workoutSetNotEnoughBarPathEntries(
 				ClientEmail: "email@email.com",
 				Session:     1,
 			},
-			Exercises: []types.RawData{
+			Exercises: []types.RawExerciseData{
 				{
 					Name: "Squat",
 					Sets: 3,
@@ -318,7 +320,7 @@ func workoutSetFractionalSetsAndExercisesLen(
 				ClientEmail: "email@email.com",
 				Session:     1,
 			},
-			Exercises: []types.RawData{
+			Exercises: []types.RawExerciseData{
 				{
 					Name: "Squat",
 					Sets: 2.5,
@@ -362,15 +364,15 @@ func workoutAddGetNoPhysicsData(t *testing.T) {
 				Session:       1,
 				DatePerformed: sbtest.MustParseTime(time.DateOnly, "2025-01-02"),
 			},
-			Exercises: []types.RawData{
-				types.RawData{
+			Exercises: []types.RawExerciseData{
+				types.RawExerciseData{
 					Name:   "Squat",
 					Weight: 355,
 					Sets:   5,
 					Reps:   5,
 					Effort: 8.5,
 				},
-				types.RawData{
+				types.RawExerciseData{
 					Name:   "Bench",
 					Weight: 135,
 					Sets:   3,
@@ -385,8 +387,8 @@ func workoutAddGetNoPhysicsData(t *testing.T) {
 				Session:       1,
 				DatePerformed: sbtest.MustParseTime(time.DateOnly, "2025-01-03"),
 			},
-			Exercises: []types.RawData{
-				types.RawData{
+			Exercises: []types.RawExerciseData{
+				types.RawExerciseData{
 					Name:   "Deadlift",
 					Weight: 405,
 					Sets:   6,
@@ -489,8 +491,8 @@ func workoutAddGetTimeSeriesPhysicsData(t *testing.T) {
 				Session:       1,
 				DatePerformed: sbtest.MustParseTime(time.DateOnly, "2025-01-02"),
 			},
-			Exercises: []types.RawData{
-				types.RawData{
+			Exercises: []types.RawExerciseData{
+				types.RawExerciseData{
 					Name:   "Squat",
 					Weight: 355,
 					Sets:   2,
@@ -507,7 +509,7 @@ func workoutAddGetTimeSeriesPhysicsData(t *testing.T) {
 						}),
 					},
 				},
-				types.RawData{
+				types.RawExerciseData{
 					Name:   "Bench",
 					Weight: 135,
 					Sets:   1,
@@ -528,8 +530,8 @@ func workoutAddGetTimeSeriesPhysicsData(t *testing.T) {
 				Session:       1,
 				DatePerformed: sbtest.MustParseTime(time.DateOnly, "2025-01-03"),
 			},
-			Exercises: []types.RawData{
-				types.RawData{
+			Exercises: []types.RawExerciseData{
+				types.RawExerciseData{
 					Name:   "Deadlift",
 					Weight: 405,
 					Sets:   2,
@@ -560,6 +562,8 @@ func workoutAddGetTimeSeriesPhysicsData(t *testing.T) {
 	sbtest.Eq(t, 2, numRawWorkouts)
 
 	res, err := ReadWorkoutsByID(ctxt, workouts[0].WorkoutID, workouts[1].WorkoutID)
+	// TODO - see if there is a better way to test if workouts are the same
+	// This is some madness
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, len(res), 2)
 	sbtest.Eq(t, len(res[0].Exercises), 2)
