@@ -27,22 +27,77 @@ func StateFromContext(ctxt context.Context) (*types.State, bool) {
 //
 // Most other library functions require the supplied context to hold a
 // [types.State] value, which will require calling this function.
-func WithStateValue(
-	ctxt context.Context,
-	s *types.State,
-) (newCtxt context.Context, opErr error) {
-	newCtxt = context.WithValue(ctxt, stateCtxtKey, s)
-	opErr = validateState(s)
-	return
+//
+// The state value must be valid or other library functions will encounter
+// unexpected errors. If a [types.State] struct is manually created rather than
+// using [ConfToState] the [ValidateState] function should be called before
+// making any other library calls.
+func WithStateValue(ctxt context.Context, s *types.State) context.Context {
+	return context.WithValue(ctxt, stateCtxtKey, s)
 }
 
-func validateState(s *types.State) error {
-	if s.PhysicsData.MinNumSamples < 2 {
+// Validates the supplied state. If this function does not return `nil` then
+// other library functions are likely to error or have unexpected results.
+//
+// If a [types.State] struct is manually created rather than using [ConfToState]
+// this function should be called before making any other library calls.
+func ValidateState(s *types.State) error {
+	if err := checkStateGlobalConf(s); err != nil {
+		return err
+	}
+	if err := checkStatePhysicsDataConf(s); err != nil {
+		return err
+	}
+	if s.Log == nil {
+		return sberr.Wrap(types.InvalidLoggerErr, "The Log field must not be nil")
+	}
+	if s.DB == nil {
+		return sberr.Wrap(types.InvalidDBErr, "The DB field must not be nil")
+	}
+	if s.PhysicsJobQueue == nil {
+		return sberr.Wrap(
+			types.InvalidPhysicsJobQueueErr,
+			"The PhysicsJobQueue field must not be nil",
+		)
+	}
+	if s.VideoJobQueue == nil {
+		return sberr.Wrap(
+			types.InvalidVideoJobQueue,
+			"The VideoJobQueue field must not be nil",
+		)
+	}
+	return nil
+}
+
+func checkStateGlobalConf(state *types.State) error {
+	if state.Global.BatchSize == 0 {
 		return sberr.AppendError(
-			types.InvalidPhysicsDataConfErr,
+			types.InvalidGlobalErr,
+			sberr.Wrap(
+				types.InvalidBatchSizeErr,
+				"Must be >=2. Got: %d", state.PhysicsData.MinNumSamples,
+			),
+		)
+	}
+	return nil
+}
+
+func checkStatePhysicsDataConf(state *types.State) error {
+	if state.PhysicsData.MinNumSamples < 2 {
+		return sberr.AppendError(
+			types.InvalidPhysicsDataErr,
 			sberr.Wrap(
 				types.InvalidMinNumSamplesErr,
-				"Must be >=2. Got: %d", s.PhysicsData.MinNumSamples,
+				"Must be >=2. Got: %d", state.PhysicsData.MinNumSamples,
+			),
+		)
+	}
+	if state.PhysicsData.TimeDeltaEps <= 0 {
+		return sberr.AppendError(
+			types.InvalidPhysicsDataErr,
+			sberr.Wrap(
+				types.InvalidTImeDeltaEpsErr,
+				"Must be >=0. Got: %f", state.PhysicsData.TimeDeltaEps,
 			),
 		)
 	}

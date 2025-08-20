@@ -80,7 +80,7 @@ func testAppMain(
 			"DB.User", "DB.PswdEnvVar", "DB.Name",
 		},
 		ArgDefsSetter: func(conf *types.Conf, fs *flag.FlagSet) error {
-			ConfParser(fs, conf, "", ConfValDefaults())
+			ConfParser(fs, conf, "", ConfDefaults())
 			return nil
 		},
 	}); err != nil {
@@ -93,24 +93,20 @@ func testAppMain(
 	if err != nil {
 		panic(err)
 	}
-
-	// :AppSetup - Notice how cancelation can be derived from a parent context
-	// This allows an application to cancel _all_ prov lib operations from a
-	// single cancelable context (assuming the ctxt passed into WithStateValue
-	// is cancelable).
-	provLifetime, err := WithStateValue(appLifetime, state)
-	if err != nil {
-		panic(err)
-	}
-	if err := RunMigrations(provLifetime); err != nil {
-		panic(err)
-	}
-
-	// Notice how polling is derived from app lifetime and not prov lifetime
 	go sbjobqueue.Poll(
 		appLifetime,
 		state.PhysicsJobQueue, state.VideoJobQueue,
 	)
+
+	// :AppSetup - Notice how cancelation can be derived from a parent context
+	//  1. This allows an application to cancel _all_ prov lib operations from a
+	//     single cancelable context (assuming the ctxt passed into
+	//     WithStateValue is cancelable).
+	//  2. This allows separate lib calls to have separate cancelable lifetimes
+	provLifetime := WithStateValue(appLifetime, state)
+	if err := RunMigrations(provLifetime); err != nil {
+		panic(err)
+	}
 
 	// Normally there would be a defer function call rather than returning a
 	// function

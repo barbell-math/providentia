@@ -27,8 +27,15 @@ type (
 )
 
 var (
-	InvalidMinNumSamplesErr       = errors.New("Invalid min num samples")
-	InvalidPhysicsDataConfErr     = errors.New("Invalid physics data conf")
-	InvalidPhysicsJobQueueConfErr = errors.New("Invalid physics job queue conf")
-	InvalidVideoJobQueueConfErr   = errors.New("Invalid video job queue conf")
+	InvalidPhysicsDataErr   = errors.New("Invalid physics data conf")
+	InvalidMinNumSamplesErr = errors.New("Invalid min num samples")
+	InvalidTImeDeltaEpsErr  = errors.New("Invalid time delta eps")
+
+	InvalidGlobalErr    = errors.New("Invalid global conf")
+	InvalidBatchSizeErr = errors.New("Invalid batch size")
+
+	InvalidLoggerErr          = errors.New("Invalid logger")
+	InvalidDBErr              = errors.New("Invalid database connection pool")
+	InvalidPhysicsJobQueueErr = errors.New("Invalid physics job queue")
+	InvalidVideoJobQueue      = errors.New("Invalid video job queue")
 )

@@ -16,7 +16,7 @@ import (
 
 // Returns a [types.Conf] struct with sensible default values. Can be passed to
 // [ParseConfig] as the `_default` parameter.
-func ConfValDefaults() *types.Conf {
+func ConfDefaults() *types.Conf {
 	return &types.Conf{
 		Logging: sbargp.LoggingConf{
 			Verbosity:       0,
@@ -31,6 +31,10 @@ func ConfValDefaults() *types.Conf {
 		},
 		Global: types.GlobalConf{
 			BatchSize: 1e3,
+		},
+		PhysicsData: types.PhysicsDataConf{
+			MinNumSamples: 100,
+			TimeDeltaEps:  1e-6,
 		},
 		PhysicsJobQueue: types.PhysicsJobQueueConf{
 			QueueLen:       10,
@@ -182,11 +186,8 @@ func ConfToState(
 	var s types.State
 	state = &s
 
-	state.PhysicsData = c.PhysicsData
 	state.Global = c.Global
-	if err = validateState(state); err != nil {
-		return
-	}
+	state.PhysicsData = c.PhysicsData
 
 	if state.PhysicsJobQueue, err = sbjobqueue.NewJobQueue[types.PhysicsJob](
 		(*sbjobqueue.Opts)(&c.PhysicsJobQueue),
@@ -222,6 +223,9 @@ func ConfToState(
 		return
 	}
 	if err = state.DB.Ping(ctxt); err != nil {
+		return
+	}
+	if err = ValidateState(&s); err != nil {
 		return
 	}
 	return

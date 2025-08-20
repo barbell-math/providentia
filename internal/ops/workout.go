@@ -51,17 +51,8 @@ func CreateWorkouts(
 		// TODO - check if supplied ctxt was canceled; if it was break; look into
 		// similar things in other ops
 
-		// TODO - move to validate workout...
-		if iterW.Session <= 0 {
-			opErr = sberr.AppendError(
-				types.InvalidWorkoutErr,
-				sberr.Wrap(
-					types.InvalidSessionErr,
-					"Must be >0, Got: %d", iterW.Session,
-				),
-			)
-			return
-		}
+		// TODO - move to validate workout after session check and once caches
+		// have been created
 		if _, ok := clientIdCache[iterW.ClientEmail]; !ok {
 			var clientID int64
 			syncQueries.Run(func(q *dal.Queries) {
@@ -152,6 +143,17 @@ func validateWorkout(
 			msgStart = fmt.Sprintf("%sSet %d: ", msgStart, curSet)
 		}
 		return sberr.Wrap(types.MalformedWorkoutExerciseErr, msgStart+msg, args...)
+	}
+
+	if w.Session <= 0 {
+		opErr = sberr.AppendError(
+			types.InvalidWorkoutErr,
+			sberr.Wrap(
+				types.InvalidSessionErr,
+				"Must be >0, Got: %d", w.Session,
+			),
+		)
+		return
 	}
 
 	for curExercise = range len(w.Exercises) {

@@ -29,14 +29,9 @@ type (
 	// series data that represents the bar path.
 	VideoJobQueueConf sbjobqueue.Opts
 
-	// This is the full conf struct that will be populated by parsing the CMD
-	// line args and TOML file in [Parse]. This is a superset of the [Conf]
-	// struct so that the [State] struct will never be able to have conflicting
-	// information between the generated values such as the db conn and the
-	// DBConf args.
-	// All fields that are used to do things like set up secondary variables in
-	// the [State] struct should not be included in the [Conf] struct but should
-	// be included here.
+	// Holds all configuration data for the library. Used to define the state of
+	// the library and provides associated utility functions for cmd line
+	// argument parsing such as [logic.ConfParser] and [logic.ConfDefaults].
 	Conf struct {
 		Logging sbargp.LoggingConf
 		DB      sbargp.DBConf
