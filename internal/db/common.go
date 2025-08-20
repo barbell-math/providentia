@@ -7,7 +7,7 @@ import (
 	sbsqlm "code.barbellmath.net/barbell-math/smoothbrain-sqlmigrate"
 )
 
-//go:generate sqlc generate
+//go:generate sqlc -f sqlc.yaml generate
 
 //go:embed migrations/*.sql
 var SqlMigrations embed.FS

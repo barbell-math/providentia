@@ -3,7 +3,7 @@ version: "2"
 sql:
   - engine: "postgresql"
     queries: "./queries.sql"
-    schema: "./schema.sql"
+    schema: "./migrations/0.sql"
     gen:
       go:
         package: "dal"

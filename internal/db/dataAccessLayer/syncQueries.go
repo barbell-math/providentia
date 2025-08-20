@@ -1,3 +1,5 @@
+//go:build prov_postgres || prov_sqlite
+
 package dal
 
 import (
