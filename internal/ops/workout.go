@@ -100,8 +100,8 @@ func CreateWorkouts(
 					InfinityModifier: pgtype.Finite,
 					Valid:            true,
 				},
-				InterSessionCntr: int32(iterW.Session),
-				InterWorkoutCntr: int32(i + 1),
+				InterSessionCntr: int16(iterW.Session),
+				InterWorkoutCntr: int16(i + 1),
 
 				Weight: iterE.Weight,
 				Sets:   iterE.Sets,
@@ -281,7 +281,7 @@ func ReadWorkoutsByID(
 			ctxt,
 			dal.GetAllWorkoutDataParams{
 				Email:            id.ClientEmail,
-				InterSessionCntr: int32(id.Session),
+				InterSessionCntr: int16(id.Session),
 				DatePerformed: pgtype.Date{
 					Time:             id.DatePerformed,
 					InfinityModifier: pgtype.Finite,

@@ -23,7 +23,7 @@ type (
 	// A unique identifier for a workout in the database
 	WorkoutID struct {
 		ClientEmail   string    // The clients unique email
-		Session       uint32    // The session of the workout
+		Session       uint16    // The session of the workout
 		DatePerformed time.Time // The date the workout was done one
 	}
 

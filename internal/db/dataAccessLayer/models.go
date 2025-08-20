@@ -49,7 +49,7 @@ type ModelState struct {
 	V8            float64 `json:"v8"`
 	V9            float64 `json:"v9"`
 	V10           float64 `json:"v10"`
-	TimeFrame     int32   `json:"time_frame"`
+	TimeFrame     int64   `json:"time_frame"`
 	Mse           float64 `json:"mse"`
 	PredWeight    float64 `json:"pred_weight"`
 }
@@ -79,8 +79,8 @@ type TrainingLog struct {
 	ClientID         int64       `json:"client_id"`
 	PhysicsID        pgtype.Int8 `json:"physics_id"`
 	DatePerformed    pgtype.Date `json:"date_performed"`
-	InterSessionCntr int32       `json:"inter_session_cntr"`
-	InterWorkoutCntr int32       `json:"inter_workout_cntr"`
+	InterSessionCntr int16       `json:"inter_session_cntr"`
+	InterWorkoutCntr int16       `json:"inter_workout_cntr"`
 	Weight           float64     `json:"weight"`
 	Sets             float64     `json:"sets"`
 	Reps             int32       `json:"reps"`

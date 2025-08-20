@@ -9,19 +9,6 @@ import (
 )
 
 type (
-	// Global settings that configure many parts of providentia's behavior.
-	GlobalConf struct {
-		BatchSize uint
-		// SimplifiedNegativeSpaceModel simplifiednegativespace.Opts
-	}
-
-	// Configuration that is used when parsing, generating, and utilizing
-	// physics data.
-	PhysicsDataConf struct {
-		MinNumSamples uint
-		TimeDeltaEps  float64
-	}
-
 	PhysicsJob struct{} // Used to identify a physics job
 	VideoJob   struct{} // Used to identify a video job
 

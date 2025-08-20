@@ -2,88 +2,120 @@ package logic
 
 import (
 	"context"
+	"flag"
 	"fmt"
+	"os"
+	"testing"
 
+	"code.barbellmath.net/barbell-math/providentia/lib/types"
+	sbargp "code.barbellmath.net/barbell-math/smoothbrain-argparse"
 	sbjobqueue "code.barbellmath.net/barbell-math/smoothbrain-jobQueue"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+var (
+	TestDBPool *pgxpool.Pool
+)
+
+func TestMain(m *testing.M) {
+	dbPswd, ok := os.LookupEnv("DB_PSWD")
+	if !ok {
+		panic("Set DB_PSWD env var")
+	}
+
+	var err error
+	var poolConf *pgxpool.Config
+	if poolConf, err = pgxpool.ParseConfig(fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s",
+		"localhost", 5432, "postgres", dbPswd, "postgres",
+	)); err != nil {
+		panic(err)
+	}
+	if TestDBPool, err = pgxpool.NewWithConfig(
+		context.Background(), poolConf,
+	); err != nil {
+		panic(err)
+	}
+	if err = TestDBPool.Ping(context.Background()); err != nil {
+		panic(err)
+	}
+	m.Run()
+	TestDBPool.Close()
+}
+
 func resetApp(ctxtIn context.Context) (context.Context, func()) {
-	testCtxt, stateCleanup, err := ParseState(
-		ctxtIn,
-		[]string{"-conf", "../../bs/testSetup.toml"},
-	)
-	defer stateCleanup()
-	if err != nil {
-		panic(err)
-	}
-	dropDatabase(testCtxt)
-	addDatabase(testCtxt)
-	return initTestState(testCtxt)
-}
-
-func dropDatabase(ctxt context.Context) {
-	state, ok := StateFromContext(ctxt)
-	if ok != true {
-		panic("Could not find state in context!")
-	}
-
 	sql := fmt.Sprintf("DROP DATABASE IF EXISTS provlib_tests WITH (FORCE);")
-	_, err := state.DB.Exec(ctxt, sql)
-	state.Log.Info("Dropped", "sql", sql)
+	_, err := TestDBPool.Exec(ctxtIn, sql)
 	if err != nil {
 		panic(err)
 	}
+
+	sql = fmt.Sprintf("CREATE DATABASE provlib_tests;")
+	_, err = TestDBPool.Exec(ctxtIn, sql)
+	if err != nil {
+		panic(err)
+	}
+
+	return testAppMain(ctxtIn, "-conf", "../../bs/testsDB.toml")
 }
 
-func addDatabase(ctxt context.Context) {
-	state, ok := StateFromContext(ctxt)
-	if ok != true {
-		panic("Could not find state in context!")
+// This is meant to represent the main function of a separate application.
+//
+// Normally no arguments would be passed in and no parameters would be returned
+// but because this test application sits beneath the testing framework it has
+// to accept parameters and return values.
+//
+// Every time you see `testCtxt` it could be replaced with context.Background()
+// in a real application.
+//
+// `args` would be gathered from os.Args.
+func testAppMain(
+	testCtxt context.Context,
+	args ...string,
+) (context.Context, func()) {
+	var conf types.Conf
+	if err := sbargp.Parse(&conf, args, sbargp.ParserOpts[types.Conf]{
+		ProgName: "testApp",
+		RequiredArgs: []string{
+			"DB.User", "DB.PswdEnvVar", "DB.Name",
+		},
+		ArgDefsSetter: func(conf *types.Conf, fs *flag.FlagSet) error {
+			ConfParser(fs, conf, "", ConfValDefaults())
+			return nil
+		},
+	}); err != nil {
+		panic(err)
 	}
 
-	sql := fmt.Sprintf("CREATE DATABASE provlib_tests;")
-	_, err := state.DB.Exec(ctxt, sql)
-	state.Log.Info("Created", "sql", sql)
+	// Normally this would be derived from context.Background()
+	appLifetime, appCancel := context.WithCancel(testCtxt)
+	state, err := ConfToState(appLifetime, &conf)
 	if err != nil {
 		panic(err)
 	}
-}
 
-func initTestState(testCtxt context.Context) (context.Context, func()) {
-	testSetupState, ok := StateFromContext(testCtxt)
-	if ok != true {
-		panic("Could not find state in context!")
-	}
-
-	// Note - this is sort of how setup would need to occur in an application
-	// as well.
-	// :AppSetup - Notice how cancelation can be derived from the testCtxt
-	testSetupState.Log.Info("Setting up tests database...")
-	provCtxt, provCleanup, err := ParseState(
-		testCtxt,
-		[]string{"-conf", "../../bs/testsDB.toml"},
-	)
+	// :AppSetup - Notice how cancelation can be derived from a parent context
+	// This allows an application to cancel _all_ prov lib operations from a
+	// single cancelable context (assuming the ctxt passed into WithStateValue
+	// is cancelable).
+	provLifetime, err := WithStateValue(appLifetime, state)
 	if err != nil {
 		panic(err)
 	}
-	provState, ok := StateFromContext(provCtxt)
-	if ok != true {
-		panic("Could not find state in context!")
-	}
-
-	if err := RunMigrations(provCtxt); err != nil {
+	if err := RunMigrations(provLifetime); err != nil {
 		panic(err)
 	}
-	pollerCtxt, cancel := context.WithCancel(testCtxt)
+
+	// Notice how polling is derived from app lifetime and not prov lifetime
 	go sbjobqueue.Poll(
-		pollerCtxt,
-		provState.PhysicsJobQueue, provState.VideoJobQueue,
+		appLifetime,
+		state.PhysicsJobQueue, state.VideoJobQueue,
 	)
 
-	testSetupState.Log.Info("Setting up tests database... done.")
-
-	return provCtxt, func() {
-		cancel()
-		provCleanup()
+	// Normally there would be a defer function call rather than returning a
+	// function
+	return provLifetime, func() {
+		appCancel()
+		CleanupState(state)
 	}
 }

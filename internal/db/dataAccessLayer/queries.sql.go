@@ -56,7 +56,7 @@ type BulkCreateModelStatesParams struct {
 	V8            float64 `json:"v8"`
 	V9            float64 `json:"v9"`
 	V10           float64 `json:"v10"`
-	TimeFrame     int32   `json:"time_frame"`
+	TimeFrame     int64   `json:"time_frame"`
 	Mse           float64 `json:"mse"`
 	PredWeight    float64 `json:"pred_weight"`
 }
@@ -76,8 +76,8 @@ type BulkCreateTrainingLogsParams struct {
 	Sets             float64     `json:"sets"`
 	Reps             int32       `json:"reps"`
 	Effort           float64     `json:"effort"`
-	InterSessionCntr int32       `json:"inter_session_cntr"`
-	InterWorkoutCntr int32       `json:"inter_workout_cntr"`
+	InterSessionCntr int16       `json:"inter_session_cntr"`
+	InterWorkoutCntr int16       `json:"inter_workout_cntr"`
 }
 
 const clientLastWorkoutDate = `-- name: ClientLastWorkoutDate :one
@@ -126,8 +126,8 @@ type ClientTrainingLogDataDateRangeAscendingRow struct {
 	Sets             float64 `json:"sets"`
 	Reps             int32   `json:"reps"`
 	Effort           float64 `json:"effort"`
-	InterSessionCntr int32   `json:"inter_session_cntr"`
-	InterWorkoutCntr int32   `json:"inter_workout_cntr"`
+	InterSessionCntr int16   `json:"inter_session_cntr"`
+	InterWorkoutCntr int16   `json:"inter_workout_cntr"`
 }
 
 func (q *Queries) ClientTrainingLogDataDateRangeAscending(ctx context.Context, arg ClientTrainingLogDataDateRangeAscendingParams) ([]ClientTrainingLogDataDateRangeAscendingRow, error) {
@@ -260,7 +260,7 @@ type GetAllClientsTrainingLogDataRow struct {
 	Email            string      `json:"email"`
 	Name             string      `json:"name"`
 	DatePerformed    pgtype.Date `json:"date_performed"`
-	InterSessionCntr int32       `json:"inter_session_cntr"`
+	InterSessionCntr int16       `json:"inter_session_cntr"`
 	Weight           float64     `json:"weight"`
 	Sets             float64     `json:"sets"`
 	Reps             int32       `json:"reps"`
@@ -336,7 +336,7 @@ ORDER BY training_log.inter_workout_cntr ASC
 
 type GetAllWorkoutDataParams struct {
 	Email            string      `json:"email"`
-	InterSessionCntr int32       `json:"inter_session_cntr"`
+	InterSessionCntr int16       `json:"inter_session_cntr"`
 	DatePerformed    pgtype.Date `json:"date_performed"`
 }
 
@@ -437,7 +437,7 @@ type GetClientTrainingLogDataParams struct {
 type GetClientTrainingLogDataRow struct {
 	Name             string      `json:"name"`
 	DatePerformed    pgtype.Date `json:"date_performed"`
-	InterSessionCntr int32       `json:"inter_session_cntr"`
+	InterSessionCntr int16       `json:"inter_session_cntr"`
 	Weight           float64     `json:"weight"`
 	Sets             float64     `json:"sets"`
 	Reps             int32       `json:"reps"`

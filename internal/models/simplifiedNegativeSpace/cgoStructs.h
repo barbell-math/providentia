@@ -25,7 +25,7 @@ extern "C" {
 		double_t V8;
 		double_t V9;
 		double_t V10;
-		int32_t TimeFrame;
+		int64_t TimeFrame;
 		double_t Mse;
 		double_t PredWeight;
 	} modelState_t;
@@ -45,8 +45,8 @@ extern "C" {
 		double_t Sets;
 		int32_t Reps;
 		double_t Effort;
-		int32_t InterSessionCntr;
-		int32_t InterWorkoutCntr;
+		int16_t InterSessionCntr;
+		int16_t InterWorkoutCntr;
 	} trainingLog_t;
 
 #ifdef __cplusplus
