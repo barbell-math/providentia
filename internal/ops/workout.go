@@ -28,8 +28,7 @@ func CreateWorkouts(
 	batch, _ := sbjobqueue.BatchWithContext(ctxt)
 	clientCacheLoader := dal.NewClientCacheLoader(syncQueries)
 	exerciseCacheLoader := dal.NewExerciseCacheLoader(syncQueries)
-
-	bufWriter := NewBufferedWriter(
+	bufWriter := dal.NewBufferedWriter(
 		state.Global.BatchSize,
 		func(
 			ctxt context.Context,

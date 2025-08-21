@@ -1,10 +1,9 @@
-package ops
+package dal
 
 import (
 	"context"
 	"errors"
 
-	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
 	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
 )
 
@@ -15,7 +14,7 @@ var (
 
 type (
 	bulkCreateTypes interface {
-		dal.BulkCreateClientsParams | dal.BulkCreateTrainingLogsParams
+		BulkCreateClientsParams | BulkCreateTrainingLogsParams
 	}
 
 	BufferedWriter[T bulkCreateTypes] struct {
