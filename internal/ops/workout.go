@@ -26,12 +26,10 @@ func CreateWorkouts(
 ) (opErr error) {
 	syncQueries := dal.NewSyncQueries(queries)
 	batch, _ := sbjobqueue.BatchWithContext(ctxt)
+	clientCacheLoader := dal.NewClientCacheLoader(syncQueries)
+	exerciseCacheLoader := dal.NewExerciseCacheLoader(syncQueries)
 
-	// TODO - make caches separate - part of init state??
-	clientIdCache := map[string]int64{}
-	exerciseCache := map[string]int32{}
-
-	bufWriter := NewBufferedWriter[dal.BulkCreateTrainingLogsParams](
+	bufWriter := NewBufferedWriter(
 		state.Global.BatchSize,
 		func(
 			ctxt context.Context,
@@ -51,40 +49,46 @@ func CreateWorkouts(
 		// TODO - check if supplied ctxt was canceled; if it was break; look into
 		// similar things in other ops
 
-		// TODO - move to validate workout after session check and once caches
-		// have been created
-		if _, ok := clientIdCache[iterW.ClientEmail]; !ok {
-			var clientID int64
-			syncQueries.Run(func(q *dal.Queries) {
-				clientID, opErr = q.GetClientIDFromEmail(
-					ctxt, iterW.ClientEmail,
-				)
-			})
-			if opErr != nil {
-				opErr = sberr.AppendError(
-					types.InvalidWorkoutErr,
-					sberr.AppendError(
-						types.CouldNotFindRequestedClientErr, opErr,
-					),
-				)
-				return
-			}
-			clientIdCache[iterW.ClientEmail] = clientID
-		}
-
-		if opErr = validateWorkout(
-			ctxt, state, syncQueries,
-			&iterW, exerciseCache,
-		); opErr != nil {
+		if opErr = validateWorkout(state, &iterW); opErr != nil {
 			opErr = sberr.AppendError(types.InvalidWorkoutErr, opErr)
 			return
 		}
 
+		var iterClient types.IdWrapper[int64, types.Client]
+		if iterClient, opErr = state.ClientCache.Get(
+			ctxt, iterW.ClientEmail, clientCacheLoader,
+		); opErr != nil {
+			opErr = sberr.AppendError(
+				types.InvalidWorkoutErr,
+				sberr.Wrap(
+					types.CouldNotFindRequestedClientErr,
+					"Unknown Email: %s", iterW.ClientEmail,
+				),
+				opErr,
+			)
+			return
+		}
+
 		for i, iterE := range iterW.Exercises {
+			var iterExercise types.IdWrapper[int32, types.Exercise]
+			if iterExercise, opErr = state.ExerciseCache.Get(
+				ctxt, iterE.Name, exerciseCacheLoader,
+			); opErr != nil {
+				opErr = sberr.AppendError(
+					types.InvalidWorkoutErr,
+					types.MalformedWorkoutExerciseErr,
+					sberr.Wrap(
+						types.CouldNotFindRequestedExerciseErr,
+						"Unknown Exercise: %s", iterE.Name,
+					),
+					opErr,
+				)
+				return
+			}
+
 			if opErr = bufWriter.Write(ctxt, dal.BulkCreateTrainingLogsParams{
-				ClientID: clientIdCache[iterW.ClientEmail],
-				// exerciseCache is populated by validateWorkout
-				ExerciseID: exerciseCache[iterE.Name],
+				ClientID:   iterClient.Id,
+				ExerciseID: iterExercise.Id,
 
 				DatePerformed: pgtype.Date{
 					Time:             iterW.DatePerformed,
@@ -128,13 +132,7 @@ func CreateWorkouts(
 	return
 }
 
-func validateWorkout(
-	ctxt context.Context,
-	state *types.State,
-	queries *dal.SyncQueries,
-	w *types.RawWorkout,
-	exerciseCache map[string]int32,
-) (opErr error) {
+func validateWorkout(state *types.State, w *types.RawWorkout) (opErr error) {
 	curExercise := -1
 	curSet := -1
 	wrapErr := func(msg string, args ...any) error {
@@ -146,12 +144,9 @@ func validateWorkout(
 	}
 
 	if w.Session <= 0 {
-		opErr = sberr.AppendError(
-			types.InvalidWorkoutErr,
-			sberr.Wrap(
-				types.InvalidSessionErr,
-				"Must be >0, Got: %d", w.Session,
-			),
+		opErr = sberr.Wrap(
+			types.InvalidSessionErr,
+			"Must be >0, Got: %d", w.Session,
 		)
 		return
 	}
@@ -159,23 +154,6 @@ func validateWorkout(
 	for curExercise = range len(w.Exercises) {
 		curSet = -1
 		iterE := w.Exercises[curExercise]
-
-		if iterId, ok := exerciseCache[iterE.Name]; !ok {
-			queries.Run(func(q *dal.Queries) {
-				iterId, opErr = q.GetExerciseId(ctxt, iterE.Name)
-			})
-			if opErr != nil {
-				opErr = sberr.AppendError(
-					wrapErr(""),
-					sberr.Wrap(
-						types.CouldNotFindRequestedExerciseErr,
-						"Unknown exercise: %s", iterE.Name,
-					),
-				)
-				return
-			}
-			exerciseCache[iterE.Name] = iterId
-		}
 
 		if len(iterE.BarPath) == 0 {
 			// Not supplying any physics or bar path data is valid

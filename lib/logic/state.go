@@ -96,7 +96,7 @@ func checkStatePhysicsDataConf(state *types.State) error {
 		return sberr.AppendError(
 			types.InvalidPhysicsDataErr,
 			sberr.Wrap(
-				types.InvalidTImeDeltaEpsErr,
+				types.InvalidTimeDeltaEpsErr,
 				"Must be >=0. Got: %f", state.PhysicsData.TimeDeltaEps,
 			),
 		)

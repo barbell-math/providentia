@@ -12,6 +12,7 @@ import (
 	sbjobqueue "code.barbellmath.net/barbell-math/smoothbrain-jobQueue"
 	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/maypok86/otter/v2"
 )
 
 // Returns a [types.Conf] struct with sensible default values. Can be passed to
@@ -36,15 +37,27 @@ func ConfDefaults() *types.Conf {
 			MinNumSamples: 100,
 			TimeDeltaEps:  1e-6,
 		},
-		PhysicsJobQueue: types.PhysicsJobQueueConf{
+		PhysicsJobQueue: sbjobqueue.Opts{
 			QueueLen:       10,
 			MaxNumWorkers:  uint32(runtime.NumCPU()),
 			MaxJobsPerPoll: 1,
 		},
-		VideoJobQueue: types.VideoJobQueueConf{
+		VideoJobQueue: sbjobqueue.Opts{
 			QueueLen:       10,
 			MaxNumWorkers:  uint32(runtime.NumCPU()),
 			MaxJobsPerPoll: 1,
+		},
+		ClientCache: otter.Options[
+			string, types.IdWrapper[int64, types.Client],
+		]{
+			MaximumSize:     100,
+			InitialCapacity: 100,
+		},
+		ExerciseCache: otter.Options[
+			string, types.IdWrapper[int32, types.Exercise],
+		]{
+			MaximumSize:     100,
+			InitialCapacity: 100,
 		},
 	}
 }
@@ -172,6 +185,44 @@ func ConfParser(
 			10,
 		),
 	)
+
+	fs.Func(
+		startStr("ClientCache", "MaximumSize"),
+		"The maximum number of client structs that can be held in the in memory client cache",
+		sbargp.Int(
+			&val.ClientCache.MaximumSize,
+			_default.ClientCache.MaximumSize,
+			10,
+		),
+	)
+	fs.Func(
+		startStr("ClientCache", "InitialCapacity"),
+		"The initial capacity of the in memory client cache",
+		sbargp.Int(
+			&val.ClientCache.MaximumSize,
+			_default.ClientCache.MaximumSize,
+			10,
+		),
+	)
+
+	fs.Func(
+		startStr("ExerciseCache", "MaximumSize"),
+		"The maximum number of client structs that can be held in the in memory exercise cache",
+		sbargp.Int(
+			&val.ClientCache.MaximumSize,
+			_default.ClientCache.MaximumSize,
+			10,
+		),
+	)
+	fs.Func(
+		startStr("ExerciseCache", "InitialCapacity"),
+		"The initial capacity of the in memory exercise cache",
+		sbargp.Int(
+			&val.ClientCache.MaximumSize,
+			_default.ClientCache.MaximumSize,
+			10,
+		),
+	)
 }
 
 // Takes the supplied [types.Conf] struct and translates it into a [types.State]
@@ -190,16 +241,33 @@ func ConfToState(
 	state.PhysicsData = c.PhysicsData
 
 	if state.PhysicsJobQueue, err = sbjobqueue.NewJobQueue[types.PhysicsJob](
-		(*sbjobqueue.Opts)(&c.PhysicsJobQueue),
+		&c.PhysicsJobQueue,
 	); err != nil {
 		return
 	}
 	if state.VideoJobQueue, err = sbjobqueue.NewJobQueue[types.VideoJob](
-		(*sbjobqueue.Opts)(&c.VideoJobQueue),
+		&c.VideoJobQueue,
 	); err != nil {
 		return
 	}
 
+	if state.ClientCache, err = otter.New[
+		string, types.IdWrapper[int64, types.Client],
+	](
+		&c.ClientCache,
+	); err != nil {
+		return
+	}
+	if state.ExerciseCache, err = otter.New[
+		string, types.IdWrapper[int32, types.Exercise],
+	](
+		&c.ExerciseCache,
+	); err != nil {
+		return
+	}
+
+	// TODO - This would be nice... Figure out logging somehow
+	// c.ClientCache.Logger=slog.Default()
 	if state.Log, err = sblog.New(sblog.Opts{
 		CurVerbosityLevel: uint(c.Logging.Verbosity),
 		RotateWriterOpts: sblog.RotateWriterOpts{

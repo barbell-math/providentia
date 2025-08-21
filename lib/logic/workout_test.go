@@ -79,7 +79,7 @@ func workoutInvalidClient(ctxt context.Context) func(t *testing.T) {
 				Session:     1,
 			},
 		})
-		sbtest.ContainsError(t, types.InvalidWorkoutErr, err)
+		sbtest.ContainsError(t, types.InvalidWorkoutErr, err, "Unknown Email")
 		sbtest.ContainsError(t, types.CouldNotFindRequestedClientErr, err)
 	}
 }
@@ -98,7 +98,7 @@ func workoutUnknownExercise(ctxt context.Context) func(t *testing.T) {
 				},
 			},
 		})
-		sbtest.ContainsError(t, types.InvalidWorkoutErr, err, "Unknown exercise")
+		sbtest.ContainsError(t, types.InvalidWorkoutErr, err, "Unknown Exercise")
 		sbtest.ContainsError(t, types.MalformedWorkoutExerciseErr, err)
 	}
 }
