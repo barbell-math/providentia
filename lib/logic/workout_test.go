@@ -468,8 +468,13 @@ func workoutAddGetNoPhysicsData(t *testing.T) {
 	numRawWorkouts, err := ReadClientNumWorkouts(ctxt, "email@email.com")
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, 2, numRawWorkouts)
+	numPhysEntries, err := ReadClientTotalNumPhysEntries(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 0, numPhysEntries)
 
-	res, err := ReadWorkoutsByID(ctxt, workouts[0].WorkoutID, workouts[1].WorkoutID)
+	res, err := ReadWorkoutsByID(
+		ctxt, workouts[0].WorkoutID, workouts[1].WorkoutID,
+	)
 	rawWorkoutEqSavedWorkout(t, workouts[:], res)
 }
 
@@ -557,6 +562,9 @@ func workoutAddGetTimeSeriesPhysicsData(t *testing.T) {
 	numRawWorkouts, err := ReadClientNumWorkouts(ctxt, "email@email.com")
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, 2, numRawWorkouts)
+	numPhysEntries, err := ReadClientTotalNumPhysEntries(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 3, numPhysEntries)
 
 	res, err := ReadWorkoutsByID(ctxt, workouts[0].WorkoutID, workouts[1].WorkoutID)
 	rawWorkoutEqSavedWorkout(t, workouts[:], res)
