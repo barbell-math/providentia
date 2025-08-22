@@ -40,6 +40,19 @@ func ReadClientTotalNumExercises(
 	return
 }
 
+func ReadClientTotalNumPhysEntries(
+	ctxt context.Context,
+	clientEmail string,
+) (res int64, opErr error) {
+	opErr = runOp(ctxt, func(state *types.State, queries *dal.Queries) (err error) {
+		res, err = ops.ReadClientTotalNumPhysEntries(
+			ctxt, state, queries, clientEmail,
+		)
+		return err
+	})
+	return
+}
+
 // Gets the total number of workouts in the database for a given client.
 //
 // The context must have a [State] variable.

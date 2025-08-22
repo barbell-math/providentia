@@ -228,6 +228,24 @@ func ReadClientTotalNumExercises(
 	return
 }
 
+func ReadClientTotalNumPhysEntries(
+	ctxt context.Context,
+	state *types.State,
+	queries *dal.Queries,
+	clientEmail string,
+) (res int64, opErr error) {
+	res, opErr = queries.GetTotalNumPhysicsEntriesForClient(ctxt, clientEmail)
+	if opErr != nil {
+		opErr = sberr.AppendError(types.CouldNotGetTotalNumPhysEntriesErr, opErr)
+		return
+	}
+	state.Log.Log(
+		ctxt, sblog.VLevel(3),
+		"Read total num phys entries for client",
+	)
+	return
+}
+
 func ReadClientNumWorkouts(
 	ctxt context.Context,
 	state *types.State,
@@ -317,17 +335,6 @@ func UpdateWorkouts(
 ) (opErr error) {
 	return
 }
-
-// // Eh?? -might make for quicker physics data updates but would require another
-// // user facing api type UpdatePhysData struct { WorkoutID, PhysData }
-// func UpdateWorkoutPhysicsData(
-// 	ctxt context.Context,
-// 	state *types.State,
-// 	queries *dal.Queries,
-// 	data ...types.RawWorkout,
-// ) (opErr error) {
-// 	return
-// }
 
 func DeleteWorkouts(
 	ctxt context.Context,

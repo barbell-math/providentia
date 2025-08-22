@@ -2,6 +2,8 @@ package dal
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"unsafe"
 
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
@@ -21,6 +23,10 @@ func NewClientCacheLoader(
 			var tmp Client
 			tmp, err = q.GetFullClientByEmail(ctxt, key)
 			res = *(*types.IdWrapper[int64, types.Client])(unsafe.Pointer(&tmp))
+			if errors.Is(err, sql.ErrNoRows) {
+				// Convert "not found" DB error to cache-specific error
+				err = otter.ErrNotFound
+			}
 		})
 		return
 	}
@@ -39,6 +45,10 @@ func NewExerciseCacheLoader(
 			var tmp Exercise
 			tmp, err = q.GetFullExerciseByName(ctxt, key)
 			res = *(*types.IdWrapper[int32, types.Exercise])(unsafe.Pointer(&tmp))
+			if errors.Is(err, sql.ErrNoRows) {
+				// Convert "not found" DB error to cache-specific error
+				err = otter.ErrNotFound
+			}
 		})
 		return
 	}

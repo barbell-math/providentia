@@ -98,9 +98,9 @@ func testAppMain(
 		state.PhysicsJobQueue, state.VideoJobQueue,
 	)
 
-	// :AppSetup - Notice how cancellation can be derived from a parent context
-	// This allows separate lib calls to be canceled separately while still
-	// allowing a single parent context to cancel all lib calls at once.
+	// Notice how cancellation can be derived from a parent context. This allows
+	// separate lib calls to be canceled separately while still allowing a
+	// single parent context to cancel all lib calls at once.
 	provLifetime := WithStateValue(appLifetime, state)
 	if err := RunMigrations(provLifetime); err != nil {
 		panic(err)

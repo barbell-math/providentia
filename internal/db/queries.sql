@@ -172,6 +172,15 @@ INSERT INTO providentia.physics_data(
 	$1, $2, $3, $4, $5, $6, $7, $8, $9
 ) RETURNING id;
 
+-- name: GetTotalNumPhysicsEntriesForClient :one
+SELECT COUNT(*) FROM providentia.physics_data
+JOIN providentia.training_log
+	ON providentia.physics_data.id = providentia.training_log.physics_id
+JOIN providentia.client
+	ON providentia.training_log.client_id = providentia.client.id
+WHERE
+	providentia.client.email = $1;
+
 ----- OLD ----------------------------------------------------------------------
 -- name: BulkCreateModelStates :copyfrom
 INSERT INTO providentia.model_state(

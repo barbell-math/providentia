@@ -86,6 +86,10 @@ func ReadExercisesByName(
 ) (res []types.Exercise, opErr error) {
 	res = make([]types.Exercise, len(names))
 
+	// Note: the exercise cache is not updated because that would require
+	// returning an types.IdWrapper rather than just a types.Exercise struct and
+	// that would require copying all of the returned results one at a time
+	// rather than in chunks with a copy command.
 	for start, end := range batchIndexes(names, int(state.Global.BatchSize)) {
 		var rawData []dal.GetExercisesByNameRow
 		rawData, opErr = queries.GetExercisesByName(ctxt, names[start:end])
@@ -121,8 +125,10 @@ func UpdateExercises(
 	exercises ...dal.UpdateExerciseByNameParams,
 ) (opErr error) {
 	cntr := 0
-	for _, c := range exercises {
-		opErr = queries.UpdateExerciseByName(ctxt, c)
+	for _, e := range exercises {
+		// Note: the exercise cache does not need to be updated because the
+		// email (and hence id in the database) does not change.
+		opErr = queries.UpdateExerciseByName(ctxt, e)
 		if opErr != nil {
 			opErr = sberr.AppendError(
 				types.CouldNotUpdateRequestedExerciseErr, opErr,
@@ -154,6 +160,10 @@ func DeleteExercises(
 	names ...string,
 ) (opErr error) {
 	// TODO - delete all referenced training log data, video data, model data
+
+	for _, n := range names {
+		state.ExerciseCache.Invalidate(n)
+	}
 
 	var count int64
 	count, opErr = queries.DeleteExercisesByName(ctxt, names)

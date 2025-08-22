@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log/slog"
 	"runtime"
 	"strings"
 
@@ -14,6 +15,20 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/maypok86/otter/v2"
 )
+
+type (
+	defaultCacheLogger struct {
+		log *slog.Logger
+	}
+)
+
+func (dl *defaultCacheLogger) Warn(ctx context.Context, msg string, err error) {
+	dl.log.WarnContext(ctx, msg, "err", err)
+}
+
+func (dl *defaultCacheLogger) Error(ctx context.Context, msg string, err error) {
+	dl.log.ErrorContext(ctx, msg, "err", err)
+}
 
 // Returns a [types.Conf] struct with sensible default values. Can be passed to
 // [ParseConfig] as the `_default` parameter.
@@ -251,21 +266,6 @@ func ConfToState(
 		return
 	}
 
-	if state.ClientCache, err = otter.New[
-		string, types.IdWrapper[int64, types.Client],
-	](
-		&c.ClientCache,
-	); err != nil {
-		return
-	}
-	if state.ExerciseCache, err = otter.New[
-		string, types.IdWrapper[int32, types.Exercise],
-	](
-		&c.ExerciseCache,
-	); err != nil {
-		return
-	}
-
 	// TODO - This would be nice... Figure out logging somehow
 	// c.ClientCache.Logger=slog.Default()
 	if state.Log, err = sblog.New(sblog.Opts{
@@ -277,6 +277,23 @@ func ConfToState(
 			MaxLogSizeBytes: uint64(c.Logging.MaxLogSizeBytes),
 		},
 	}); err != nil {
+		return
+	}
+
+	c.ClientCache.Logger = &defaultCacheLogger{log: state.Log}
+	if state.ClientCache, err = otter.New[
+		string, types.IdWrapper[int64, types.Client],
+	](
+		&c.ClientCache,
+	); err != nil {
+		return
+	}
+	c.ExerciseCache.Logger = &defaultCacheLogger{log: state.Log}
+	if state.ExerciseCache, err = otter.New[
+		string, types.IdWrapper[int32, types.Exercise],
+	](
+		&c.ExerciseCache,
+	); err != nil {
 		return
 	}
 

@@ -635,6 +635,23 @@ func (q *Queries) GetTotalNumExercisesForClient(ctx context.Context, email strin
 	return count, err
 }
 
+const getTotalNumPhysicsEntriesForClient = `-- name: GetTotalNumPhysicsEntriesForClient :one
+SELECT COUNT(*) FROM providentia.physics_data
+JOIN providentia.training_log
+	ON providentia.physics_data.id = providentia.training_log.physics_id
+JOIN providentia.client
+	ON providentia.training_log.client_id = providentia.client.id
+WHERE
+	providentia.client.email = $1
+`
+
+func (q *Queries) GetTotalNumPhysicsEntriesForClient(ctx context.Context, email string) (int64, error) {
+	row := q.db.QueryRow(ctx, getTotalNumPhysicsEntriesForClient, email)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const updateClientByEmail = `-- name: UpdateClientByEmail :exec
 UPDATE providentia.client SET first_name=$1, last_name=$2
 WHERE providentia.client.email=$3

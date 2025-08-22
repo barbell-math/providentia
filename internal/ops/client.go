@@ -89,6 +89,10 @@ func ReadClientsByEmail(
 ) (res []types.Client, opErr error) {
 	res = make([]types.Client, len(emails))
 
+	// Note: the client cache is not updated because that would require
+	// returning an types.IdWrapper rather than just a types.Client struct and
+	// that would require copying all of the returned results one at a time
+	// rather than in chunks with a copy command.
 	for start, end := range batchIndexes(emails, int(state.Global.BatchSize)) {
 		var rawData []dal.GetClientsByEmailRow
 		rawData, opErr = queries.GetClientsByEmail(ctxt, emails[start:end])
@@ -125,6 +129,8 @@ func UpdateClients(
 ) (opErr error) {
 	cntr := 0
 	for _, c := range clients {
+		// Note: the client cache does not need to be updated because the email
+		// (and hence id in the database) does not change.
 		opErr = queries.UpdateClientByEmail(ctxt, c)
 		if opErr != nil {
 			opErr = sberr.AppendError(
@@ -157,6 +163,10 @@ func DeleteClients(
 	emails ...string,
 ) (opErr error) {
 	// TODO - delete all referenced training log data, video data, model data
+
+	for _, e := range emails {
+		state.ClientCache.Invalidate(e)
+	}
 
 	var count int64
 	count, opErr = queries.DeleteClientsByEmail(ctxt, emails)
