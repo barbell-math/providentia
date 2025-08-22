@@ -8,7 +8,44 @@ import (
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 )
 
-// TODO - add comment
+// Adds the supplied workouts to the database and calculates the physics
+// information associated with any exercise that provides either a video path or
+// time series data. The supplied workouts must have a valid workout ID and raw
+// data. A valid workout ID must:
+//
+//   - Have a valid client email already present in the database
+//   - Have a session number >0
+//   - Have a valid date time stamp
+//   - The workout ID must not already be present in the database
+//
+// Each raw data entry in the exercise list must:
+//
+//   - Have a valid exercise name already present in the database
+//   - Have a weight >=0
+//   - Have sets >=0
+//   - Have reps >=0
+//   - Have effort in the range [0, 10]
+//   - Valid bar path data
+//
+// Bar path data can either be a path to a video file or time series data that
+// represents the bars position over time. Valid time series bar path data must:
+//
+//   - Have time data and position data of the same length
+//   - Have more than [state.PhysicsData.MinNumSamples] time samples
+//   - The time data must be monotonically increasing, with a variance less than
+//     [state.PhysicsData.TimeDeltaEps]
+//
+// Valid video bar path data must:
+//
+//   - Point to a valid path
+//   - Point to a video longer than [state.??? TODO]
+//
+// The context must have a [State] variable.
+//
+// Workouts will be uploaded in batches that respect the size set in the
+// [State.BatchSize] variable.
+//
+// If any error occurs no changes will be made to the database.
 func CreateWorkouts(
 	ctxt context.Context,
 	workouts ...types.RawWorkout,
