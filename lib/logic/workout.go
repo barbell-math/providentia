@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"time"
 
 	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
 	"code.barbellmath.net/barbell-math/providentia/internal/ops"
@@ -40,7 +41,7 @@ import (
 //   - Point to a valid path
 //   - Point to a video longer than [state.??? TODO]
 //
-// The context must have a [State] variable.
+// The context must have a [types.State] variable.
 //
 // Workouts will be uploaded in batches that respect the size set in the
 // [State.BatchSize] variable.
@@ -58,10 +59,10 @@ func CreateWorkouts(
 	})
 }
 
-// Gets the total number of exercies across all workouts in the database for a
+// Gets the total number of exercises across all workouts in the database for a
 // given client.
 //
-// The context must have a [State] variable.
+// The context must have a [types.State] variable.
 //
 // No changes will be made to the database.
 func ReadClientTotalNumExercises(
@@ -77,6 +78,13 @@ func ReadClientTotalNumExercises(
 	return
 }
 
+// Gets the total number of physics entries across all workouts in the database
+// for a given client. Each exercise with physics data will correspond to a
+// single entry in the physics table.
+//
+// The context must have a [types.State] variable.
+//
+// No changes will be made to the database.
 func ReadClientTotalNumPhysEntries(
 	ctxt context.Context,
 	clientEmail string,
@@ -92,7 +100,7 @@ func ReadClientTotalNumPhysEntries(
 
 // Gets the total number of workouts in the database for a given client.
 //
-// The context must have a [State] variable.
+// The context must have a [types.State] variable.
 //
 // No changes will be made to the database.
 func ReadClientNumWorkouts(
@@ -109,7 +117,7 @@ func ReadClientNumWorkouts(
 // Gets the workout data associated with the supplied ids if they exist. If they
 // do not exist an error will be returned.
 //
-// The context must have a [State] variable.
+// The context must have a [types.State] variable.
 //
 // No changes will be made to the database.
 func ReadWorkoutsByID(
@@ -118,6 +126,42 @@ func ReadWorkoutsByID(
 ) (res []types.Workout, opErr error) {
 	opErr = runOp(ctxt, func(state *types.State, queries *dal.Queries) (err error) {
 		res, err = ops.ReadWorkoutsByID(ctxt, state, queries, ids...)
+		return err
+	})
+	return
+}
+
+// Gets the workouts for the supplied client in the supplied date range. If the
+// supplied client does not exist no workouts will be returned and an error
+// will be returned. If `start` is after `end` no workouts will be returned and
+// an error will be returned.
+//
+// Both `start` and `end` are inclusive.
+//
+// The context must have a [types.State] variable.
+//
+// No changes will be made to the database.
+func ReadWorkoutsInDateRange(
+	ctxt context.Context,
+	clientEmail string,
+	start time.Time,
+	end time.Time,
+) (res []types.Workout, opErr error) {
+	opErr = runOp(ctxt, func(state *types.State, queries *dal.Queries) (err error) {
+		res, err = ops.ReadWorkoutsInDateRange(
+			ctxt, state, queries, clientEmail, start, end,
+		)
+		return err
+	})
+	return
+}
+
+func DeleteWorkouts(
+	ctxt context.Context,
+	ids ...types.WorkoutID,
+) (opErr error) {
+	opErr = runOp(ctxt, func(state *types.State, queries *dal.Queries) (err error) {
+		err = ops.DeleteWorkouts(ctxt, state, queries, ids...)
 		return err
 	})
 	return

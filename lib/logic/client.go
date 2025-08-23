@@ -14,7 +14,7 @@ import (
 // be duplicated, including the set of client emails that are already in the
 // database.
 //
-// The context must have a [State] variable.
+// The context must have a [types.State] variable.
 //
 // Clients will be uploaded in batches that respect the size set in the
 // [State.BatchSize] variable.
@@ -38,7 +38,7 @@ func CreateClients(
 
 // Gets the total number of clients in the database.
 //
-// The context must have a [State] variable.
+// The context must have a [types.State] variable.
 //
 // No changes will be made to the database.
 func ReadNumClients(ctxt context.Context) (res int64, opErr error) {
@@ -53,7 +53,7 @@ func ReadNumClients(ctxt context.Context) (res int64, opErr error) {
 // they do not exist an error will be returned. The order of the returned
 // clients may not match the order of the supplied emails.
 //
-// The context must have a [State] variable.
+// The context must have a [types.State] variable.
 //
 // No changes will be made to the database.
 func ReadClientsByEmail(
@@ -72,7 +72,7 @@ func ReadClientsByEmail(
 // constraint. If a client is supplied with an email that does not exist in the
 // database an error will be returned.
 //
-// The context must have a [State] variable.
+// The context must have a [types.State] variable.
 //
 // If any error occurs no changes will be made to the database.
 func UpdateClients(
@@ -94,7 +94,7 @@ func UpdateClients(
 // Deletes the supplied clients, as identified by their email. All data
 // associated with the client will be deleted.
 //
-// The context must have a [State] variable.
+// The context must have a [types.State] variable.
 //
 // If any error occurs no changes will be made to the database.
 func DeleteClients(ctxt context.Context, emails ...string) (opErr error) {

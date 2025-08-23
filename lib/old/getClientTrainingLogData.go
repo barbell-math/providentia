@@ -11,7 +11,7 @@ import (
 // log entries will be sorted by date in descending order. If `limit` is <=0 no
 // work will be done.
 //
-// The context must have a [State] variable.
+// The context must have a [types.State] variable.
 //
 // No changes will be made to the database.
 func GetTrainingLogData(

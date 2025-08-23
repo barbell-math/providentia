@@ -39,6 +39,9 @@ FROM providentia.client WHERE email = ANY($1::text[]);
 -- name: GetFullClientByEmail :one
 SELECT id, first_name, last_name, email FROM providentia.client WHERE email = $1;
 
+-- name: ClientExists :one
+SELECT EXISTS( SELECT 1 FROM providentia.client WHERE email = $1);
+
 -- name: UpdateClientByEmail :exec
 UPDATE providentia.client SET first_name=$1, last_name=$2
 WHERE providentia.client.email=$3;
@@ -85,9 +88,9 @@ WHERE providentia.exercise.name=$1;
 
 -- name: DeleteExercisesByName :one
 WITH deleted_exercises AS (
-    DELETE FROM providentia.exercise
-    WHERE name = ANY($1::text[])
-    RETURNING id
+	DELETE FROM providentia.exercise
+	WHERE name = ANY($1::text[])
+	RETURNING id
 ) SELECT COUNT(*) FROM deleted_exercises;
 
 
@@ -162,6 +165,54 @@ WHERE
 	providentia.training_log.date_performed = $3
 ORDER BY training_log.inter_workout_cntr ASC;
 
+-- name: GetAllWorkoutDataBetweenDates :many
+SELECT
+	providentia.exercise.name,
+	providentia.training_log.weight,
+	providentia.training_log.sets,
+	providentia.training_log.reps,
+	providentia.training_log.effort,
+	providentia.training_log.volume,
+	providentia.training_log.exertion,
+	providentia.training_log.total_reps,
+	providentia.training_log.date_performed,
+	providentia.training_log.inter_session_cntr,
+	providentia.physics_data.time,
+	providentia.physics_data.position,
+	providentia.physics_data.velocity,
+	providentia.physics_data.acceleration,
+	providentia.physics_data.jerk,
+	providentia.physics_data.force,
+	providentia.physics_data.impulse,
+	providentia.physics_data.work
+FROM providentia.training_log
+JOIN providentia.exercise
+	ON providentia.training_log.exercise_id=providentia.exercise.id
+JOIN providentia.client
+	ON providentia.training_log.client_id=providentia.client.id
+LEFT JOIN providentia.physics_data
+	ON providentia.training_log.physics_id=providentia.physics_data.id
+WHERE
+	providentia.client.email = $1 AND
+	providentia.training_log.date_performed BETWEEN @start::DATE AND @ending::DATE
+ORDER BY 
+	training_log.date_performed ASC,
+	training_log.inter_session_cntr ASC,
+	training_log.inter_workout_cntr ASC;
+
+-- name: DeleteWorkout :one
+WITH deleted_exercises AS (
+	DELETE FROM providentia.training_log
+	USING providentia.client
+	WHERE
+		providentia.client.id = providentia.training_log.client_id AND
+		providentia.client.email = $1 AND
+		providentia.training_log.inter_session_cntr = $2 AND
+		providentia.training_log.date_performed = $3
+	RETURNING providentia.training_log.id
+) SELECT COUNT(*) FROM deleted_exercises;
+
+
 
 -- name: CreatePhysicsData :one
 INSERT INTO providentia.physics_data(
@@ -180,6 +231,7 @@ JOIN providentia.client
 	ON providentia.training_log.client_id = providentia.client.id
 WHERE
 	providentia.client.email = $1;
+
 
 ----- OLD ----------------------------------------------------------------------
 -- name: BulkCreateModelStates :copyfrom

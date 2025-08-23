@@ -14,7 +14,7 @@ import (
 // valid enum values. Exercise names must not be duplicated, including the set
 // of exercises that are already in the database.
 //
-// The context must have a [State] variable.
+// The context must have a [types.State] variable.
 //
 // Exercises will be uploaded in batches that respect the size set in the
 // [State.BatchSize] variable.
@@ -38,7 +38,7 @@ func CreateExercises(
 
 // Gets the total number of exercises in the database.
 //
-// The context must have a [State] variable.
+// The context must have a [types.State] variable.
 //
 // No changes will be made to the database.
 func ReadNumExercises(ctxt context.Context) (res int64, opErr error) {
@@ -53,7 +53,7 @@ func ReadNumExercises(ctxt context.Context) (res int64, opErr error) {
 // they do not exist an error will be returned. The order of the returned
 // exercises may not match the order of the supplied exercise names.
 //
-// The context must have a [State] variable.
+// The context must have a [types.State] variable.
 //
 // No changes will be made to the database.
 func ReadExercisesByName(
@@ -72,7 +72,7 @@ func ReadExercisesByName(
 // constraint. If an exercise is supplied with a name that does not exist in the
 // database an error will be returned.
 //
-// The context must have a [State] variable.
+// The context must have a [types.State] variable.
 //
 // If any error occurs no changes will be made to the database.
 func UpdateExercises(
@@ -94,7 +94,7 @@ func UpdateExercises(
 // Deletes the supplied exercises, as identified by their name. All data
 // associated with the exercise will be deleted.
 //
-// The context must have a [State] variable.
+// The context must have a [types.State] variable.
 //
 // If any error occurs no changes will be made to the database.
 func DeleteExercises(ctxt context.Context, names ...string) (opErr error) {

@@ -48,8 +48,8 @@ CREATE TABLE IF NOT EXISTS providentia.physics_data (
 
 CREATE TABLE IF NOT EXISTS providentia.training_log (
 	id SERIAL8 NOT NULL PRIMARY KEY,
-	exercise_id INT4 NOT NULL REFERENCES providentia.exercise(id),
-	client_id INT8 NOT NULL REFERENCES providentia.client(id),
+	exercise_id INT4 NOT NULL REFERENCES providentia.exercise(id) ON DELETE CASCADE,
+	client_id INT8 NOT NULL REFERENCES providentia.client(id) ON DELETE CASCADE,
 	physics_id INT8 REFERENCES providentia.physics_data(id),
 
 	date_performed DATE NOT NULL,
@@ -70,9 +70,9 @@ CREATE TABLE IF NOT EXISTS providentia.training_log (
 
 CREATE TABLE IF NOT EXISTS providentia.model_state (
 	id SERIAL8 NOT NULL PRIMARY KEY,
-	client_id INT8 NOT NULL REFERENCES providentia.client(id),
-	training_log_id INT8 NOT NULL REFERENCES providentia.training_log(id),
-	model_id INT4 NOT NULL REFERENCES providentia.model(id),
+	client_id INT8 NOT NULL REFERENCES providentia.client(id) ON DELETE CASCADE,
+	training_log_id INT8 NOT NULL REFERENCES providentia.training_log(id) ON DELETE CASCADE,
+	model_id INT4 NOT NULL REFERENCES providentia.model(id) ON DELETE CASCADE,
 
 	v1 FLOAT8 NOT NULL CHECK (v1>=0),
 	v2 FLOAT8 NOT NULL CHECK (v2>=0),
@@ -91,3 +91,21 @@ CREATE TABLE IF NOT EXISTS providentia.model_state (
 
 	UNIQUE (training_log_id, model_id)
 );
+
+CREATE FUNCTION reverse_cascade_training_log_physics_data()
+   RETURNS TRIGGER
+   LANGUAGE PLPGSQL
+AS $$
+BEGIN
+	DELETE FROM providentia.physics_data
+	WHERE OLD.physics_id = providentia.physics_data.id;
+	
+	RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER reverse_cascade_training_log_physics_data
+  AFTER DELETE
+  ON providentia.training_log
+  FOR EACH ROW
+  EXECUTE PROCEDURE reverse_cascade_training_log_physics_data();

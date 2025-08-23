@@ -16,7 +16,7 @@ type (
 // log entries will be sorted by client, with each clients data sorted by date
 // in descending order. If `limit` is <=0 no work will be done.
 //
-// The context must have a [State] variable.
+// The context must have a [types.State] variable.
 //
 // No changes will be made to the database.
 func GetAllClientsTrainingLogData(

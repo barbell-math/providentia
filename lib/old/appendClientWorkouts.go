@@ -54,7 +54,7 @@ var (
 // workout. The ordering of exercises in a workout is important to make any
 // modeling as accurate as possible.
 //
-// The context must have a [State] variable.
+// The context must have a [types.State] variable.
 //
 // Training log data will be uploaded in batches that respect the size set in
 // the [State.BatchSize] variable.

@@ -107,4 +107,5 @@ var (
 	CouldNotGetTotalNumExercisesErr   = errors.New("Could not get total num exercises")
 	CouldNotGetTotalNumPhysEntriesErr = errors.New("Could not get total num phys entries")
 	CouldNotFindRequestedWorkoutErr   = errors.New("Could not find requested workout")
+	CouldNotDeleteRequestedWorkoutErr = errors.New("Could not delete requested workout")
 )

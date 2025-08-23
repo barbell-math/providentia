@@ -71,10 +71,7 @@ func ReadNumExercises(
 		opErr = sberr.AppendError(types.CouldNotGetNumExercisesErr, opErr)
 		return
 	}
-	state.Log.Log(
-		ctxt, sblog.VLevel(3),
-		"Read num exercises",
-	)
+	state.Log.Log(ctxt, sblog.VLevel(3), "Read num exercises")
 	return
 }
 
@@ -144,12 +141,7 @@ func UpdateExercises(
 		)
 		return
 	}
-	state.Log.Log(
-		ctxt, sblog.VLevel(3),
-		"Updated clients",
-		"Num", cntr,
-	)
-
+	state.Log.Log(ctxt, sblog.VLevel(3), "Updated clients", "Num", cntr)
 	return
 }
 
@@ -177,11 +169,6 @@ func DeleteExercises(
 			types.CouldNotFindRequestedExerciseErr,
 		)
 	}
-	state.Log.Log(
-		ctxt, sblog.VLevel(3),
-		"Deleted clients",
-		"Num", count,
-	)
-
+	state.Log.Log(ctxt, sblog.VLevel(3), "Deleted exercises", "Num", count)
 	return
 }

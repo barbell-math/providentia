@@ -80,6 +80,17 @@ type BulkCreateTrainingLogsParams struct {
 	InterWorkoutCntr int16       `json:"inter_workout_cntr"`
 }
 
+const clientExists = `-- name: ClientExists :one
+SELECT EXISTS( SELECT 1 FROM providentia.client WHERE email = $1)
+`
+
+func (q *Queries) ClientExists(ctx context.Context, email string) (bool, error) {
+	row := q.db.QueryRow(ctx, clientExists, email)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const clientLastWorkoutDate = `-- name: ClientLastWorkoutDate :one
 SELECT date_performed FROM providentia.training_log
 WHERE client_id=$1
@@ -216,14 +227,40 @@ func (q *Queries) DeleteClientsByEmail(ctx context.Context, dollar_1 []string) (
 
 const deleteExercisesByName = `-- name: DeleteExercisesByName :one
 WITH deleted_exercises AS (
-    DELETE FROM providentia.exercise
-    WHERE name = ANY($1::text[])
-    RETURNING id
+	DELETE FROM providentia.exercise
+	WHERE name = ANY($1::text[])
+	RETURNING id
 ) SELECT COUNT(*) FROM deleted_exercises
 `
 
 func (q *Queries) DeleteExercisesByName(ctx context.Context, dollar_1 []string) (int64, error) {
 	row := q.db.QueryRow(ctx, deleteExercisesByName, dollar_1)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const deleteWorkout = `-- name: DeleteWorkout :one
+WITH deleted_exercises AS (
+	DELETE FROM providentia.training_log
+	USING providentia.client
+	WHERE
+		providentia.client.id = providentia.training_log.client_id AND
+		providentia.client.email = $1 AND
+		providentia.training_log.inter_session_cntr = $2 AND
+		providentia.training_log.date_performed = $3
+	RETURNING providentia.training_log.id
+) SELECT COUNT(*) FROM deleted_exercises
+`
+
+type DeleteWorkoutParams struct {
+	Email            string      `json:"email"`
+	InterSessionCntr int16       `json:"inter_session_cntr"`
+	DatePerformed    pgtype.Date `json:"date_performed"`
+}
+
+func (q *Queries) DeleteWorkout(ctx context.Context, arg DeleteWorkoutParams) (int64, error) {
+	row := q.db.QueryRow(ctx, deleteWorkout, arg.Email, arg.InterSessionCntr, arg.DatePerformed)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -377,6 +414,108 @@ func (q *Queries) GetAllWorkoutData(ctx context.Context, arg GetAllWorkoutDataPa
 			&i.Volume,
 			&i.Exertion,
 			&i.TotalReps,
+			&i.Time,
+			&i.Position,
+			&i.Velocity,
+			&i.Acceleration,
+			&i.Jerk,
+			&i.Force,
+			&i.Impulse,
+			&i.Work,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAllWorkoutDataBetweenDates = `-- name: GetAllWorkoutDataBetweenDates :many
+SELECT
+	providentia.exercise.name,
+	providentia.training_log.weight,
+	providentia.training_log.sets,
+	providentia.training_log.reps,
+	providentia.training_log.effort,
+	providentia.training_log.volume,
+	providentia.training_log.exertion,
+	providentia.training_log.total_reps,
+	providentia.training_log.date_performed,
+	providentia.training_log.inter_session_cntr,
+	providentia.physics_data.time,
+	providentia.physics_data.position,
+	providentia.physics_data.velocity,
+	providentia.physics_data.acceleration,
+	providentia.physics_data.jerk,
+	providentia.physics_data.force,
+	providentia.physics_data.impulse,
+	providentia.physics_data.work
+FROM providentia.training_log
+JOIN providentia.exercise
+	ON providentia.training_log.exercise_id=providentia.exercise.id
+JOIN providentia.client
+	ON providentia.training_log.client_id=providentia.client.id
+LEFT JOIN providentia.physics_data
+	ON providentia.training_log.physics_id=providentia.physics_data.id
+WHERE
+	providentia.client.email = $1 AND
+	providentia.training_log.date_performed BETWEEN $2::DATE AND $3::DATE
+ORDER BY 
+	training_log.date_performed ASC,
+	training_log.inter_session_cntr ASC,
+	training_log.inter_workout_cntr ASC
+`
+
+type GetAllWorkoutDataBetweenDatesParams struct {
+	Email  string      `json:"email"`
+	Start  pgtype.Date `json:"start"`
+	Ending pgtype.Date `json:"ending"`
+}
+
+type GetAllWorkoutDataBetweenDatesRow struct {
+	Name             string      `json:"name"`
+	Weight           float64     `json:"weight"`
+	Sets             float64     `json:"sets"`
+	Reps             int32       `json:"reps"`
+	Effort           float64     `json:"effort"`
+	Volume           float64     `json:"volume"`
+	Exertion         float64     `json:"exertion"`
+	TotalReps        float64     `json:"total_reps"`
+	DatePerformed    pgtype.Date `json:"date_performed"`
+	InterSessionCntr int16       `json:"inter_session_cntr"`
+	Time             [][]float64 `json:"time"`
+	Position         [][]float64 `json:"position"`
+	Velocity         [][]float64 `json:"velocity"`
+	Acceleration     [][]float64 `json:"acceleration"`
+	Jerk             [][]float64 `json:"jerk"`
+	Force            [][]float64 `json:"force"`
+	Impulse          [][]float64 `json:"impulse"`
+	Work             [][]float64 `json:"work"`
+}
+
+func (q *Queries) GetAllWorkoutDataBetweenDates(ctx context.Context, arg GetAllWorkoutDataBetweenDatesParams) ([]GetAllWorkoutDataBetweenDatesRow, error) {
+	rows, err := q.db.Query(ctx, getAllWorkoutDataBetweenDates, arg.Email, arg.Start, arg.Ending)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllWorkoutDataBetweenDatesRow
+	for rows.Next() {
+		var i GetAllWorkoutDataBetweenDatesRow
+		if err := rows.Scan(
+			&i.Name,
+			&i.Weight,
+			&i.Sets,
+			&i.Reps,
+			&i.Effort,
+			&i.Volume,
+			&i.Exertion,
+			&i.TotalReps,
+			&i.DatePerformed,
+			&i.InterSessionCntr,
 			&i.Time,
 			&i.Position,
 			&i.Velocity,

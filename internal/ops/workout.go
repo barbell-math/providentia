@@ -221,10 +221,7 @@ func ReadClientTotalNumExercises(
 		opErr = sberr.AppendError(types.CouldNotGetTotalNumExercisesErr, opErr)
 		return
 	}
-	state.Log.Log(
-		ctxt, sblog.VLevel(3),
-		"Read total num exercises for client",
-	)
+	state.Log.Log(ctxt, sblog.VLevel(3), "Read total num exercises for client")
 	return
 }
 
@@ -257,10 +254,7 @@ func ReadClientNumWorkouts(
 		opErr = sberr.AppendError(types.CouldNotGetNumWorkoutsErr, opErr)
 		return
 	}
-	state.Log.Log(
-		ctxt, sblog.VLevel(3),
-		"Read num workouts for client",
-	)
+	state.Log.Log(ctxt, sblog.VLevel(3), "Read num workouts for client")
 	return
 }
 
@@ -321,9 +315,101 @@ func ReadWorkoutsInDateRange(
 	ctxt context.Context,
 	state *types.State,
 	queries *dal.Queries,
+	clientEmail string,
 	start time.Time,
 	end time.Time,
 ) (res []types.Workout, opErr error) {
+	var rawData []dal.GetAllWorkoutDataBetweenDatesRow
+
+	if start.After(end) {
+		opErr = sberr.Wrap(
+			types.CouldNotFindRequestedWorkoutErr,
+			"Start date (%s) must be after end date (%s)",
+			start, end,
+		)
+		return
+	}
+
+	var ok bool
+	if ok, opErr = queries.ClientExists(ctxt, clientEmail); opErr != nil {
+		opErr = sberr.AppendError(types.CouldNotFindRequestedWorkoutErr, opErr)
+		return
+	} else if !ok {
+		opErr = sberr.AppendError(
+			types.CouldNotFindRequestedWorkoutErr,
+			sberr.Wrap(
+				types.CouldNotFindRequestedClientErr, "Client: %s", clientEmail,
+			),
+		)
+		return
+	}
+
+	rawData, opErr = queries.GetAllWorkoutDataBetweenDates(
+		ctxt,
+		dal.GetAllWorkoutDataBetweenDatesParams{
+			Email: clientEmail,
+			Start: pgtype.Date{
+				Time:             start,
+				InfinityModifier: pgtype.Finite,
+				Valid:            true,
+			},
+			Ending: pgtype.Date{
+				Time:             end,
+				InfinityModifier: pgtype.Finite,
+				Valid:            true,
+			},
+		},
+	)
+	if opErr != nil {
+		opErr = sberr.AppendError(
+			types.CouldNotFindRequestedWorkoutErr, opErr,
+		)
+		return
+	}
+	if len(rawData) == 0 {
+		goto readDateRangeDone
+	}
+
+	res = make([]types.Workout, 0, 10)
+	for i := range len(rawData) {
+		iterID := types.WorkoutID{
+			ClientEmail:   clientEmail,
+			Session:       uint16(rawData[i].InterSessionCntr),
+			DatePerformed: rawData[i].DatePerformed.Time,
+		}
+		if len(res) == 0 || res[len(res)-1].WorkoutID != iterID {
+			res = append(res, types.Workout{WorkoutID: iterID})
+		}
+		res[len(res)-1].Exercises = append(
+			res[len(res)-1].Exercises,
+			types.ExerciseData{
+				Name:         rawData[i].Name,
+				Weight:       rawData[i].Weight,
+				Sets:         rawData[i].Sets,
+				Reps:         rawData[i].Reps,
+				Effort:       rawData[i].Effort,
+				Volume:       rawData[i].Volume,
+				Exertion:     rawData[i].Exertion,
+				TotalReps:    rawData[i].TotalReps,
+				Time:         rawData[i].Time,
+				Position:     rawData[i].Position,
+				Velocity:     rawData[i].Velocity,
+				Acceleration: rawData[i].Acceleration,
+				Jerk:         rawData[i].Jerk,
+				Force:        rawData[i].Force,
+				Impulse:      rawData[i].Impulse,
+				Work:         rawData[i].Work,
+			},
+		)
+	}
+
+readDateRangeDone:
+	state.Log.Log(
+		ctxt, sblog.VLevel(3),
+		"Read workouts from client with date range",
+		"Num", len(res),
+	)
+
 	return
 }
 
@@ -333,6 +419,11 @@ func UpdateWorkouts(
 	queries *dal.Queries,
 	data ...types.RawWorkout,
 ) (opErr error) {
+	// TODO
+	// Does the workout already exist??
+	// What about upserting? That could get weird when the entire workout is
+	// being replaced...
+	// Delete then re-add? Would work well for checking if the workout exists
 	return
 }
 
@@ -340,7 +431,48 @@ func DeleteWorkouts(
 	ctxt context.Context,
 	state *types.State,
 	queries *dal.Queries,
-	data ...types.RawWorkout,
+	ids ...types.WorkoutID,
+) (opErr error) {
+	for _, id := range ids {
+		var count int64
+		count, opErr = queries.DeleteWorkout(
+			ctxt,
+			dal.DeleteWorkoutParams{
+				Email:            id.ClientEmail,
+				InterSessionCntr: int16(id.Session),
+				DatePerformed: pgtype.Date{
+					Time:             id.DatePerformed,
+					InfinityModifier: pgtype.Finite,
+					Valid:            true,
+				},
+			},
+		)
+		if opErr != nil {
+			opErr = sberr.AppendError(
+				types.CouldNotDeleteRequestedWorkoutErr, opErr,
+			)
+			return
+		}
+		if count == 0 {
+			opErr = sberr.Wrap(
+				types.CouldNotFindRequestedWorkoutErr,
+				"No data found for %+v", id,
+			)
+			return
+		}
+	}
+
+	state.Log.Log(ctxt, sblog.VLevel(3), "Deleted workouts", "Num", len(ids))
+	return
+}
+
+func DeleteWorkoutsInDateRange(
+	ctxt context.Context,
+	state *types.State,
+	queries *dal.Queries,
+	clientEmail string,
+	start time.Time,
+	end time.Time,
 ) (opErr error) {
 	return
 }
