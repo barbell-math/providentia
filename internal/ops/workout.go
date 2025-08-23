@@ -367,7 +367,11 @@ func ReadWorkoutsInDateRange(
 		return
 	}
 	if len(rawData) == 0 {
-		goto readDateRangeDone
+		opErr = sberr.Wrap(
+			types.CouldNotFindRequestedWorkoutErr,
+			"No data found for date range: [%s, %s]", start, end,
+		)
+		return
 	}
 
 	res = make([]types.Workout, 0, 10)
@@ -403,7 +407,6 @@ func ReadWorkoutsInDateRange(
 		)
 	}
 
-readDateRangeDone:
 	state.Log.Log(
 		ctxt, sblog.VLevel(3),
 		"Read workouts from client with date range",
@@ -473,6 +476,60 @@ func DeleteWorkoutsInDateRange(
 	clientEmail string,
 	start time.Time,
 	end time.Time,
-) (opErr error) {
+) (res int64, opErr error) {
+	if start.After(end) {
+		opErr = sberr.Wrap(
+			types.CouldNotFindRequestedWorkoutErr,
+			"Start date (%s) must be after end date (%s)",
+			start, end,
+		)
+		return
+	}
+
+	var ok bool
+	if ok, opErr = queries.ClientExists(ctxt, clientEmail); opErr != nil {
+		opErr = sberr.AppendError(types.CouldNotFindRequestedWorkoutErr, opErr)
+		return
+	} else if !ok {
+		opErr = sberr.AppendError(
+			types.CouldNotFindRequestedWorkoutErr,
+			sberr.Wrap(
+				types.CouldNotFindRequestedClientErr, "Client: %s", clientEmail,
+			),
+		)
+		return
+	}
+
+	res, opErr = queries.DeleteWorkoutsBetweenDates(
+		ctxt,
+		dal.DeleteWorkoutsBetweenDatesParams{
+			Email: clientEmail,
+			Start: pgtype.Date{
+				Time:             start,
+				InfinityModifier: pgtype.Finite,
+				Valid:            true,
+			},
+			Ending: pgtype.Date{
+				Time:             end,
+				InfinityModifier: pgtype.Finite,
+				Valid:            true,
+			},
+		},
+	)
+	if opErr != nil {
+		opErr = sberr.AppendError(
+			types.CouldNotDeleteRequestedWorkoutErr, opErr,
+		)
+		return
+	}
+	if res == 0 {
+		opErr = sberr.Wrap(
+			types.CouldNotFindRequestedWorkoutErr,
+			"No data found for date range: [%s, %s]", start, end,
+		)
+		return
+	}
+
+	state.Log.Log(ctxt, sblog.VLevel(3), "Deleted workouts", "Num", res)
 	return
 }

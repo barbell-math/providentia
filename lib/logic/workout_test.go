@@ -20,6 +20,7 @@ func TestRawWorkout(t *testing.T) {
 	// TODO
 	// t.Run("addUpdateGet", clientAddUpdateGet)
 	t.Run("addDeleteGet", workoutAddDeleteGet)
+	t.Run("addDeleteGetDateRange", workoutAddDeleteGetDateRange)
 }
 
 func workoutFailingNoWrites(t *testing.T) {
@@ -722,7 +723,20 @@ func workoutAddGetDateRange(t *testing.T) {
 	sbtest.ContainsError(
 		t, types.CouldNotFindRequestedClientErr, err, "Client: ",
 	)
+
+	res, err = ReadWorkoutsInDateRange(
+		ctxt, "email@email.com",
+		sbtest.MustParseTime(time.DateOnly, "2025-01-05"),
+		sbtest.MustParseTime(time.DateOnly, "2025-01-06"),
+	)
+	sbtest.Eq(t, len(res), 0)
+	sbtest.ContainsError(
+		t, types.CouldNotFindRequestedWorkoutErr, err,
+		"No data found for date range",
+	)
 }
+
+// TODO - workoutAddUpdateGet
 
 func workoutAddDeleteGet(t *testing.T) {
 	ctxt, cleanup := resetApp(context.Background())
@@ -843,4 +857,177 @@ func workoutAddDeleteGet(t *testing.T) {
 	sbtest.ContainsError(t, types.CouldNotFindRequestedWorkoutErr, err)
 	res, err = ReadWorkoutsByID(ctxt, workouts[1].WorkoutID)
 	sbtest.ContainsError(t, types.CouldNotFindRequestedWorkoutErr, err)
+
+	err = DeleteWorkouts(ctxt, workouts[1].WorkoutID)
+	sbtest.ContainsError(t, types.CouldNotFindRequestedWorkoutErr, err)
+	numExercises, err = ReadClientTotalNumExercises(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 0, numExercises)
+	numRawWorkouts, err = ReadClientNumWorkouts(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 0, numRawWorkouts)
+	numPhysEntries, err = ReadClientTotalNumPhysEntries(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 0, numPhysEntries)
+	res, err = ReadWorkoutsByID(ctxt, workouts[0].WorkoutID)
+	sbtest.ContainsError(t, types.CouldNotFindRequestedWorkoutErr, err)
+	res, err = ReadWorkoutsByID(ctxt, workouts[1].WorkoutID)
+	sbtest.ContainsError(t, types.CouldNotFindRequestedWorkoutErr, err)
+}
+
+func workoutAddDeleteGetDateRange(t *testing.T) {
+	ctxt, cleanup := resetApp(context.Background())
+	t.Cleanup(cleanup)
+
+	err := CreateClients(ctxt, types.Client{
+		FirstName: "FName", LastName: "LName", Email: "email@email.com",
+	})
+
+	workouts := [3]types.RawWorkout{
+		types.RawWorkout{
+			WorkoutID: types.WorkoutID{
+				ClientEmail:   "email@email.com",
+				Session:       1,
+				DatePerformed: sbtest.MustParseTime(time.DateOnly, "2025-01-02"),
+			},
+			Exercises: []types.RawExerciseData{
+				types.RawExerciseData{
+					Name:   "Squat",
+					Weight: 355,
+					Sets:   2,
+					Reps:   5,
+					Effort: 8.5,
+					BarPath: []types.BarPathVariant{
+						types.BarPathTimeSeriesData(types.RawTimeSeriesData{
+							TimeData:     []float64{0, 1, 2, 3, 4, 5, 6},
+							PositionData: []float64{0, 1, 2, 3, 4, 5, 6},
+						}),
+						types.BarPathTimeSeriesData(types.RawTimeSeriesData{
+							TimeData:     []float64{0, 1, 2, 3, 4, 5, 6},
+							PositionData: []float64{0, 1, 2, 3, 4, 5, 6},
+						}),
+					},
+				},
+			},
+		},
+		types.RawWorkout{
+			WorkoutID: types.WorkoutID{
+				ClientEmail:   "email@email.com",
+				Session:       1,
+				DatePerformed: sbtest.MustParseTime(time.DateOnly, "2025-01-03"),
+			},
+			Exercises: []types.RawExerciseData{
+				types.RawExerciseData{
+					Name:   "Bench",
+					Weight: 135,
+					Sets:   1,
+					Reps:   8,
+					Effort: 5,
+				},
+			},
+		},
+		types.RawWorkout{
+			WorkoutID: types.WorkoutID{
+				ClientEmail:   "email@email.com",
+				Session:       1,
+				DatePerformed: sbtest.MustParseTime(time.DateOnly, "2025-01-04"),
+			},
+			Exercises: []types.RawExerciseData{
+				types.RawExerciseData{
+					Name:   "Deadlift",
+					Weight: 405,
+					Sets:   2,
+					Reps:   6,
+					Effort: 7,
+				},
+			},
+		},
+	}
+
+	err = CreateWorkouts(ctxt, workouts[:]...)
+	sbtest.Nil(t, err)
+	numExercises, err := ReadClientTotalNumExercises(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 3, numExercises)
+	numRawWorkouts, err := ReadClientNumWorkouts(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 3, numRawWorkouts)
+	numPhysEntries, err := ReadClientTotalNumPhysEntries(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 1, numPhysEntries)
+
+	res, err := DeleteWorkoutsInDateRange(
+		ctxt, "email@email.com",
+		sbtest.MustParseTime(time.DateOnly, "2025-01-05"),
+		sbtest.MustParseTime(time.DateOnly, "2025-01-06"),
+	)
+	sbtest.ContainsError(
+		t, types.CouldNotFindRequestedWorkoutErr, err,
+		"No data found for date range",
+	)
+	sbtest.Eq(t, res, 0)
+
+	res, err = DeleteWorkoutsInDateRange(
+		ctxt, "bad@email.com",
+		sbtest.MustParseTime(time.DateOnly, "2025-01-01"),
+		sbtest.MustParseTime(time.DateOnly, "2025-01-06"),
+	)
+	sbtest.ContainsError(t, types.CouldNotFindRequestedWorkoutErr, err)
+	sbtest.ContainsError(t, types.CouldNotFindRequestedClientErr, err)
+	sbtest.Eq(t, res, 0)
+
+	res, err = DeleteWorkoutsInDateRange(
+		ctxt, "email@email.com",
+		sbtest.MustParseTime(time.DateOnly, "2025-01-06"),
+		sbtest.MustParseTime(time.DateOnly, "2025-01-01"),
+	)
+	sbtest.ContainsError(
+		t, types.CouldNotFindRequestedWorkoutErr, err,
+		"must be after end date",
+	)
+	sbtest.Eq(t, res, 0)
+
+	res, err = DeleteWorkoutsInDateRange(
+		ctxt, "email@email.com",
+		sbtest.MustParseTime(time.DateOnly, "2025-01-02"),
+		sbtest.MustParseTime(time.DateOnly, "2025-01-02"),
+	)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, res, 1)
+	remaining, err := ReadWorkoutsInDateRange(
+		ctxt, "email@email.com",
+		sbtest.MustParseTime(time.DateOnly, "2025-01-01"),
+		sbtest.MustParseTime(time.DateOnly, "2025-01-06"),
+	)
+	sbtest.Nil(t, err)
+	rawWorkoutEqSavedWorkout(t, workouts[1:3], remaining)
+
+	res, err = DeleteWorkoutsInDateRange(
+		ctxt, "email@email.com",
+		sbtest.MustParseTime(time.DateOnly, "2025-01-02"),
+		sbtest.MustParseTime(time.DateOnly, "2025-01-04"),
+	)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, res, 2)
+	remaining, err = ReadWorkoutsInDateRange(
+		ctxt, "email@email.com",
+		sbtest.MustParseTime(time.DateOnly, "2025-01-01"),
+		sbtest.MustParseTime(time.DateOnly, "2025-01-06"),
+	)
+	sbtest.ContainsError(
+		t, types.CouldNotFindRequestedWorkoutErr, err,
+		"No data found for date range",
+	)
+	sbtest.Eq(t, len(remaining), 0)
+
+	res, err = DeleteWorkoutsInDateRange(
+		ctxt, "email@email.com",
+		sbtest.MustParseTime(time.DateOnly, "2025-01-01"),
+		sbtest.MustParseTime(time.DateOnly, "2025-01-06"),
+	)
+	sbtest.ContainsError(
+		t, types.CouldNotFindRequestedWorkoutErr, err,
+		"No data found for date range",
+	)
+	sbtest.Eq(t, res, 0)
 }

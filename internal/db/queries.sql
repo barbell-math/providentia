@@ -212,6 +212,17 @@ WITH deleted_exercises AS (
 	RETURNING providentia.training_log.id
 ) SELECT COUNT(*) FROM deleted_exercises;
 
+-- name: DeleteWorkoutsBetweenDates :one
+WITH deleted_exercises AS (
+	DELETE FROM providentia.training_log
+	USING providentia.client
+	WHERE
+		providentia.client.id = providentia.training_log.client_id AND
+		providentia.client.email = $1 AND
+		providentia.training_log.date_performed BETWEEN @start::DATE AND @ending::DATE
+	RETURNING providentia.training_log.id
+) SELECT COUNT(*) FROM deleted_exercises;
+
 
 
 -- name: CreatePhysicsData :one

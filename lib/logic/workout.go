@@ -134,7 +134,8 @@ func ReadWorkoutsByID(
 // Gets the workouts for the supplied client in the supplied date range. If the
 // supplied client does not exist no workouts will be returned and an error
 // will be returned. If `start` is after `end` no workouts will be returned and
-// an error will be returned.
+// an error will be returned. If no workouts exists between `start` and `end` an
+// error will be returned.
 //
 // Both `start` and `end` are inclusive.
 //
@@ -156,12 +157,44 @@ func ReadWorkoutsInDateRange(
 	return
 }
 
+// Deletes the workout data associated with the supplied ids if they exist. If
+// they do not exist an error will be returned.
+//
+// The context must have a [types.State] variable.
+//
+// If any error occurs no changes will be made to the database.
 func DeleteWorkouts(
 	ctxt context.Context,
 	ids ...types.WorkoutID,
 ) (opErr error) {
 	opErr = runOp(ctxt, func(state *types.State, queries *dal.Queries) (err error) {
 		err = ops.DeleteWorkouts(ctxt, state, queries, ids...)
+		return err
+	})
+	return
+}
+
+// Deletes the workouts for the supplied client in the supplied date range
+// returning the number of deleted workouts. If the supplied client does not
+// exist no workouts will be deleted and an error will be returned. If `start`
+// is after `end` no workouts will be deleted and an error will be returned. If
+// no workouts exists between `start` and `end` an error will be returned.
+//
+// Both `start` and `end` are inclusive.
+//
+// The context must have a [types.State] variable.
+//
+// If any error occurs no changes will be made to the database.
+func DeleteWorkoutsInDateRange(
+	ctxt context.Context,
+	clientEmail string,
+	start time.Time,
+	end time.Time,
+) (res int64, opErr error) {
+	opErr = runOp(ctxt, func(state *types.State, queries *dal.Queries) (err error) {
+		res, err = ops.DeleteWorkoutsInDateRange(
+			ctxt, state, queries, clientEmail, start, end,
+		)
 		return err
 	})
 	return

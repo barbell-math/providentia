@@ -266,6 +266,31 @@ func (q *Queries) DeleteWorkout(ctx context.Context, arg DeleteWorkoutParams) (i
 	return count, err
 }
 
+const deleteWorkoutsBetweenDates = `-- name: DeleteWorkoutsBetweenDates :one
+WITH deleted_exercises AS (
+	DELETE FROM providentia.training_log
+	USING providentia.client
+	WHERE
+		providentia.client.id = providentia.training_log.client_id AND
+		providentia.client.email = $1 AND
+		providentia.training_log.date_performed BETWEEN $2::DATE AND $3::DATE
+	RETURNING providentia.training_log.id
+) SELECT COUNT(*) FROM deleted_exercises
+`
+
+type DeleteWorkoutsBetweenDatesParams struct {
+	Email  string      `json:"email"`
+	Start  pgtype.Date `json:"start"`
+	Ending pgtype.Date `json:"ending"`
+}
+
+func (q *Queries) DeleteWorkoutsBetweenDates(ctx context.Context, arg DeleteWorkoutsBetweenDatesParams) (int64, error) {
+	row := q.db.QueryRow(ctx, deleteWorkoutsBetweenDates, arg.Email, arg.Start, arg.Ending)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getAllClientsTrainingLogData = `-- name: GetAllClientsTrainingLogData :many
 SELECT
 	providentia.client.email,
