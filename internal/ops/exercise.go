@@ -152,6 +152,7 @@ func DeleteExercises(
 	names ...string,
 ) (opErr error) {
 	// TODO - delete all referenced training log data, video data, model data
+	// Is this properly handled by cascade??
 
 	for _, n := range names {
 		state.ExerciseCache.Invalidate(n)
