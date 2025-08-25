@@ -19,7 +19,7 @@ func NewClientCacheLoader(
 	) (res types.IdWrapper[int64, types.Client], err error) {
 		queries.Run(func(q *Queries) {
 			// TODO - some kind of check would be nice...
-			// _=types.IdWrapper[uint64, types.Client](Client{})
+			// _=types.IdWrapper[int64, types.Client](Client{})
 			var tmp Client
 			tmp, err = q.GetFullClientByEmail(ctxt, key)
 			res = *(*types.IdWrapper[int64, types.Client])(unsafe.Pointer(&tmp))
@@ -41,7 +41,7 @@ func NewExerciseCacheLoader(
 	) (res types.IdWrapper[int32, types.Exercise], err error) {
 		queries.Run(func(q *Queries) {
 			// TODO - some kind of check would be nice...
-			// _=types.IdWrapper[uint32, types.Exercise](Client{})
+			// _=types.IdWrapper[int32, types.Exercise](Client{})
 			var tmp Exercise
 			tmp, err = q.GetFullExerciseByName(ctxt, key)
 			res = *(*types.IdWrapper[int32, types.Exercise])(unsafe.Pointer(&tmp))

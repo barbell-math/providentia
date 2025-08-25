@@ -16,8 +16,12 @@ type (
 	// Configuration that is used when parsing, generating, and utilizing
 	// physics data.
 	PhysicsDataConf struct {
-		MinNumSamples uint
-		TimeDeltaEps  float64
+		MinNumSamples uint64
+		TimeDeltaEps  Second
+	}
+
+	BarPathCalcConf struct {
+		ApproxErr ApproximationError
 	}
 
 	// Holds all configuration data for the library. Used to define the state of
@@ -29,6 +33,7 @@ type (
 
 		Global      GlobalConf
 		PhysicsData PhysicsDataConf
+		BarPathCalc BarPathCalcConf
 
 		// Configuraiton that is used when setting up the physics job queue. The
 		// physics job queue is responsible for taking position time series data

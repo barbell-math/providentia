@@ -11,6 +11,100 @@ import (
 )
 
 const (
+	// SecondOrder is a ApproximationError of type SecondOrder.
+	SecondOrder ApproximationError = iota + 2
+	// FourthOrder is a ApproximationError of type FourthOrder.
+	FourthOrder ApproximationError = iota + 3
+)
+
+var ErrInvalidApproximationError = fmt.Errorf("not a valid ApproximationError, try [%s]", strings.Join(_ApproximationErrorNames, ", "))
+
+const _ApproximationErrorName = "SecondOrderFourthOrder"
+
+var _ApproximationErrorNames = []string{
+	_ApproximationErrorName[0:11],
+	_ApproximationErrorName[11:22],
+}
+
+// ApproximationErrorNames returns a list of possible string values of ApproximationError.
+func ApproximationErrorNames() []string {
+	tmp := make([]string, len(_ApproximationErrorNames))
+	copy(tmp, _ApproximationErrorNames)
+	return tmp
+}
+
+// ApproximationErrorValues returns a list of the values for ApproximationError
+func ApproximationErrorValues() []ApproximationError {
+	return []ApproximationError{
+		SecondOrder,
+		FourthOrder,
+	}
+}
+
+var _ApproximationErrorMap = map[ApproximationError]string{
+	SecondOrder: _ApproximationErrorName[0:11],
+	FourthOrder: _ApproximationErrorName[11:22],
+}
+
+// String implements the Stringer interface.
+func (x ApproximationError) String() string {
+	if str, ok := _ApproximationErrorMap[x]; ok {
+		return str
+	}
+	return fmt.Sprintf("ApproximationError(%d)", x)
+}
+
+// IsValid provides a quick way to determine if the typed value is
+// part of the allowed enumerated values
+func (x ApproximationError) IsValid() bool {
+	_, ok := _ApproximationErrorMap[x]
+	return ok
+}
+
+var _ApproximationErrorValue = map[string]ApproximationError{
+	_ApproximationErrorName[0:11]:                   SecondOrder,
+	strings.ToLower(_ApproximationErrorName[0:11]):  SecondOrder,
+	_ApproximationErrorName[11:22]:                  FourthOrder,
+	strings.ToLower(_ApproximationErrorName[11:22]): FourthOrder,
+}
+
+// ParseApproximationError attempts to convert a string to a ApproximationError.
+func ParseApproximationError(name string) (ApproximationError, error) {
+	if x, ok := _ApproximationErrorValue[name]; ok {
+		return x, nil
+	}
+	// Case insensitive parse, do a separate lookup to prevent unnecessary cost of lowercasing a string if we don't need to.
+	if x, ok := _ApproximationErrorValue[strings.ToLower(name)]; ok {
+		return x, nil
+	}
+	return ApproximationError(0), fmt.Errorf("%s is %w", name, ErrInvalidApproximationError)
+}
+
+// MarshalText implements the text marshaller method.
+func (x ApproximationError) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
+}
+
+// UnmarshalText implements the text unmarshaller method.
+func (x *ApproximationError) UnmarshalText(text []byte) error {
+	name := string(text)
+	tmp, err := ParseApproximationError(name)
+	if err != nil {
+		return err
+	}
+	*x = tmp
+	return nil
+}
+
+// AppendText appends the textual representation of itself to the end of b
+// (allocating a larger slice if necessary) and returns the updated slice.
+//
+// Implementations must not retain b, nor mutate any bytes within b[:len(b)].
+func (x *ApproximationError) AppendText(b []byte) ([]byte, error) {
+	return append(b, x.String()...), nil
+}
+
+const (
 	// UnknownExerciseFocus is a ExerciseFocus of type UnknownExerciseFocus.
 	UnknownExerciseFocus ExerciseFocus = iota
 	// Squat is a ExerciseFocus of type Squat.

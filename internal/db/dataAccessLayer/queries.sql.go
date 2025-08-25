@@ -182,15 +182,15 @@ INSERT INTO providentia.physics_data(
 `
 
 type CreatePhysicsDataParams struct {
-	Path         []string    `json:"path"`
-	Time         [][]float64 `json:"time"`
-	Position     [][]float64 `json:"position"`
-	Velocity     [][]float64 `json:"velocity"`
-	Acceleration [][]float64 `json:"acceleration"`
-	Jerk         [][]float64 `json:"jerk"`
-	Force        [][]float64 `json:"force"`
-	Impulse      [][]float64 `json:"impulse"`
-	Work         [][]float64 `json:"work"`
+	Path         []string                           `json:"path"`
+	Time         [][]types.Second                   `json:"time"`
+	Position     [][]types.Vec2[types.Meter]        `json:"position"`
+	Velocity     [][]types.Vec2[types.MeterPerSec]  `json:"velocity"`
+	Acceleration [][]types.Vec2[types.MeterPerSec2] `json:"acceleration"`
+	Jerk         [][]types.Vec2[types.MeterPerSec3] `json:"jerk"`
+	Force        [][]types.Vec2[types.Newton]       `json:"force"`
+	Impulse      [][]types.Vec2[types.NewtonSec]    `json:"impulse"`
+	Work         [][]types.Vec2[types.Joule]        `json:"work"`
 }
 
 func (q *Queries) CreatePhysicsData(ctx context.Context, arg CreatePhysicsDataParams) (int64, error) {
@@ -403,22 +403,22 @@ type GetAllWorkoutDataParams struct {
 }
 
 type GetAllWorkoutDataRow struct {
-	Name         string      `json:"name"`
-	Weight       float64     `json:"weight"`
-	Sets         float64     `json:"sets"`
-	Reps         int32       `json:"reps"`
-	Effort       float64     `json:"effort"`
-	Volume       float64     `json:"volume"`
-	Exertion     float64     `json:"exertion"`
-	TotalReps    float64     `json:"total_reps"`
-	Time         [][]float64 `json:"time"`
-	Position     [][]float64 `json:"position"`
-	Velocity     [][]float64 `json:"velocity"`
-	Acceleration [][]float64 `json:"acceleration"`
-	Jerk         [][]float64 `json:"jerk"`
-	Force        [][]float64 `json:"force"`
-	Impulse      [][]float64 `json:"impulse"`
-	Work         [][]float64 `json:"work"`
+	Name         string                             `json:"name"`
+	Weight       float64                            `json:"weight"`
+	Sets         float64                            `json:"sets"`
+	Reps         int32                              `json:"reps"`
+	Effort       float64                            `json:"effort"`
+	Volume       float64                            `json:"volume"`
+	Exertion     float64                            `json:"exertion"`
+	TotalReps    float64                            `json:"total_reps"`
+	Time         [][]types.Second                   `json:"time"`
+	Position     [][]types.Vec2[types.Meter]        `json:"position"`
+	Velocity     [][]types.Vec2[types.MeterPerSec]  `json:"velocity"`
+	Acceleration [][]types.Vec2[types.MeterPerSec2] `json:"acceleration"`
+	Jerk         [][]types.Vec2[types.MeterPerSec3] `json:"jerk"`
+	Force        [][]types.Vec2[types.Newton]       `json:"force"`
+	Impulse      [][]types.Vec2[types.NewtonSec]    `json:"impulse"`
+	Work         [][]types.Vec2[types.Joule]        `json:"work"`
 }
 
 func (q *Queries) GetAllWorkoutData(ctx context.Context, arg GetAllWorkoutDataParams) ([]GetAllWorkoutDataRow, error) {
@@ -501,24 +501,24 @@ type GetAllWorkoutDataBetweenDatesParams struct {
 }
 
 type GetAllWorkoutDataBetweenDatesRow struct {
-	Name             string      `json:"name"`
-	Weight           float64     `json:"weight"`
-	Sets             float64     `json:"sets"`
-	Reps             int32       `json:"reps"`
-	Effort           float64     `json:"effort"`
-	Volume           float64     `json:"volume"`
-	Exertion         float64     `json:"exertion"`
-	TotalReps        float64     `json:"total_reps"`
-	DatePerformed    pgtype.Date `json:"date_performed"`
-	InterSessionCntr int16       `json:"inter_session_cntr"`
-	Time             [][]float64 `json:"time"`
-	Position         [][]float64 `json:"position"`
-	Velocity         [][]float64 `json:"velocity"`
-	Acceleration     [][]float64 `json:"acceleration"`
-	Jerk             [][]float64 `json:"jerk"`
-	Force            [][]float64 `json:"force"`
-	Impulse          [][]float64 `json:"impulse"`
-	Work             [][]float64 `json:"work"`
+	Name             string                             `json:"name"`
+	Weight           float64                            `json:"weight"`
+	Sets             float64                            `json:"sets"`
+	Reps             int32                              `json:"reps"`
+	Effort           float64                            `json:"effort"`
+	Volume           float64                            `json:"volume"`
+	Exertion         float64                            `json:"exertion"`
+	TotalReps        float64                            `json:"total_reps"`
+	DatePerformed    pgtype.Date                        `json:"date_performed"`
+	InterSessionCntr int16                              `json:"inter_session_cntr"`
+	Time             [][]types.Second                   `json:"time"`
+	Position         [][]types.Vec2[types.Meter]        `json:"position"`
+	Velocity         [][]types.Vec2[types.MeterPerSec]  `json:"velocity"`
+	Acceleration     [][]types.Vec2[types.MeterPerSec2] `json:"acceleration"`
+	Jerk             [][]types.Vec2[types.MeterPerSec3] `json:"jerk"`
+	Force            [][]types.Vec2[types.Newton]       `json:"force"`
+	Impulse          [][]types.Vec2[types.NewtonSec]    `json:"impulse"`
+	Work             [][]types.Vec2[types.Joule]        `json:"work"`
 }
 
 func (q *Queries) GetAllWorkoutDataBetweenDates(ctx context.Context, arg GetAllWorkoutDataBetweenDatesParams) ([]GetAllWorkoutDataBetweenDatesRow, error) {

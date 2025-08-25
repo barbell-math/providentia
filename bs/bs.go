@@ -14,10 +14,7 @@ func main() {
 	)
 	sbbs.RegisterSqlcTargets()
 	sbbs.RegisterGoEnumTargets()
-	sbbs.RegisterCommonGoCmdTargets(sbbs.AllGoTargets().
-		// TODO - eventually replace with default target once old dir is deleted
-		SetTestTarget(sbbs.DefaultGoTestTargetName, "-v", "./lib/logic/..."),
-	)
+	sbbs.RegisterCommonGoCmdTargets(sbbs.AllGoTargets())
 	sbbs.RegisterMergegateTarget(sbbs.NewMergegateTargets().
 		SetPreStages(
 			sbbs.TargetAsStage("install.goenum"),

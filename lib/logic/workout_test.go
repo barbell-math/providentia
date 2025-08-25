@@ -118,8 +118,13 @@ func workoutSetTimeAndPosDiffLen(ctxt context.Context) func(t *testing.T) {
 					BarPath: []types.BarPathVariant{
 						types.BarPathTimeSeriesData(
 							types.RawTimeSeriesData{
-								TimeData:     []float64{0, 1, 2},
-								PositionData: []float64{0, 1, 2, 3},
+								TimeData: []types.Second{0, 1, 2},
+								PositionData: []types.Vec2[types.Meter]{
+									types.Vec2[types.Meter]{X: 0, Y: 0},
+									types.Vec2[types.Meter]{X: 1, Y: 1},
+									types.Vec2[types.Meter]{X: 2, Y: 2},
+									types.Vec2[types.Meter]{X: 3, Y: 3},
+								},
 							},
 						),
 					},
@@ -148,8 +153,13 @@ func workoutSetNotEnoughSamples(ctxt context.Context) func(t *testing.T) {
 					BarPath: []types.BarPathVariant{
 						types.BarPathTimeSeriesData(
 							types.RawTimeSeriesData{
-								TimeData:     []float64{0, 1, 2, 3},
-								PositionData: []float64{0, 1, 2, 3},
+								TimeData: []types.Second{0, 1, 2, 3},
+								PositionData: []types.Vec2[types.Meter]{
+									types.Vec2[types.Meter]{X: 0, Y: 0},
+									types.Vec2[types.Meter]{X: 1, Y: 1},
+									types.Vec2[types.Meter]{X: 2, Y: 2},
+									types.Vec2[types.Meter]{X: 3, Y: 3},
+								},
 							},
 						),
 					},
@@ -178,8 +188,14 @@ func workoutSetBackwardsTime(ctxt context.Context) func(t *testing.T) {
 					BarPath: []types.BarPathVariant{
 						types.BarPathTimeSeriesData(
 							types.RawTimeSeriesData{
-								TimeData:     []float64{1, 0, 2, 3, 4},
-								PositionData: []float64{0, 1, 2, 3, 4},
+								TimeData: []types.Second{0, 2, 1, 3, 4},
+								PositionData: []types.Vec2[types.Meter]{
+									types.Vec2[types.Meter]{X: 0, Y: 0},
+									types.Vec2[types.Meter]{X: 1, Y: 1},
+									types.Vec2[types.Meter]{X: 2, Y: 2},
+									types.Vec2[types.Meter]{X: 3, Y: 3},
+									types.Vec2[types.Meter]{X: 4, Y: 4},
+								},
 							},
 						),
 					},
@@ -209,8 +225,14 @@ func workoutSetDiffTimeDelta(ctxt context.Context) func(t *testing.T) {
 					BarPath: []types.BarPathVariant{
 						types.BarPathTimeSeriesData(
 							types.RawTimeSeriesData{
-								TimeData:     []float64{0, 1, 3, 3, 4},
-								PositionData: []float64{0, 1, 2, 3, 4},
+								TimeData: []types.Second{0, 1, 1, 3, 4},
+								PositionData: []types.Vec2[types.Meter]{
+									types.Vec2[types.Meter]{X: 0, Y: 0},
+									types.Vec2[types.Meter]{X: 1, Y: 1},
+									types.Vec2[types.Meter]{X: 2, Y: 2},
+									types.Vec2[types.Meter]{X: 3, Y: 3},
+									types.Vec2[types.Meter]{X: 4, Y: 4},
+								},
 							},
 						),
 					},
@@ -274,9 +296,7 @@ func workoutSetInvalidVideoFile(ctxt context.Context) func(t *testing.T) {
 	}
 }
 
-func workoutSetNotEnoughBarPathEntries(
-	ctxt context.Context,
-) func(t *testing.T) {
+func workoutSetNotEnoughBarPathEntries(ctxt context.Context) func(t *testing.T) {
 	return func(t *testing.T) {
 		err := CreateWorkouts(ctxt, types.RawWorkout{
 			WorkoutID: types.WorkoutID{
@@ -290,14 +310,26 @@ func workoutSetNotEnoughBarPathEntries(
 					BarPath: []types.BarPathVariant{
 						types.BarPathTimeSeriesData(
 							types.RawTimeSeriesData{
-								TimeData:     []float64{0, 1, 2, 3, 4},
-								PositionData: []float64{0, 1, 2, 3, 4},
+								TimeData: []types.Second{0, 1, 2, 3, 4},
+								PositionData: []types.Vec2[types.Meter]{
+									types.Vec2[types.Meter]{X: 0, Y: 0},
+									types.Vec2[types.Meter]{X: 1, Y: 1},
+									types.Vec2[types.Meter]{X: 2, Y: 2},
+									types.Vec2[types.Meter]{X: 3, Y: 3},
+									types.Vec2[types.Meter]{X: 4, Y: 4},
+								},
 							},
 						),
 						types.BarPathTimeSeriesData(
 							types.RawTimeSeriesData{
-								TimeData:     []float64{0, 1, 2, 3, 4},
-								PositionData: []float64{0, 1, 2, 3, 4},
+								TimeData: []types.Second{0, 1, 2, 3, 4},
+								PositionData: []types.Vec2[types.Meter]{
+									types.Vec2[types.Meter]{X: 0, Y: 0},
+									types.Vec2[types.Meter]{X: 1, Y: 1},
+									types.Vec2[types.Meter]{X: 2, Y: 2},
+									types.Vec2[types.Meter]{X: 3, Y: 3},
+									types.Vec2[types.Meter]{X: 4, Y: 4},
+								},
 							},
 						),
 					},
@@ -328,14 +360,26 @@ func workoutSetFractionalSetsAndExercisesLen(
 					BarPath: []types.BarPathVariant{
 						types.BarPathTimeSeriesData(
 							types.RawTimeSeriesData{
-								TimeData:     []float64{0, 1, 2, 3, 4},
-								PositionData: []float64{0, 1, 2, 3, 4},
+								TimeData: []types.Second{0, 1, 2, 3, 4},
+								PositionData: []types.Vec2[types.Meter]{
+									types.Vec2[types.Meter]{X: 0, Y: 0},
+									types.Vec2[types.Meter]{X: 1, Y: 1},
+									types.Vec2[types.Meter]{X: 2, Y: 2},
+									types.Vec2[types.Meter]{X: 3, Y: 3},
+									types.Vec2[types.Meter]{X: 4, Y: 4},
+								},
 							},
 						),
 						types.BarPathTimeSeriesData(
 							types.RawTimeSeriesData{
-								TimeData:     []float64{0, 1, 2, 3, 4},
-								PositionData: []float64{0, 1, 2, 3, 4},
+								TimeData: []types.Second{0, 1, 2, 3, 4},
+								PositionData: []types.Vec2[types.Meter]{
+									types.Vec2[types.Meter]{X: 0, Y: 0},
+									types.Vec2[types.Meter]{X: 1, Y: 1},
+									types.Vec2[types.Meter]{X: 2, Y: 2},
+									types.Vec2[types.Meter]{X: 3, Y: 3},
+									types.Vec2[types.Meter]{X: 4, Y: 4},
+								},
 							},
 						),
 					},
@@ -374,8 +418,16 @@ func workoutDuplicateWorkout(t *testing.T) {
 					Effort: 8.5,
 					BarPath: []types.BarPathVariant{
 						types.BarPathTimeSeriesData(types.RawTimeSeriesData{
-							TimeData:     []float64{0, 1, 2, 3, 4, 5, 6},
-							PositionData: []float64{0, 1, 2, 3, 4, 5, 6},
+							TimeData: []types.Second{0, 1, 2, 3, 4, 5, 6},
+							PositionData: []types.Vec2[types.Meter]{
+								types.Vec2[types.Meter]{X: 0, Y: 0},
+								types.Vec2[types.Meter]{X: 1, Y: 1},
+								types.Vec2[types.Meter]{X: 2, Y: 2},
+								types.Vec2[types.Meter]{X: 3, Y: 3},
+								types.Vec2[types.Meter]{X: 4, Y: 4},
+								types.Vec2[types.Meter]{X: 5, Y: 5},
+								types.Vec2[types.Meter]{X: 6, Y: 6},
+							},
 						}),
 					},
 				},
@@ -513,12 +565,28 @@ func workoutAddGetTimeSeriesPhysicsData(t *testing.T) {
 					Effort: 8.5,
 					BarPath: []types.BarPathVariant{
 						types.BarPathTimeSeriesData(types.RawTimeSeriesData{
-							TimeData:     []float64{0, 1, 2, 3, 4, 5, 6},
-							PositionData: []float64{0, 1, 2, 3, 4, 5, 6},
+							TimeData: []types.Second{0, 1, 2, 3, 4, 5, 6},
+							PositionData: []types.Vec2[types.Meter]{
+								types.Vec2[types.Meter]{X: 0, Y: 0},
+								types.Vec2[types.Meter]{X: 1, Y: 1},
+								types.Vec2[types.Meter]{X: 2, Y: 2},
+								types.Vec2[types.Meter]{X: 3, Y: 3},
+								types.Vec2[types.Meter]{X: 4, Y: 4},
+								types.Vec2[types.Meter]{X: 5, Y: 5},
+								types.Vec2[types.Meter]{X: 6, Y: 6},
+							},
 						}),
 						types.BarPathTimeSeriesData(types.RawTimeSeriesData{
-							TimeData:     []float64{0, 1, 2, 3, 4, 5, 6},
-							PositionData: []float64{0, 1, 2, 3, 4, 5, 6},
+							TimeData: []types.Second{0, 1, 2, 3, 4, 5, 6},
+							PositionData: []types.Vec2[types.Meter]{
+								types.Vec2[types.Meter]{X: 0, Y: 0},
+								types.Vec2[types.Meter]{X: 1, Y: 1},
+								types.Vec2[types.Meter]{X: 2, Y: 2},
+								types.Vec2[types.Meter]{X: 3, Y: 3},
+								types.Vec2[types.Meter]{X: 4, Y: 4},
+								types.Vec2[types.Meter]{X: 5, Y: 5},
+								types.Vec2[types.Meter]{X: 6, Y: 6},
+							},
 						}),
 					},
 				},
@@ -530,8 +598,16 @@ func workoutAddGetTimeSeriesPhysicsData(t *testing.T) {
 					Effort: 5,
 					BarPath: []types.BarPathVariant{
 						types.BarPathTimeSeriesData(types.RawTimeSeriesData{
-							TimeData:     []float64{0, 1, 2, 3, 4, 5, 6},
-							PositionData: []float64{0, 1, 2, 3, 4, 5, 6},
+							TimeData: []types.Second{0, 1, 2, 3, 4, 5, 6},
+							PositionData: []types.Vec2[types.Meter]{
+								types.Vec2[types.Meter]{X: 0, Y: 0},
+								types.Vec2[types.Meter]{X: 1, Y: 1},
+								types.Vec2[types.Meter]{X: 2, Y: 2},
+								types.Vec2[types.Meter]{X: 3, Y: 3},
+								types.Vec2[types.Meter]{X: 4, Y: 4},
+								types.Vec2[types.Meter]{X: 5, Y: 5},
+								types.Vec2[types.Meter]{X: 6, Y: 6},
+							},
 						}),
 					},
 				},
@@ -552,12 +628,28 @@ func workoutAddGetTimeSeriesPhysicsData(t *testing.T) {
 					Effort: 7,
 					BarPath: []types.BarPathVariant{
 						types.BarPathTimeSeriesData(types.RawTimeSeriesData{
-							TimeData:     []float64{0, 1, 2, 3, 4, 5, 6},
-							PositionData: []float64{0, 1, 2, 3, 4, 5, 6},
+							TimeData: []types.Second{0, 1, 2, 3, 4, 5, 6},
+							PositionData: []types.Vec2[types.Meter]{
+								types.Vec2[types.Meter]{X: 0, Y: 0},
+								types.Vec2[types.Meter]{X: 1, Y: 1},
+								types.Vec2[types.Meter]{X: 2, Y: 2},
+								types.Vec2[types.Meter]{X: 3, Y: 3},
+								types.Vec2[types.Meter]{X: 4, Y: 4},
+								types.Vec2[types.Meter]{X: 5, Y: 5},
+								types.Vec2[types.Meter]{X: 6, Y: 6},
+							},
 						}),
 						types.BarPathTimeSeriesData(types.RawTimeSeriesData{
-							TimeData:     []float64{0, 1, 2, 3, 4, 5, 6},
-							PositionData: []float64{0, 1, 2, 3, 4, 5, 6},
+							TimeData: []types.Second{0, 1, 2, 3, 4, 5, 6},
+							PositionData: []types.Vec2[types.Meter]{
+								types.Vec2[types.Meter]{X: 0, Y: 0},
+								types.Vec2[types.Meter]{X: 1, Y: 1},
+								types.Vec2[types.Meter]{X: 2, Y: 2},
+								types.Vec2[types.Meter]{X: 3, Y: 3},
+								types.Vec2[types.Meter]{X: 4, Y: 4},
+								types.Vec2[types.Meter]{X: 5, Y: 5},
+								types.Vec2[types.Meter]{X: 6, Y: 6},
+							},
 						}),
 					},
 				},
@@ -614,12 +706,28 @@ func workoutAddGetDateRange(t *testing.T) {
 					Effort: 8.5,
 					BarPath: []types.BarPathVariant{
 						types.BarPathTimeSeriesData(types.RawTimeSeriesData{
-							TimeData:     []float64{0, 1, 2, 3, 4, 5, 6},
-							PositionData: []float64{0, 1, 2, 3, 4, 5, 6},
+							TimeData: []types.Second{0, 1, 2, 3, 4, 5, 6},
+							PositionData: []types.Vec2[types.Meter]{
+								types.Vec2[types.Meter]{X: 0, Y: 0},
+								types.Vec2[types.Meter]{X: 1, Y: 1},
+								types.Vec2[types.Meter]{X: 2, Y: 2},
+								types.Vec2[types.Meter]{X: 3, Y: 3},
+								types.Vec2[types.Meter]{X: 4, Y: 4},
+								types.Vec2[types.Meter]{X: 5, Y: 5},
+								types.Vec2[types.Meter]{X: 6, Y: 6},
+							},
 						}),
 						types.BarPathTimeSeriesData(types.RawTimeSeriesData{
-							TimeData:     []float64{0, 1, 2, 3, 4, 5, 6},
-							PositionData: []float64{0, 1, 2, 3, 4, 5, 6},
+							TimeData: []types.Second{0, 1, 2, 3, 4, 5, 6},
+							PositionData: []types.Vec2[types.Meter]{
+								types.Vec2[types.Meter]{X: 0, Y: 0},
+								types.Vec2[types.Meter]{X: 1, Y: 1},
+								types.Vec2[types.Meter]{X: 2, Y: 2},
+								types.Vec2[types.Meter]{X: 3, Y: 3},
+								types.Vec2[types.Meter]{X: 4, Y: 4},
+								types.Vec2[types.Meter]{X: 5, Y: 5},
+								types.Vec2[types.Meter]{X: 6, Y: 6},
+							},
 						}),
 					},
 				},
@@ -762,12 +870,28 @@ func workoutAddDeleteGet(t *testing.T) {
 					Effort: 8.5,
 					BarPath: []types.BarPathVariant{
 						types.BarPathTimeSeriesData(types.RawTimeSeriesData{
-							TimeData:     []float64{0, 1, 2, 3, 4, 5, 6},
-							PositionData: []float64{0, 1, 2, 3, 4, 5, 6},
+							TimeData: []types.Second{0, 1, 2, 3, 4, 5, 6},
+							PositionData: []types.Vec2[types.Meter]{
+								types.Vec2[types.Meter]{X: 0, Y: 0},
+								types.Vec2[types.Meter]{X: 1, Y: 1},
+								types.Vec2[types.Meter]{X: 2, Y: 2},
+								types.Vec2[types.Meter]{X: 3, Y: 3},
+								types.Vec2[types.Meter]{X: 4, Y: 4},
+								types.Vec2[types.Meter]{X: 5, Y: 5},
+								types.Vec2[types.Meter]{X: 6, Y: 6},
+							},
 						}),
 						types.BarPathTimeSeriesData(types.RawTimeSeriesData{
-							TimeData:     []float64{0, 1, 2, 3, 4, 5, 6},
-							PositionData: []float64{0, 1, 2, 3, 4, 5, 6},
+							TimeData: []types.Second{0, 1, 2, 3, 4, 5, 6},
+							PositionData: []types.Vec2[types.Meter]{
+								types.Vec2[types.Meter]{X: 0, Y: 0},
+								types.Vec2[types.Meter]{X: 1, Y: 1},
+								types.Vec2[types.Meter]{X: 2, Y: 2},
+								types.Vec2[types.Meter]{X: 3, Y: 3},
+								types.Vec2[types.Meter]{X: 4, Y: 4},
+								types.Vec2[types.Meter]{X: 5, Y: 5},
+								types.Vec2[types.Meter]{X: 6, Y: 6},
+							},
 						}),
 					},
 				},
@@ -779,8 +903,16 @@ func workoutAddDeleteGet(t *testing.T) {
 					Effort: 5,
 					BarPath: []types.BarPathVariant{
 						types.BarPathTimeSeriesData(types.RawTimeSeriesData{
-							TimeData:     []float64{0, 1, 2, 3, 4, 5, 6},
-							PositionData: []float64{0, 1, 2, 3, 4, 5, 6},
+							TimeData: []types.Second{0, 1, 2, 3, 4, 5, 6},
+							PositionData: []types.Vec2[types.Meter]{
+								types.Vec2[types.Meter]{X: 0, Y: 0},
+								types.Vec2[types.Meter]{X: 1, Y: 1},
+								types.Vec2[types.Meter]{X: 2, Y: 2},
+								types.Vec2[types.Meter]{X: 3, Y: 3},
+								types.Vec2[types.Meter]{X: 4, Y: 4},
+								types.Vec2[types.Meter]{X: 5, Y: 5},
+								types.Vec2[types.Meter]{X: 6, Y: 6},
+							},
 						}),
 					},
 				},
@@ -801,12 +933,28 @@ func workoutAddDeleteGet(t *testing.T) {
 					Effort: 7,
 					BarPath: []types.BarPathVariant{
 						types.BarPathTimeSeriesData(types.RawTimeSeriesData{
-							TimeData:     []float64{0, 1, 2, 3, 4, 5, 6},
-							PositionData: []float64{0, 1, 2, 3, 4, 5, 6},
+							TimeData: []types.Second{0, 1, 2, 3, 4, 5, 6},
+							PositionData: []types.Vec2[types.Meter]{
+								types.Vec2[types.Meter]{X: 0, Y: 0},
+								types.Vec2[types.Meter]{X: 1, Y: 1},
+								types.Vec2[types.Meter]{X: 2, Y: 2},
+								types.Vec2[types.Meter]{X: 3, Y: 3},
+								types.Vec2[types.Meter]{X: 4, Y: 4},
+								types.Vec2[types.Meter]{X: 5, Y: 5},
+								types.Vec2[types.Meter]{X: 6, Y: 6},
+							},
 						}),
 						types.BarPathTimeSeriesData(types.RawTimeSeriesData{
-							TimeData:     []float64{0, 1, 2, 3, 4, 5, 6},
-							PositionData: []float64{0, 1, 2, 3, 4, 5, 6},
+							TimeData: []types.Second{0, 1, 2, 3, 4, 5, 6},
+							PositionData: []types.Vec2[types.Meter]{
+								types.Vec2[types.Meter]{X: 0, Y: 0},
+								types.Vec2[types.Meter]{X: 1, Y: 1},
+								types.Vec2[types.Meter]{X: 2, Y: 2},
+								types.Vec2[types.Meter]{X: 3, Y: 3},
+								types.Vec2[types.Meter]{X: 4, Y: 4},
+								types.Vec2[types.Meter]{X: 5, Y: 5},
+								types.Vec2[types.Meter]{X: 6, Y: 6},
+							},
 						}),
 					},
 				},
@@ -899,12 +1047,28 @@ func workoutAddDeleteGetDateRange(t *testing.T) {
 					Effort: 8.5,
 					BarPath: []types.BarPathVariant{
 						types.BarPathTimeSeriesData(types.RawTimeSeriesData{
-							TimeData:     []float64{0, 1, 2, 3, 4, 5, 6},
-							PositionData: []float64{0, 1, 2, 3, 4, 5, 6},
+							TimeData: []types.Second{0, 1, 2, 3, 4, 5, 6},
+							PositionData: []types.Vec2[types.Meter]{
+								types.Vec2[types.Meter]{X: 0, Y: 0},
+								types.Vec2[types.Meter]{X: 1, Y: 1},
+								types.Vec2[types.Meter]{X: 2, Y: 2},
+								types.Vec2[types.Meter]{X: 3, Y: 3},
+								types.Vec2[types.Meter]{X: 4, Y: 4},
+								types.Vec2[types.Meter]{X: 5, Y: 5},
+								types.Vec2[types.Meter]{X: 6, Y: 6},
+							},
 						}),
 						types.BarPathTimeSeriesData(types.RawTimeSeriesData{
-							TimeData:     []float64{0, 1, 2, 3, 4, 5, 6},
-							PositionData: []float64{0, 1, 2, 3, 4, 5, 6},
+							TimeData: []types.Second{0, 1, 2, 3, 4, 5, 6},
+							PositionData: []types.Vec2[types.Meter]{
+								types.Vec2[types.Meter]{X: 0, Y: 0},
+								types.Vec2[types.Meter]{X: 1, Y: 1},
+								types.Vec2[types.Meter]{X: 2, Y: 2},
+								types.Vec2[types.Meter]{X: 3, Y: 3},
+								types.Vec2[types.Meter]{X: 4, Y: 4},
+								types.Vec2[types.Meter]{X: 5, Y: 5},
+								types.Vec2[types.Meter]{X: 6, Y: 6},
+							},
 						}),
 					},
 				},

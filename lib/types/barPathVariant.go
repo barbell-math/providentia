@@ -4,8 +4,8 @@ type (
 	// A struct that is used to represent the bar path when it has been
 	// calculated by an external source.
 	RawTimeSeriesData struct {
-		TimeData     []float64 // The time data for each set
-		PositionData []float64 // The position data for each set
+		TimeData     []Second      // The time data for each set
+		PositionData []Vec2[Meter] // The position data for each set
 	}
 
 	BarPathFlag int

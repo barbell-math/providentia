@@ -55,16 +55,16 @@ type ModelState struct {
 }
 
 type PhysicsData struct {
-	ID           int64       `json:"id"`
-	Path         []string    `json:"path"`
-	Time         [][]float64 `json:"time"`
-	Position     [][]float64 `json:"position"`
-	Velocity     [][]float64 `json:"velocity"`
-	Acceleration [][]float64 `json:"acceleration"`
-	Jerk         [][]float64 `json:"jerk"`
-	Force        [][]float64 `json:"force"`
-	Impulse      [][]float64 `json:"impulse"`
-	Work         [][]float64 `json:"work"`
+	ID           int64                              `json:"id"`
+	Path         []string                           `json:"path"`
+	Time         [][]types.Second                   `json:"time"`
+	Position     [][]types.Vec2[types.Meter]        `json:"position"`
+	Velocity     [][]types.Vec2[types.MeterPerSec]  `json:"velocity"`
+	Acceleration [][]types.Vec2[types.MeterPerSec2] `json:"acceleration"`
+	Jerk         [][]types.Vec2[types.MeterPerSec3] `json:"jerk"`
+	Force        [][]types.Vec2[types.Newton]       `json:"force"`
+	Impulse      [][]types.Vec2[types.NewtonSec]    `json:"impulse"`
+	Work         [][]types.Vec2[types.Joule]        `json:"work"`
 }
 
 type ProvidentiaModel struct {

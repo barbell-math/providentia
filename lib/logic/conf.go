@@ -52,6 +52,7 @@ func ConfDefaults() *types.Conf {
 			MinNumSamples: 100,
 			TimeDeltaEps:  1e-6,
 		},
+		BarPathCalc: types.BarPathCalcConf{},
 		PhysicsJobQueue: sbjobqueue.Opts{
 			QueueLen:       10,
 			MaxNumWorkers:  uint32(runtime.NumCPU()),
@@ -254,6 +255,7 @@ func ConfToState(
 
 	state.Global = c.Global
 	state.PhysicsData = c.PhysicsData
+	state.BarPathCalc = c.BarPathCalc
 
 	if state.PhysicsJobQueue, err = sbjobqueue.NewJobQueue[types.PhysicsJob](
 		&c.PhysicsJobQueue,
@@ -266,8 +268,6 @@ func ConfToState(
 		return
 	}
 
-	// TODO - This would be nice... Figure out logging somehow
-	// c.ClientCache.Logger=slog.Default()
 	if state.Log, err = sblog.New(sblog.Opts{
 		CurVerbosityLevel: uint(c.Logging.Verbosity),
 		RotateWriterOpts: sblog.RotateWriterOpts{

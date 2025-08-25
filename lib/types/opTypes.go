@@ -67,14 +67,14 @@ type (
 		Volume       float64
 		Exertion     float64
 		TotalReps    float64
-		Time         [][]float64
-		Position     [][]float64
-		Velocity     [][]float64
-		Acceleration [][]float64
-		Jerk         [][]float64
-		Force        [][]float64
-		Impulse      [][]float64
-		Work         [][]float64
+		Time         [][]Second
+		Position     [][]Vec2[Meter]
+		Velocity     [][]Vec2[MeterPerSec]
+		Acceleration [][]Vec2[MeterPerSec2]
+		Jerk         [][]Vec2[MeterPerSec3]
+		Force        [][]Vec2[Newton]
+		Impulse      [][]Vec2[NewtonSec]
+		Work         [][]Vec2[Joule]
 	}
 )
 

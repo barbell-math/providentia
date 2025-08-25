@@ -19,4 +19,10 @@ type (
 	//	SimplifiedNegativeSpace,
 	// )
 	ModelID int32
+
+	// ENUM(
+	//	SecondOrder = 2
+	//	FourthOrder = 4
+	// )
+	ApproximationError int32
 )

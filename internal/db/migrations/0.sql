@@ -36,14 +36,14 @@ CREATE TABLE IF NOT EXISTS providentia.physics_data (
 	path TEXT[] UNIQUE,
 
 	time FLOAT8[][] NOT NULL,
-	position FLOAT8[][] NOT NULL,
-	velocity FLOAT8[][] NOT NULL,
-	acceleration FLOAT8[][] NOT NULL,
-	jerk FLOAT8[][] NOT NULL,
+	position POINT[][] NOT NULL,
+	velocity POINT[][] NOT NULL,
+	acceleration POINT[][] NOT NULL,
+	jerk POINT[][] NOT NULL,
 
-	force FLOAT8[][] NOT NULL,
-	impulse FLOAT8[][] NOT NULL,
-	work FLOAT8[][] NOT NULL
+	force POINT[][] NOT NULL,
+	impulse POINT[][] NOT NULL,
+	work POINT[][] NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS providentia.training_log (

@@ -5,6 +5,7 @@ import (
 	"math"
 
 	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
+	barpathphysdata "code.barbellmath.net/barbell-math/providentia/internal/models/barPathPhysData"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
 	sbjobqueue "code.barbellmath.net/barbell-math/smoothbrain-jobQueue"
@@ -29,17 +30,17 @@ func (p *Physics) Batch() *sbjobqueue.Batch {
 
 func (p *Physics) Run(ctxt context.Context) error {
 	physData := dal.CreatePhysicsDataParams{
-		Time:         make([][]float64, len(p.BarPath)),
-		Position:     make([][]float64, len(p.BarPath)),
-		Velocity:     make([][]float64, len(p.BarPath)),
-		Acceleration: make([][]float64, len(p.BarPath)),
-		Jerk:         make([][]float64, len(p.BarPath)),
-		Force:        make([][]float64, len(p.BarPath)),
-		Work:         make([][]float64, len(p.BarPath)),
-		Impulse:      make([][]float64, len(p.BarPath)),
+		Time:         make([][]types.Second, len(p.BarPath)),
+		Position:     make([][]types.Vec2[types.Meter], len(p.BarPath)),
+		Velocity:     make([][]types.Vec2[types.MeterPerSec], len(p.BarPath)),
+		Acceleration: make([][]types.Vec2[types.MeterPerSec2], len(p.BarPath)),
+		Jerk:         make([][]types.Vec2[types.MeterPerSec3], len(p.BarPath)),
+		Force:        make([][]types.Vec2[types.Newton], len(p.BarPath)),
+		Work:         make([][]types.Vec2[types.Joule], len(p.BarPath)),
+		Impulse:      make([][]types.Vec2[types.NewtonSec], len(p.BarPath)),
 	}
 
-	if err := p.processTimeSeriesData(ctxt, &physData); err != nil {
+	if err := p.processData(ctxt, &physData); err != nil {
 		return sberr.AppendError(types.PhysicsJobQueueErr, err)
 	}
 
@@ -56,13 +57,15 @@ func (p *Physics) Run(ctxt context.Context) error {
 	return nil
 }
 
-func (p *Physics) processTimeSeriesData(
+func (p *Physics) processData(
 	ctxt context.Context,
 	data *dal.CreatePhysicsDataParams,
 ) error {
 	for i, set := range p.BarPath {
 		// TODO - check if ctxt was canceled to stop job early
 		if rawData, ok := set.TimeSeriesData(); ok {
+			// TODO - performance: move these checks to the C code
+			// Would make error messages more opaque...
 			delta := rawData.TimeData[1] - rawData.TimeData[0]
 			for i := 1; i < len(rawData.TimeData); i++ {
 				iterDelta := rawData.TimeData[i] - rawData.TimeData[i-1]
@@ -73,7 +76,7 @@ func (p *Physics) processTimeSeriesData(
 						iterDelta,
 					)
 				}
-				if math.Abs(iterDelta-delta) > p.S.PhysicsData.TimeDeltaEps {
+				if math.Abs(float64(iterDelta-delta)) > float64(p.S.PhysicsData.TimeDeltaEps) {
 					return sberr.Wrap(
 						types.TimeSeriesNotMonotonicErr,
 						"Time samples must all have the same delta (within %f variance), got deltas of %f and %f",
@@ -82,12 +85,34 @@ func (p *Physics) processTimeSeriesData(
 				}
 			}
 
+			if len(rawData.TimeData) < int(p.S.PhysicsData.MinNumSamples) {
+				// TODO - return err
+				// Where tf should all these checks go?? It feels like they
+				// don't have a "home"
+			}
+
 			data.Time[i] = rawData.TimeData
 			data.Position[i] = rawData.PositionData
+			data.Velocity[i] = make(
+				[]types.Vec2[types.MeterPerSec], len(rawData.TimeData),
+			)
+			data.Acceleration[i] = make(
+				[]types.Vec2[types.MeterPerSec2], len(rawData.TimeData),
+			)
+			data.Jerk[i] = make(
+				[]types.Vec2[types.MeterPerSec3], len(rawData.TimeData),
+			)
+			data.Work[i] = make(
+				[]types.Vec2[types.Joule], len(rawData.TimeData),
+			)
+			data.Impulse[i] = make(
+				[]types.Vec2[types.NewtonSec], len(rawData.TimeData),
+			)
+			data.Force[i] = make(
+				[]types.Vec2[types.Newton], len(rawData.TimeData),
+			)
 
-			// call c algo to calculate all derivatives and such
-			// should we wait to call the c algo when all time/position data is
-			// available?? would make sense from cgo perspective
+			barpathphysdata.Calc(p.S, data, i)
 		}
 	}
 

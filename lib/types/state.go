@@ -26,6 +26,7 @@ type (
 
 		Global      GlobalConf
 		PhysicsData PhysicsDataConf
+		BarPathCalc BarPathCalcConf
 	}
 )
 
