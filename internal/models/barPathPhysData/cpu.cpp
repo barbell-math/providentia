@@ -1,6 +1,6 @@
 #include <cmath>
 #include "cpu.h"
-#include "cgoStructs.h"
+#include "../../glue/glue.h"
 
 extern "C" int64_t calcBarPathPhysData(
 	int64_t timeLen,
