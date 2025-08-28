@@ -235,23 +235,11 @@ func ConfParser(
 	fs.Func(
 		startStr("ExerciseCache", "InitialCapacity"),
 		"The initial capacity of the in memory exercise cache",
-		sbargp.Int(
-			&val.ClientCache.MaximumSize,
-			_default.ClientCache.MaximumSize,
-			10,
+		sbargp.FromTextUnmarshaler[types.ApproximationError](
+			&val.BarPathCalc.ApproxErr,
+			_default.BarPathCalc.ApproxErr,
 		),
 	)
-
-	// WTF to do about enums???
-	// fs.Func(
-	// 	&val.BarPathCalc.ApproxErr,
-	// 	startStr("BarPathCalc", "ApproxErr"),
-	// 	fmt.Sprintf(
-	// 		"The approximation error to use when calculating some bar path metrics. One of: %v",
-	// 		types.ApproximationErrorNames(),
-	// 	),
-	// )
-	// TODO - add bar path ApproxErr
 }
 
 // Takes the supplied [types.Conf] struct and translates it into a [types.State]

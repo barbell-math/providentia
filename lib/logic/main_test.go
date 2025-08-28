@@ -81,7 +81,6 @@ func testAppMain(
 		},
 		ArgDefsSetter: func(conf *types.Conf, fs *flag.FlagSet) error {
 			ConfParser(fs, conf, "", ConfDefaults())
-			fmt.Println("NOW??", conf.BarPathCalc.ApproxErr)
 			return nil
 		},
 	}); err != nil {

@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -657,8 +656,6 @@ func workoutAddGetTimeSeriesPhysicsData(t *testing.T) {
 			},
 		},
 	}
-	s, _ := StateFromContext(ctxt)
-	fmt.Println("EH?", s.BarPathCalc.ApproxErr)
 
 	err = CreateWorkouts(ctxt, workouts[:]...)
 	sbtest.Nil(t, err)

@@ -48,6 +48,9 @@ func ValidateState(s *types.State) error {
 	if err := checkStatePhysicsDataConf(s); err != nil {
 		return err
 	}
+	if err := checkStateBarPathCalc(s); err != nil {
+		return err
+	}
 	if s.Log == nil {
 		return sberr.Wrap(types.InvalidLoggerErr, "The Log field must not be nil")
 	}
@@ -104,7 +107,15 @@ func checkStatePhysicsDataConf(state *types.State) error {
 	return nil
 }
 
-// TODO - check bar path calc struct
+func checkStateBarPathCalc(state *types.State) error {
+	if !state.BarPathCalc.ApproxErr.IsValid() {
+		return sberr.AppendError(
+			types.InvalidBarPathCalcErr,
+			types.ErrInvalidApproximationError,
+		)
+	}
+	return nil
+}
 
 // Cleans up the resources in the supplied state.
 func CleanupState(s *types.State) {

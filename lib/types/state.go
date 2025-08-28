@@ -38,6 +38,8 @@ var (
 	InvalidGlobalErr    = errors.New("Invalid global conf")
 	InvalidBatchSizeErr = errors.New("Invalid batch size")
 
+	InvalidBarPathCalcErr = errors.New("Invalid bar path calc conf")
+
 	InvalidLoggerErr          = errors.New("Invalid logger")
 	InvalidDBErr              = errors.New("Invalid database connection pool")
 	InvalidPhysicsJobQueueErr = errors.New("Invalid physics job queue")
