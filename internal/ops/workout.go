@@ -172,6 +172,9 @@ func validateWorkout(state *types.State, w *types.RawWorkout) (opErr error) {
 			if curBarPath.Source() == types.VideoBarPathData {
 				videoPath, _ := curBarPath.VideoData()
 
+				// These are surface level checks that make it so trivial errors
+				// "fail fast" here rather than in a separate go routine in the
+				// physics job queue.
 				var fs fs.FileInfo
 				if fs, opErr = os.Stat(videoPath); opErr != nil {
 					return sberr.AppendError(
@@ -190,6 +193,9 @@ func validateWorkout(state *types.State, w *types.RawWorkout) (opErr error) {
 				lenTimeData := len(timeSeriesData.TimeData)
 				lenPosData := len(timeSeriesData.PositionData)
 
+				// These are surface level checks that make it so trivial errors
+				// "fail fast" here rather than in a separate go routine in the
+				// physics job queue.
 				if lenTimeData != lenPosData {
 					opErr = wrapErr(fmt.Sprintf(
 						"the length of the time data (%d) and position data (%d) must match",

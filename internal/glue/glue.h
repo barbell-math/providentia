@@ -17,6 +17,14 @@ extern "C" {
 	const ApproximationError_t SecondOrder = { .v=2 };
 	const ApproximationError_t FourthOrder = { .v=4 };
 
+	typedef struct {
+		int64_t v;
+	} BarPathCalcErrCode_t;
+	const BarPathCalcErrCode_t NoErr = { .v=0 };
+	const BarPathCalcErrCode_t TimeSeriesNotIncreasingErr = { .v=1 };
+	const BarPathCalcErrCode_t TimeSeriesNotMonotonicErr = { .v=2 };
+	const BarPathCalcErrCode_t InvalidApproximationErrErr = { .v=3 };
+
 	typedef struct accVec2{
 		double_t X;
 		double_t Y;

@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -204,7 +205,7 @@ func workoutSetBackwardsTime(ctxt context.Context) func(t *testing.T) {
 		})
 		sbtest.ContainsError(
 			t, types.CouldNotAddWorkoutErr, err,
-			"Time samples must be increasing, got a delta of",
+			"Time samples must be increasing",
 		)
 		sbtest.ContainsError(t, types.PhysicsJobQueueErr, err)
 		sbtest.ContainsError(t, types.TimeSeriesDecreaseErr, err)
@@ -656,6 +657,8 @@ func workoutAddGetTimeSeriesPhysicsData(t *testing.T) {
 			},
 		},
 	}
+	s, _ := StateFromContext(ctxt)
+	fmt.Println("EH?", s.BarPathCalc.ApproxErr)
 
 	err = CreateWorkouts(ctxt, workouts[:]...)
 	sbtest.Nil(t, err)

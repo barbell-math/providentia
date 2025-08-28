@@ -1,7 +1,8 @@
 #include <cmath>
 #include "cpu.h"
+#include "cgoStructs.h"
 
-extern "C" int8_t calcBarPathPhysData(
+extern "C" int64_t calcBarPathPhysData(
 	int64_t timeLen,
 	double_t* time,
 	posVec2_t* pos,
@@ -19,17 +20,49 @@ extern "C" int8_t calcBarPathPhysData(
 	for (int i=1; i<timeLen; i++) {
 		double_t iterH=time[i]-time[i-1];
 		if (iterH<0) {
-			// TODO - how to describe enums to C? Make cgoEnumGen package??
-			return 1;
+			return TimeSeriesNotIncreasingErr.v;
 		}
 		if (std::fabs(iterH-h) > pdOpts->TimeDeltaEps) {
-			return 2;
+			return TimeSeriesNotMonotonicErr.v;
 		}
 	}
 
 	// For an explanation of the formulas refer to here:
 	// http://code.barbellmath.net/barbell-math/providentia/wiki/Numerical-Difference-Methods
-	if (bpOpts->ApproxErr==4) {
+	if (bpOpts->ApproxErr.v==SecondOrder.v) {
+		for (int i=2; i<timeLen-2; i++) {
+			vel[i].X=(-pos[i-1].X+pos[i+1].X)/(2*h);
+			vel[i].Y=(-pos[i-1].Y+pos[i+1].Y)/(2*h);
+
+			acc[i].X=(pos[i-1].X-2*pos[i].X+pos[i+1].X)/(h*h);
+			acc[i].Y=(pos[i-1].Y-2*pos[i].Y+pos[i+1].Y)/(h*h);
+
+			jerk[i].X=(
+				-pos[i-2].X+2*pos[i-1].X-2*pos[i+1].X+pos[i+2].X
+			)/(
+				2*h*h*h
+			);
+			jerk[i].Y=(
+				-pos[i-2].Y+2*pos[i-1].Y-2*pos[i+1].Y+pos[i+2].Y
+			)/(
+				2*h*h*h
+			);
+		}
+
+		// Smear edges to the ends of the results rather than computing forward and
+		// backward difference formulas. Running those calculations would provide
+		// little benefit while significantly increasing complexity and maintenance
+		for (int i=0; i<2 && i<timeLen; i++) {
+			vel[i]=vel[2];
+			acc[i]=acc[2];
+			jerk[i]=jerk[2];
+		}
+		for (int i=timeLen-2; i<timeLen; i++) {
+			vel[i]=vel[timeLen-3];
+			acc[i]=acc[timeLen-3];
+			jerk[i]=jerk[timeLen-3];
+		}
+	} else if (bpOpts->ApproxErr.v==FourthOrder.v) {
 		for (int i=3; i<timeLen-3; i++) {
 			vel[i].X=(pos[i-2].X-8*pos[i-1].X+8*pos[i+1].X-pos[i+2].X)/(12*h);
 			vel[i].Y=(pos[i-2].Y-8*pos[i-1].Y+8*pos[i+1].Y-pos[i+2].Y)/(12*h);
@@ -72,9 +105,11 @@ extern "C" int8_t calcBarPathPhysData(
 			acc[i]=acc[timeLen-4];
 			jerk[i]=jerk[timeLen-4];
 		}
-	} else if (bpOpts->ApproxErr==2) {
-		// TODO - second order approx calcs
+	} else {
+		return InvalidApproximationErrErr.v;
 	}
+
+	// TODO - calc work, impulse, force
 
 	return 0;
 }

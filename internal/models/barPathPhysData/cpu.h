@@ -3,13 +3,13 @@
 
 #include <math.h>
 #include <stdint.h>
-#include "cgoStructs.h"
+#include "../../glue/glue.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-	int8_t calcBarPathPhysData(
+	int64_t calcBarPathPhysData(
 		int64_t timeLen,
 		double_t* time,
 		posVec2_t* pos,

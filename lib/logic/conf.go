@@ -52,7 +52,9 @@ func ConfDefaults() *types.Conf {
 			MinNumSamples: 100,
 			TimeDeltaEps:  1e-6,
 		},
-		BarPathCalc: types.BarPathCalcConf{},
+		BarPathCalc: types.BarPathCalcConf{
+			ApproxErr: types.FourthOrder,
+		},
 		PhysicsJobQueue: sbjobqueue.Opts{
 			QueueLen:       10,
 			MaxNumWorkers:  uint32(runtime.NumCPU()),
@@ -239,6 +241,17 @@ func ConfParser(
 			10,
 		),
 	)
+
+	// WTF to do about enums???
+	// fs.Func(
+	// 	&val.BarPathCalc.ApproxErr,
+	// 	startStr("BarPathCalc", "ApproxErr"),
+	// 	fmt.Sprintf(
+	// 		"The approximation error to use when calculating some bar path metrics. One of: %v",
+	// 		types.ApproximationErrorNames(),
+	// 	),
+	// )
+	// TODO - add bar path ApproxErr
 }
 
 // Takes the supplied [types.Conf] struct and translates it into a [types.State]

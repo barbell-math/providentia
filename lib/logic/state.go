@@ -104,6 +104,8 @@ func checkStatePhysicsDataConf(state *types.State) error {
 	return nil
 }
 
+// TODO - check bar path calc struct
+
 // Cleans up the resources in the supplied state.
 func CleanupState(s *types.State) {
 	if s.DB != nil {

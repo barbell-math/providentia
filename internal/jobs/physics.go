@@ -2,7 +2,6 @@ package jobs
 
 import (
 	"context"
-	"math"
 
 	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
 	barpathphysdata "code.barbellmath.net/barbell-math/providentia/internal/models/barPathPhysData"
@@ -64,33 +63,6 @@ func (p *Physics) processData(
 	for i, set := range p.BarPath {
 		// TODO - check if ctxt was canceled to stop job early
 		if rawData, ok := set.TimeSeriesData(); ok {
-			// TODO - performance: move these checks to the C code
-			// Would make error messages more opaque...
-			delta := rawData.TimeData[1] - rawData.TimeData[0]
-			for i := 1; i < len(rawData.TimeData); i++ {
-				iterDelta := rawData.TimeData[i] - rawData.TimeData[i-1]
-				if iterDelta < 0 {
-					return sberr.Wrap(
-						types.TimeSeriesDecreaseErr,
-						"Time samples must be increasing, got a delta of %f",
-						iterDelta,
-					)
-				}
-				if math.Abs(float64(iterDelta-delta)) > float64(p.S.PhysicsData.TimeDeltaEps) {
-					return sberr.Wrap(
-						types.TimeSeriesNotMonotonicErr,
-						"Time samples must all have the same delta (within %f variance), got deltas of %f and %f",
-						p.S.PhysicsData.TimeDeltaEps, delta, iterDelta,
-					)
-				}
-			}
-
-			if len(rawData.TimeData) < int(p.S.PhysicsData.MinNumSamples) {
-				// TODO - return err
-				// Where tf should all these checks go?? It feels like they
-				// don't have a "home"
-			}
-
 			data.Time[i] = rawData.TimeData
 			data.Position[i] = rawData.PositionData
 			data.Velocity[i] = make(
@@ -112,7 +84,9 @@ func (p *Physics) processData(
 				[]types.Vec2[types.Newton], len(rawData.TimeData),
 			)
 
-			barpathphysdata.Calc(p.S, data, i)
+			if err := barpathphysdata.Calc(p.S, data, i); err != nil {
+				return err
+			}
 		}
 	}
 

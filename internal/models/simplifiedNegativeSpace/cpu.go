@@ -13,8 +13,6 @@ import (
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 )
 
-//go:generate go run ./structGen/structGen.go
-
 type (
 	Opts struct {
 		Alpha    float64

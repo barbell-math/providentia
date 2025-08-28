@@ -1,12 +1,11 @@
 package barpathphysdata
 
-// #cgo CXXFLAGS: -O3 -march=native -std=c++23 -I../../../_deps/eigen
+// #cgo CXXFLAGS: -O3 -march=native -std=c++23 -I../../../_deps/eigen  -I../../glue
 // #cgo LDFLAGS: -lstdc++
 // #include "cpu.h"
 import "C"
 import (
 	"errors"
-	"fmt"
 	"unsafe"
 
 	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
@@ -14,9 +13,17 @@ import (
 	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
 )
 
-//go:generate go run ./structGen/main.go
+//go:generate go-enum --marshal --names --values --nocase --noprefix
 
-// TODO - err code translation?
+type (
+	// ENUM(
+	//	NoErr
+	//	TimeSeriesNotIncreasingErr
+	//	TimeSeriesNotMonotonicErr
+	//	InvalidApproximationErrErr
+	// )
+	BarPathCalcErrCode int64
+)
 
 var (
 	InvalidRawDataIdxErr = errors.New("Invalid raw data index")
@@ -86,6 +93,13 @@ func Calc(
 	}
 
 	expLen := len(rawData.Time[idx])
+	if expLen < int(state.PhysicsData.MinNumSamples) {
+		return sberr.Wrap(
+			InvalidRawDataLenErr,
+			"the minimum number of samples (%d) was not provided, got %d samples",
+			state.PhysicsData.MinNumSamples, expLen,
+		)
+	}
 	if len(rawData.Position[idx]) != expLen {
 		return sberr.Wrap(
 			InvalidRawDataLenErr,
@@ -135,6 +149,10 @@ func Calc(
 			expLen, len(rawData.Force[idx]),
 		)
 	}
+	// Note:
+	// Checks for monotonically increasing time series data are done in the
+	// [C.calcBarPathPhysData] func because those checks can be performance
+	// intensive operations.
 
 	err := C.calcBarPathPhysData(
 		C.int64_t(len(rawData.Time[idx])),
@@ -149,8 +167,22 @@ func Calc(
 		(*C.barPathCalcConf_t)(unsafe.Pointer(&state.BarPathCalc)),
 		(*C.physDataConf_t)(unsafe.Pointer(&state.PhysicsData)),
 	)
-	fmt.Println("Modified force?", rawData.Force)
-	fmt.Println("Got err: ", err)
+
+	switch BarPathCalcErrCode(err) {
+	case TimeSeriesNotIncreasingErr:
+		return sberr.Wrap(
+			types.TimeSeriesDecreaseErr,
+			"Time samples must be increasing",
+		)
+	case TimeSeriesNotMonotonicErr:
+		return sberr.Wrap(
+			types.TimeSeriesNotMonotonicErr,
+			"Time samples must all have the same delta (within %f variance)",
+			state.PhysicsData.TimeDeltaEps,
+		)
+	case InvalidApproximationErrErr:
+		return types.ErrInvalidApproximationError
+	}
 
 	return nil
 }
