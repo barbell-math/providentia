@@ -3,6 +3,11 @@
 
 <!-- gomarkdoc:embed:end -->
 
+## Dependencies
+
+1. postgres
+1. clang-18
+
 ## Helpful Developer Cmds
 
 ```sh

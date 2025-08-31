@@ -3,14 +3,14 @@ module code.barbellmath.net/barbell-math/providentia
 go 1.24.1
 
 require (
-	code.barbellmath.net/barbell-math/smoothbrain-argparse v0.0.0-20250818234304-e0764e328440
-	code.barbellmath.net/barbell-math/smoothbrain-bs v0.0.0-20250818231037-80a4ddb0f9c4
-	code.barbellmath.net/barbell-math/smoothbrain-cgoGlue v0.0.0-20250831025845-3e48a0ce145e
-	code.barbellmath.net/barbell-math/smoothbrain-errs v0.0.0-20250818233230-1cfb2e401c4f
-	code.barbellmath.net/barbell-math/smoothbrain-jobQueue v0.0.0-20250820061538-7c5d53d5b043
-	code.barbellmath.net/barbell-math/smoothbrain-logging v0.0.0-20250818234005-fbb6bd21201b
-	code.barbellmath.net/barbell-math/smoothbrain-sqlmigrate v0.0.0-20250820055322-683a549489b0
-	code.barbellmath.net/barbell-math/smoothbrain-test v0.0.0-20250828040454-4079682fb3ca
+	code.barbellmath.net/barbell-math/smoothbrain-argparse v0.0.0-20250831071451-177325f5f1b3
+	code.barbellmath.net/barbell-math/smoothbrain-bs v0.0.0-20250831070729-5632f2448d7f
+	code.barbellmath.net/barbell-math/smoothbrain-cgoGlue v0.0.0-20250831071536-2a40ce4825f6
+	code.barbellmath.net/barbell-math/smoothbrain-errs v0.0.0-20250831071217-fe38b750a828
+	code.barbellmath.net/barbell-math/smoothbrain-jobQueue v0.0.0-20250831071525-40f7c4d71378
+	code.barbellmath.net/barbell-math/smoothbrain-logging v0.0.0-20250831071438-e5e955330baf
+	code.barbellmath.net/barbell-math/smoothbrain-sqlmigrate v0.0.0-20250831071515-53ff01a18bae
+	code.barbellmath.net/barbell-math/smoothbrain-test v0.0.0-20250831071138-3f0f71428ad0
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/maypok86/otter/v2 v2.2.1
 )
