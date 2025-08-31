@@ -151,7 +151,8 @@ SELECT
 	providentia.physics_data.jerk,
 	providentia.physics_data.force,
 	providentia.physics_data.impulse,
-	providentia.physics_data.work
+	providentia.physics_data.work,
+	providentia.physics_data.power
 FROM providentia.training_log
 JOIN providentia.exercise
 	ON providentia.training_log.exercise_id=providentia.exercise.id
@@ -184,7 +185,8 @@ SELECT
 	providentia.physics_data.jerk,
 	providentia.physics_data.force,
 	providentia.physics_data.impulse,
-	providentia.physics_data.work
+	providentia.physics_data.work,
+	providentia.physics_data.power
 FROM providentia.training_log
 JOIN providentia.exercise
 	ON providentia.training_log.exercise_id=providentia.exercise.id
@@ -229,9 +231,9 @@ WITH deleted_exercises AS (
 INSERT INTO providentia.physics_data(
 	path,
 	time, position, velocity, acceleration, jerk,
-	force, impulse, work
+	force, impulse, work, power
 ) VALUES (
-	$1, $2, $3, $4, $5, $6, $7, $8, $9
+	$1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 ) RETURNING id;
 
 -- name: GetTotalNumPhysicsEntriesForClient :one

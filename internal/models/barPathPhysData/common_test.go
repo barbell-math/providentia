@@ -35,15 +35,14 @@ func TestTimeSeriesNotIncreasingErr(t *testing.T) {
 		Jerk: [][]types.Vec2[types.MeterPerSec3]{
 			make([]types.Vec2[types.MeterPerSec3], 7),
 		},
-		Work: [][]types.Vec2[types.Joule]{
-			make([]types.Vec2[types.Joule], 7),
-		},
 		Impulse: [][]types.Vec2[types.NewtonSec]{
 			make([]types.Vec2[types.NewtonSec], 7),
 		},
 		Force: [][]types.Vec2[types.Newton]{
 			make([]types.Vec2[types.Newton], 7),
 		},
+		Work:  [][]types.Joule{make([]types.Joule, 7)},
+		Power: [][]types.Watt{make([]types.Watt, 7)},
 	}
 	state := types.State{
 		BarPathCalc: types.BarPathCalcConf{
@@ -54,7 +53,7 @@ func TestTimeSeriesNotIncreasingErr(t *testing.T) {
 			TimeDeltaEps:  1e-6,
 		},
 	}
-	err := Calc(&state, &rawData, 0)
+	err := Calc(&state, 1, &rawData, 0)
 	sbtest.ContainsError(t, types.TimeSeriesDecreaseErr, err)
 }
 
@@ -79,15 +78,14 @@ func TestTimeSeriesNotMonotonicErr(t *testing.T) {
 		Jerk: [][]types.Vec2[types.MeterPerSec3]{
 			make([]types.Vec2[types.MeterPerSec3], 7),
 		},
-		Work: [][]types.Vec2[types.Joule]{
-			make([]types.Vec2[types.Joule], 7),
-		},
 		Impulse: [][]types.Vec2[types.NewtonSec]{
 			make([]types.Vec2[types.NewtonSec], 7),
 		},
 		Force: [][]types.Vec2[types.Newton]{
 			make([]types.Vec2[types.Newton], 7),
 		},
+		Work:  [][]types.Joule{make([]types.Joule, 7)},
+		Power: [][]types.Watt{make([]types.Watt, 7)},
 	}
 	state := types.State{
 		BarPathCalc: types.BarPathCalcConf{
@@ -98,7 +96,7 @@ func TestTimeSeriesNotMonotonicErr(t *testing.T) {
 			TimeDeltaEps:  1e-6,
 		},
 	}
-	err := Calc(&state, &rawData, 0)
+	err := Calc(&state, 1, &rawData, 0)
 	sbtest.ContainsError(t, types.TimeSeriesNotMonotonicErr, err)
 }
 
@@ -123,15 +121,14 @@ func TestInvalidApproxErrErr(t *testing.T) {
 		Jerk: [][]types.Vec2[types.MeterPerSec3]{
 			make([]types.Vec2[types.MeterPerSec3], 7),
 		},
-		Work: [][]types.Vec2[types.Joule]{
-			make([]types.Vec2[types.Joule], 7),
-		},
 		Impulse: [][]types.Vec2[types.NewtonSec]{
 			make([]types.Vec2[types.NewtonSec], 7),
 		},
 		Force: [][]types.Vec2[types.Newton]{
 			make([]types.Vec2[types.Newton], 7),
 		},
+		Work:  [][]types.Joule{make([]types.Joule, 7)},
+		Power: [][]types.Watt{make([]types.Watt, 7)},
 	}
 	state := types.State{
 		BarPathCalc: types.BarPathCalcConf{
@@ -142,7 +139,7 @@ func TestInvalidApproxErrErr(t *testing.T) {
 			TimeDeltaEps:  1e-6,
 		},
 	}
-	err := Calc(&state, &rawData, 0)
+	err := Calc(&state, 1, &rawData, 0)
 	sbtest.ContainsError(t, types.ErrInvalidApproximationError, err)
 }
 
@@ -161,9 +158,10 @@ func testForAccuracy(
 		Velocity:     [][]types.Vec2[types.MeterPerSec]{make([]types.Vec2[types.MeterPerSec], samples)},
 		Acceleration: [][]types.Vec2[types.MeterPerSec2]{make([]types.Vec2[types.MeterPerSec2], samples)},
 		Jerk:         [][]types.Vec2[types.MeterPerSec3]{make([]types.Vec2[types.MeterPerSec3], samples)},
-		Work:         [][]types.Vec2[types.Joule]{make([]types.Vec2[types.Joule], samples)},
 		Impulse:      [][]types.Vec2[types.NewtonSec]{make([]types.Vec2[types.NewtonSec], samples)},
 		Force:        [][]types.Vec2[types.Newton]{make([]types.Vec2[types.Newton], samples)},
+		Work:         [][]types.Joule{make([]types.Joule, samples)},
+		Power:        [][]types.Watt{make([]types.Watt, samples)},
 	}
 	for i := range samples {
 		rawData.Time[0][i] = types.Second(i)
@@ -172,7 +170,7 @@ func testForAccuracy(
 			Y: types.Meter(f1(float64(i))),
 		}
 	}
-	err := Calc(state, &rawData, 0)
+	err := Calc(state, 1, &rawData, 0)
 	sbtest.Nil(t, err)
 
 	edgeGap := 2
@@ -211,6 +209,34 @@ func testForAccuracy(
 		sbtest.EqFloat(t, d2Val, rawData.Acceleration[0][i].Y, 1e-6)
 		sbtest.EqFloat(t, d3Val, rawData.Jerk[0][i].X, 1e-6)
 		sbtest.EqFloat(t, d3Val, rawData.Jerk[0][i].Y, 1e-6)
+	}
+	for i := range samples {
+		// When m=1 f=a becuase F=ma
+		sbtest.EqFloat(
+			t,
+			float64(rawData.Force[0][i].X),
+			float64(rawData.Acceleration[0][i].X),
+			1e-6,
+		)
+		sbtest.EqFloat(
+			t,
+			float64(rawData.Force[0][i].Y),
+			float64(rawData.Acceleration[0][i].Y),
+			1e-6,
+		)
+		// When m=1, impulse=vel because I=\int F dt=\int ma dt = mv
+		sbtest.EqFloat(
+			t,
+			float64(rawData.Impulse[0][i].X),
+			float64(rawData.Velocity[0][i].X),
+			1e-6,
+		)
+		sbtest.EqFloat(
+			t,
+			float64(rawData.Impulse[0][i].Y),
+			float64(rawData.Velocity[0][i].Y),
+			1e-6,
+		)
 	}
 }
 
@@ -276,9 +302,10 @@ func loadAndTestCsv(
 		Velocity:     [][]types.Vec2[types.MeterPerSec]{make([]types.Vec2[types.MeterPerSec], samples)},
 		Acceleration: [][]types.Vec2[types.MeterPerSec2]{make([]types.Vec2[types.MeterPerSec2], samples)},
 		Jerk:         [][]types.Vec2[types.MeterPerSec3]{make([]types.Vec2[types.MeterPerSec3], samples)},
-		Work:         [][]types.Vec2[types.Joule]{make([]types.Vec2[types.Joule], samples)},
 		Impulse:      [][]types.Vec2[types.NewtonSec]{make([]types.Vec2[types.NewtonSec], samples)},
 		Force:        [][]types.Vec2[types.Newton]{make([]types.Vec2[types.Newton], samples)},
+		Work:         [][]types.Joule{make([]types.Joule, samples)},
+		Power:        [][]types.Watt{make([]types.Watt, samples)},
 	}
 	for i := range samples {
 		rawTime, err := strconv.ParseFloat(rawData[i+1][1], 64)
@@ -294,7 +321,7 @@ func loadAndTestCsv(
 			Y: types.Meter(rawYPos) / 100,
 		}
 	}
-	err = Calc(state, &inputData, 0)
+	err = Calc(state, 1, &inputData, 0)
 	sbtest.Nil(t, err)
 
 	outF, err := os.Create(outFile)
@@ -312,6 +339,14 @@ func loadAndTestCsv(
 		"RawAccY",
 		"CalcAccX",
 		"CalcAccY",
+		"CalcJerkX",
+		"CalcJerkY",
+		"CalcForceX",
+		"CalcForceY",
+		"CalcImpulseX",
+		"CalcImpulseY",
+		"CalcWork",
+		"CalcPower",
 	})
 	for i := range samples {
 		csvWriter.Write([]string{
@@ -326,6 +361,14 @@ func loadAndTestCsv(
 			rawData[i+1][6],
 			fmt.Sprintf("%f", inputData.Acceleration[0][i].X),
 			fmt.Sprintf("%f", inputData.Acceleration[0][i].Y),
+			fmt.Sprintf("%f", inputData.Jerk[0][i].X),
+			fmt.Sprintf("%f", inputData.Jerk[0][i].Y),
+			fmt.Sprintf("%f", inputData.Force[0][i].X),
+			fmt.Sprintf("%f", inputData.Force[0][i].Y),
+			fmt.Sprintf("%f", inputData.Impulse[0][i].X),
+			fmt.Sprintf("%f", inputData.Impulse[0][i].Y),
+			fmt.Sprintf("%f", inputData.Work[0][i]),
+			fmt.Sprintf("%f", inputData.Power[0][i]),
 		})
 	}
 }
@@ -333,7 +376,12 @@ func loadAndTestCsv(
 func TestSquatDataSecondOrder(t *testing.T) {
 	state := types.State{
 		BarPathCalc: types.BarPathCalcConf{
-			ApproxErr: types.SecondOrder,
+			ApproxErr:       types.SecondOrder,
+			SmootherWeight1: 0.5,
+			SmootherWeight2: 0.5,
+			SmootherWeight3: 1,
+			SmootherWeight4: 0.5,
+			SmootherWeight5: 0.5,
 		},
 		PhysicsData: types.PhysicsDataConf{
 			MinNumSamples: 10,
@@ -351,7 +399,12 @@ func TestSquatDataSecondOrder(t *testing.T) {
 func TestSquatDataFourthOrder(t *testing.T) {
 	state := types.State{
 		BarPathCalc: types.BarPathCalcConf{
-			ApproxErr: types.FourthOrder,
+			ApproxErr:       types.FourthOrder,
+			SmootherWeight1: 0.5,
+			SmootherWeight2: 0.5,
+			SmootherWeight3: 1,
+			SmootherWeight4: 0.5,
+			SmootherWeight5: 0.5,
 		},
 		PhysicsData: types.PhysicsDataConf{
 			MinNumSamples: 10,

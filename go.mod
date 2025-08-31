@@ -5,7 +5,7 @@ go 1.24.1
 require (
 	code.barbellmath.net/barbell-math/smoothbrain-argparse v0.0.0-20250818234304-e0764e328440
 	code.barbellmath.net/barbell-math/smoothbrain-bs v0.0.0-20250818231037-80a4ddb0f9c4
-	code.barbellmath.net/barbell-math/smoothbrain-cgoGlue v0.0.0-20250828022428-d7bfb5bbc293
+	code.barbellmath.net/barbell-math/smoothbrain-cgoGlue v0.0.0-20250831025845-3e48a0ce145e
 	code.barbellmath.net/barbell-math/smoothbrain-errs v0.0.0-20250818233230-1cfb2e401c4f
 	code.barbellmath.net/barbell-math/smoothbrain-jobQueue v0.0.0-20250820061538-7c5d53d5b043
 	code.barbellmath.net/barbell-math/smoothbrain-logging v0.0.0-20250818234005-fbb6bd21201b

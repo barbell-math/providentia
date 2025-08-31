@@ -53,7 +53,12 @@ func ConfDefaults() *types.Conf {
 			TimeDeltaEps:  1e-6,
 		},
 		BarPathCalc: types.BarPathCalcConf{
-			ApproxErr: types.FourthOrder,
+			ApproxErr:       types.FourthOrder,
+			SmootherWeight1: 0.5,
+			SmootherWeight2: 0.5,
+			SmootherWeight3: 1,
+			SmootherWeight4: 0.5,
+			SmootherWeight5: 0.5,
 		},
 		PhysicsJobQueue: sbjobqueue.Opts{
 			QueueLen:       10,
@@ -225,19 +230,72 @@ func ConfParser(
 
 	fs.Func(
 		startStr("ExerciseCache", "MaximumSize"),
-		"The maximum number of client structs that can be held in the in memory exercise cache",
+		"The maximum number of exercise structs that can be held in the in memory exercise cache",
 		sbargp.Int(
-			&val.ClientCache.MaximumSize,
-			_default.ClientCache.MaximumSize,
+			&val.ExerciseCache.MaximumSize,
+			_default.ExerciseCache.MaximumSize,
 			10,
 		),
 	)
 	fs.Func(
 		startStr("ExerciseCache", "InitialCapacity"),
 		"The initial capacity of the in memory exercise cache",
-		sbargp.FromTextUnmarshaler[types.ApproximationError](
+		sbargp.Int(
+			&val.ExerciseCache.MaximumSize,
+			_default.ExerciseCache.MaximumSize,
+			10,
+		),
+	)
+
+	fs.Func(
+		startStr("BarPathCalc", "ApproxErr"),
+		fmt.Sprintf(
+			"The accuracy of the approximation error. One of: %v",
+			types.ApproximationErrorNames(),
+		),
+		sbargp.FromTextUnmarshaler(
 			&val.BarPathCalc.ApproxErr,
 			_default.BarPathCalc.ApproxErr,
+		),
+	)
+	fs.Func(
+		startStr("BarPathCalc", "SmootherWeight1"),
+		"The weight of the second-left value in the weighted average smoother function",
+		sbargp.Float(
+			&val.BarPathCalc.SmootherWeight1,
+			_default.BarPathCalc.SmootherWeight1,
+		),
+	)
+	fs.Func(
+		startStr("BarPathCalc", "SmootherWeight2"),
+		"The weight of the first-left value in the weighted average smoother function",
+		sbargp.Float(
+			&val.BarPathCalc.SmootherWeight2,
+			_default.BarPathCalc.SmootherWeight2,
+		),
+	)
+	fs.Func(
+		startStr("BarPathCalc", "SmootherWeight3"),
+		"The weight of the central value in the weighted average smoother function",
+		sbargp.Float(
+			&val.BarPathCalc.SmootherWeight3,
+			_default.BarPathCalc.SmootherWeight3,
+		),
+	)
+	fs.Func(
+		startStr("BarPathCalc", "SmootherWeight4"),
+		"The weight of the first-right value in the weighted average smoother function",
+		sbargp.Float(
+			&val.BarPathCalc.SmootherWeight4,
+			_default.BarPathCalc.SmootherWeight4,
+		),
+	)
+	fs.Func(
+		startStr("BarPathCalc", "SmootherWeight5"),
+		"The weight of the second-right value in the weighted average smoother function",
+		sbargp.Float(
+			&val.BarPathCalc.SmootherWeight5,
+			_default.BarPathCalc.SmootherWeight5,
 		),
 	)
 }

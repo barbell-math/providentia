@@ -19,6 +19,22 @@ sql:
             go_type:
               import: "code.barbellmath.net/barbell-math/providentia/lib/types"
               type: "ExerciseFocus"
+          - column: providentia.training_log.weight
+            go_type:
+              import: "code.barbellmath.net/barbell-math/providentia/lib/types"
+              type: "Kilogram"
+          - column: providentia.training_log.effort
+            go_type:
+              import: "code.barbellmath.net/barbell-math/providentia/lib/types"
+              type: "RPE"
+          - column: providentia.training_log.volume
+            go_type:
+              import: "code.barbellmath.net/barbell-math/providentia/lib/types"
+              type: "Kilogram"
+          - column: providentia.training_log.exertion
+            go_type:
+              import: "code.barbellmath.net/barbell-math/providentia/lib/types"
+              type: "RPE"
           # Note - the following columns are sort of a "hack" that rely on the
           # types import being present from other overrides...
           - column: providentia.physics_data.time
@@ -36,15 +52,18 @@ sql:
           - column: providentia.physics_data.jerk
             go_type:
               type: "[][]types.Vec2[types.MeterPerSec3]"
-          - column: providentia.physics_data.work
-            go_type:
-              type: "[][]types.Vec2[types.Joule]"
           - column: providentia.physics_data.force
             go_type:
               type: "[][]types.Vec2[types.Newton]"
           - column: providentia.physics_data.impulse
             go_type:
               type: "[][]types.Vec2[types.NewtonSec]"
+          - column: providentia.physics_data.work
+            go_type:
+              type: "[][]types.Joule"
+          - column: providentia.physics_data.power
+            go_type:
+              type: "[][]types.Watt"
 
 overrides:
  go:

@@ -27,12 +27,12 @@ func rawWorkoutEqSavedWorkout(
 
 			sbtest.Eq(
 				t,
-				l[i].Exercises[j].Sets*float64(l[i].Exercises[j].Reps)*l[i].Exercises[j].Weight,
+				types.Kilogram(l[i].Exercises[j].Sets*float64(l[i].Exercises[j].Reps))*l[i].Exercises[j].Weight,
 				r[i].Exercises[j].Volume,
 			)
 			sbtest.Eq(
 				t,
-				l[i].Exercises[j].Sets*float64(l[i].Exercises[j].Reps)*l[i].Exercises[j].Effort,
+				types.RPE(l[i].Exercises[j].Sets*float64(l[i].Exercises[j].Reps))*l[i].Exercises[j].Effort,
 				r[i].Exercises[j].Exertion,
 			)
 			sbtest.Eq(
@@ -47,13 +47,12 @@ func rawWorkoutEqSavedWorkout(
 					sbtest.True(t, ok)
 					sbtest.SlicesMatch(t, rawData.TimeData, r[i].Exercises[j].Time[k])
 					sbtest.SlicesMatch(t, rawData.PositionData, r[i].Exercises[j].Position[k])
-					// TODO - enable when physics job is working
-					// sbtest.Eq(t, len(rawData.TimeData), len(r[i].Exercises[j].Velocity[k]))
-					// sbtest.Eq(t, len(rawData.TimeData), len(r[i].Exercises[j].Acceleration[k]))
-					// sbtest.Eq(t, len(rawData.TimeData), len(r[i].Exercises[j].Jerk[k]))
-					// sbtest.Eq(t, len(rawData.TimeData), len(r[i].Exercises[j].Force[k]))
-					// sbtest.Eq(t, len(rawData.TimeData), len(r[i].Exercises[j].Impulse[k]))
-					// sbtest.Eq(t, len(rawData.TimeData), len(r[i].Exercises[j].Work[k]))
+					sbtest.Eq(t, len(rawData.TimeData), len(r[i].Exercises[j].Velocity[k]))
+					sbtest.Eq(t, len(rawData.TimeData), len(r[i].Exercises[j].Acceleration[k]))
+					sbtest.Eq(t, len(rawData.TimeData), len(r[i].Exercises[j].Jerk[k]))
+					sbtest.Eq(t, len(rawData.TimeData), len(r[i].Exercises[j].Force[k]))
+					sbtest.Eq(t, len(rawData.TimeData), len(r[i].Exercises[j].Impulse[k]))
+					sbtest.Eq(t, len(rawData.TimeData), len(r[i].Exercises[j].Work[k]))
 				}
 				if l[i].Exercises[j].BarPath[k].Source() == types.VideoBarPathData {
 					// TODO - enable when video processing is working

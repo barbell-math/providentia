@@ -21,7 +21,12 @@ type (
 	}
 
 	BarPathCalcConf struct {
-		ApproxErr ApproximationError
+		ApproxErr       ApproximationError
+		SmootherWeight1 float64
+		SmootherWeight2 float64
+		SmootherWeight3 float64
+		SmootherWeight4 float64
+		SmootherWeight5 float64
 	}
 
 	// Holds all configuration data for the library. Used to define the state of

@@ -1,6 +1,6 @@
 package barpathphysdata
 
-// #cgo CXXFLAGS: -O3 -march=native -std=c++23 -I../../../_deps/eigen  -I../../glue
+// #cgo CXXFLAGS: -O3 -Werror -march=native -std=c++23 -I../../../_deps/eigen  -I../../glue
 // #cgo LDFLAGS: -lstdc++
 // #include "cpu.h"
 import "C"
@@ -32,6 +32,7 @@ var (
 
 func Calc(
 	state *types.State,
+	weight types.Kilogram,
 	rawData *dal.CreatePhysicsDataParams,
 	idx int,
 ) error {
@@ -74,6 +75,13 @@ func Calc(
 		return sberr.Wrap(
 			InvalidRawDataIdxErr,
 			"Supplied index (%d) outside allowed work range: [0, %d)",
+			idx, len(rawData.Work),
+		)
+	}
+	if len(rawData.Power) <= idx {
+		return sberr.Wrap(
+			InvalidRawDataIdxErr,
+			"Supplied index (%d) outside allowed power range: [0, %d)",
 			idx, len(rawData.Work),
 		)
 	}
@@ -135,6 +143,13 @@ func Calc(
 			expLen, len(rawData.Work[idx]),
 		)
 	}
+	if len(rawData.Power[idx]) != expLen {
+		return sberr.Wrap(
+			InvalidRawDataLenErr,
+			"Expected power slice of len %d, got len %d",
+			expLen, len(rawData.Power[idx]),
+		)
+	}
 	if len(rawData.Impulse[idx]) != expLen {
 		return sberr.Wrap(
 			InvalidRawDataLenErr,
@@ -155,15 +170,17 @@ func Calc(
 	// intensive operations.
 
 	err := C.calcBarPathPhysData(
+		C.double(weight),
 		C.int64_t(len(rawData.Time[idx])),
 		(*C.double)(unsafe.SliceData(rawData.Time[idx])),
 		(*C.posVec2_t)(unsafe.Pointer(&rawData.Position[idx][0])),
 		(*C.velVec2_t)(unsafe.Pointer(&rawData.Velocity[idx][0])),
 		(*C.accVec2_t)(unsafe.Pointer(&rawData.Acceleration[idx][0])),
 		(*C.jerkVec2_t)(unsafe.Pointer(&rawData.Jerk[idx][0])),
-		(*C.workVec2_t)(unsafe.Pointer(&rawData.Work[idx][0])),
 		(*C.impulseVec2_t)(unsafe.Pointer(&rawData.Impulse[idx][0])),
 		(*C.forceVec2_t)(unsafe.Pointer(&rawData.Force[idx][0])),
+		(*C.double)(unsafe.Pointer(&rawData.Work[idx][0])),
+		(*C.double)(unsafe.Pointer(&rawData.Power[idx][0])),
 		(*C.barPathCalcConf_t)(unsafe.Pointer(&state.BarPathCalc)),
 		(*C.physDataConf_t)(unsafe.Pointer(&state.PhysicsData)),
 	)

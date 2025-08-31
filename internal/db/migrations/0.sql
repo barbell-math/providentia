@@ -43,7 +43,21 @@ CREATE TABLE IF NOT EXISTS providentia.physics_data (
 
 	force POINT[][] NOT NULL,
 	impulse POINT[][] NOT NULL,
-	work POINT[][] NOT NULL
+	work FLOAT8[][] NOT NULL,
+	power FLOAT8[][] NOT NULL
+
+	-- TODO - this seems to require rep identification?
+	-- avg_power FLOAT8 NOT NULL,
+	-- min_power FLOAT8 NOT NULL,
+	-- min_power_time FLOAT8 NOT NULL,
+	-- max_power FLOAT8 NOT NULL,
+	-- max_power_time FLOAT8 NOT NULL,
+
+	-- avg_force POINT NOT NULL,
+	-- min_force POINT NOT NULL,
+	-- min_force_time FLOAT8 NOT NULL,
+	-- max_force POINT NOT NULL,
+	-- max_force_time FLOAT8 NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS providentia.training_log (
@@ -59,7 +73,7 @@ CREATE TABLE IF NOT EXISTS providentia.training_log (
 	weight FLOAT8 NOT NULL CHECK (weight>=0),
 	sets FLOAT8 NOT NULL CHECK (sets>=0),
 	reps INT4 NOT NULL CHECK (reps>=0),
-	effort FLOAT8 NOT NULL CHECK (effort>=0 AND effort<=10),
+	effort FLOAT4 NOT NULL CHECK (effort>=0 AND effort<=10),
 
 	volume FLOAT8 NOT NULL CHECK (volume>=0) GENERATED ALWAYS AS (weight*sets*reps) STORED,
 	exertion FLOAT8 NOT NULL CHECK (exertion>=0) GENERATED ALWAYS AS (effort*sets*reps) STORED,

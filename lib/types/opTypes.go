@@ -41,11 +41,11 @@ type (
 	}
 	// Contains all raw data that can be provided by the user
 	RawExerciseData struct {
-		Name    string  // The unique name of the exercise
-		Weight  float64 // The weight the exercise was performed with
-		Sets    float64 // The number sets that were performed
-		Reps    int32   // The number of reps that were performed
-		Effort  float64 //The effort the exercise was performed at
+		Name    string   // The unique name of the exercise
+		Weight  Kilogram // The weight the exercise was performed with
+		Sets    float64  // The number sets that were performed
+		Reps    int32    // The number of reps that were performed
+		Effort  RPE      //The effort the exercise was performed at
 		BarPath []BarPathVariant
 	}
 
@@ -60,12 +60,12 @@ type (
 	// calculated fields such as volume
 	ExerciseData struct {
 		Name         string
-		Weight       float64
+		Weight       Kilogram
 		Sets         float64
 		Reps         int32
-		Effort       float64
-		Volume       float64
-		Exertion     float64
+		Effort       RPE
+		Volume       Kilogram
+		Exertion     RPE
 		TotalReps    float64
 		Time         [][]Second
 		Position     [][]Vec2[Meter]
@@ -74,7 +74,8 @@ type (
 		Jerk         [][]Vec2[MeterPerSec3]
 		Force        [][]Vec2[Newton]
 		Impulse      [][]Vec2[NewtonSec]
-		Work         [][]Vec2[Joule]
+		Work         [][]Joule
+		Power        [][]Watt
 	}
 )
 

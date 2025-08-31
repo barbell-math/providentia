@@ -20,7 +20,6 @@ func main() {
 			reflect.TypeFor[types.Vec2[types.MeterPerSec3]]().Name(): "jerkVec2",
 			reflect.TypeFor[types.Vec2[types.Newton]]().Name():       "forceVec2",
 			reflect.TypeFor[types.Vec2[types.NewtonSec]]().Name():    "impulseVec2",
-			reflect.TypeFor[types.Vec2[types.Joule]]().Name():        "workVec2",
 		},
 	})
 	sbcgoglue.RegisterEnum(
@@ -41,6 +40,5 @@ func main() {
 	sbcgoglue.RegisterStruct[types.Vec2[types.MeterPerSec3]](g)
 	sbcgoglue.RegisterStruct[types.Vec2[types.Newton]](g)
 	sbcgoglue.RegisterStruct[types.Vec2[types.NewtonSec]](g)
-	sbcgoglue.RegisterStruct[types.Vec2[types.Joule]](g)
 	g.WriteTo("./glue.h")
 }

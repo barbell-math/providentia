@@ -3,10 +3,9 @@ package types
 import "github.com/jackc/pgx/v5/pgtype"
 
 type (
-	Vec2[T ~float64] struct {
-		X T
-		Y T
-	}
+	RPE float32
+
+	Kilogram float64
 
 	Second float64
 
@@ -19,6 +18,12 @@ type (
 	NewtonSec float64
 
 	Joule float64
+	Watt  float64
+
+	Vec2[T ~float64] struct {
+		X T
+		Y T
+	}
 )
 
 func (v *Vec2[T]) ScanPoint(newVal pgtype.Point) error {

@@ -68,16 +68,16 @@ type BulkCreateModelsWithIDParams struct {
 }
 
 type BulkCreateTrainingLogsParams struct {
-	ExerciseID       int32       `json:"exercise_id"`
-	ClientID         int64       `json:"client_id"`
-	PhysicsID        pgtype.Int8 `json:"physics_id"`
-	DatePerformed    pgtype.Date `json:"date_performed"`
-	Weight           float64     `json:"weight"`
-	Sets             float64     `json:"sets"`
-	Reps             int32       `json:"reps"`
-	Effort           float64     `json:"effort"`
-	InterSessionCntr int16       `json:"inter_session_cntr"`
-	InterWorkoutCntr int16       `json:"inter_workout_cntr"`
+	ExerciseID       int32          `json:"exercise_id"`
+	ClientID         int64          `json:"client_id"`
+	PhysicsID        pgtype.Int8    `json:"physics_id"`
+	DatePerformed    pgtype.Date    `json:"date_performed"`
+	Weight           types.Kilogram `json:"weight"`
+	Sets             float64        `json:"sets"`
+	Reps             int32          `json:"reps"`
+	Effort           types.RPE      `json:"effort"`
+	InterSessionCntr int16          `json:"inter_session_cntr"`
+	InterWorkoutCntr int16          `json:"inter_workout_cntr"`
 }
 
 const clientExists = `-- name: ClientExists :one
@@ -130,15 +130,15 @@ type ClientTrainingLogDataDateRangeAscendingParams struct {
 }
 
 type ClientTrainingLogDataDateRangeAscendingRow struct {
-	ID               int64   `json:"id"`
-	ExerciseID       int32   `json:"exercise_id"`
-	DaysSince        int32   `json:"days_since"`
-	Weight           float64 `json:"weight"`
-	Sets             float64 `json:"sets"`
-	Reps             int32   `json:"reps"`
-	Effort           float64 `json:"effort"`
-	InterSessionCntr int16   `json:"inter_session_cntr"`
-	InterWorkoutCntr int16   `json:"inter_workout_cntr"`
+	ID               int64          `json:"id"`
+	ExerciseID       int32          `json:"exercise_id"`
+	DaysSince        int32          `json:"days_since"`
+	Weight           types.Kilogram `json:"weight"`
+	Sets             float64        `json:"sets"`
+	Reps             int32          `json:"reps"`
+	Effort           types.RPE      `json:"effort"`
+	InterSessionCntr int16          `json:"inter_session_cntr"`
+	InterWorkoutCntr int16          `json:"inter_workout_cntr"`
 }
 
 func (q *Queries) ClientTrainingLogDataDateRangeAscending(ctx context.Context, arg ClientTrainingLogDataDateRangeAscendingParams) ([]ClientTrainingLogDataDateRangeAscendingRow, error) {
@@ -175,9 +175,9 @@ const createPhysicsData = `-- name: CreatePhysicsData :one
 INSERT INTO providentia.physics_data(
 	path,
 	time, position, velocity, acceleration, jerk,
-	force, impulse, work
+	force, impulse, work, power
 ) VALUES (
-	$1, $2, $3, $4, $5, $6, $7, $8, $9
+	$1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 ) RETURNING id
 `
 
@@ -190,7 +190,8 @@ type CreatePhysicsDataParams struct {
 	Jerk         [][]types.Vec2[types.MeterPerSec3] `json:"jerk"`
 	Force        [][]types.Vec2[types.Newton]       `json:"force"`
 	Impulse      [][]types.Vec2[types.NewtonSec]    `json:"impulse"`
-	Work         [][]types.Vec2[types.Joule]        `json:"work"`
+	Work         [][]types.Joule                    `json:"work"`
+	Power        [][]types.Watt                     `json:"power"`
 }
 
 func (q *Queries) CreatePhysicsData(ctx context.Context, arg CreatePhysicsDataParams) (int64, error) {
@@ -204,6 +205,7 @@ func (q *Queries) CreatePhysicsData(ctx context.Context, arg CreatePhysicsDataPa
 		arg.Force,
 		arg.Impulse,
 		arg.Work,
+		arg.Power,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -319,17 +321,17 @@ LIMIT $1
 `
 
 type GetAllClientsTrainingLogDataRow struct {
-	Email            string      `json:"email"`
-	Name             string      `json:"name"`
-	DatePerformed    pgtype.Date `json:"date_performed"`
-	InterSessionCntr int16       `json:"inter_session_cntr"`
-	Weight           float64     `json:"weight"`
-	Sets             float64     `json:"sets"`
-	Reps             int32       `json:"reps"`
-	Effort           float64     `json:"effort"`
-	Volume           float64     `json:"volume"`
-	Exertion         float64     `json:"exertion"`
-	TotalReps        float64     `json:"total_reps"`
+	Email            string         `json:"email"`
+	Name             string         `json:"name"`
+	DatePerformed    pgtype.Date    `json:"date_performed"`
+	InterSessionCntr int16          `json:"inter_session_cntr"`
+	Weight           types.Kilogram `json:"weight"`
+	Sets             float64        `json:"sets"`
+	Reps             int32          `json:"reps"`
+	Effort           types.RPE      `json:"effort"`
+	Volume           types.Kilogram `json:"volume"`
+	Exertion         types.RPE      `json:"exertion"`
+	TotalReps        float64        `json:"total_reps"`
 }
 
 func (q *Queries) GetAllClientsTrainingLogData(ctx context.Context, limit int32) ([]GetAllClientsTrainingLogDataRow, error) {
@@ -381,7 +383,8 @@ SELECT
 	providentia.physics_data.jerk,
 	providentia.physics_data.force,
 	providentia.physics_data.impulse,
-	providentia.physics_data.work
+	providentia.physics_data.work,
+	providentia.physics_data.power
 FROM providentia.training_log
 JOIN providentia.exercise
 	ON providentia.training_log.exercise_id=providentia.exercise.id
@@ -404,12 +407,12 @@ type GetAllWorkoutDataParams struct {
 
 type GetAllWorkoutDataRow struct {
 	Name         string                             `json:"name"`
-	Weight       float64                            `json:"weight"`
+	Weight       types.Kilogram                     `json:"weight"`
 	Sets         float64                            `json:"sets"`
 	Reps         int32                              `json:"reps"`
-	Effort       float64                            `json:"effort"`
-	Volume       float64                            `json:"volume"`
-	Exertion     float64                            `json:"exertion"`
+	Effort       types.RPE                          `json:"effort"`
+	Volume       types.Kilogram                     `json:"volume"`
+	Exertion     types.RPE                          `json:"exertion"`
 	TotalReps    float64                            `json:"total_reps"`
 	Time         [][]types.Second                   `json:"time"`
 	Position     [][]types.Vec2[types.Meter]        `json:"position"`
@@ -418,7 +421,8 @@ type GetAllWorkoutDataRow struct {
 	Jerk         [][]types.Vec2[types.MeterPerSec3] `json:"jerk"`
 	Force        [][]types.Vec2[types.Newton]       `json:"force"`
 	Impulse      [][]types.Vec2[types.NewtonSec]    `json:"impulse"`
-	Work         [][]types.Vec2[types.Joule]        `json:"work"`
+	Work         [][]types.Joule                    `json:"work"`
+	Power        [][]types.Watt                     `json:"power"`
 }
 
 func (q *Queries) GetAllWorkoutData(ctx context.Context, arg GetAllWorkoutDataParams) ([]GetAllWorkoutDataRow, error) {
@@ -447,6 +451,7 @@ func (q *Queries) GetAllWorkoutData(ctx context.Context, arg GetAllWorkoutDataPa
 			&i.Force,
 			&i.Impulse,
 			&i.Work,
+			&i.Power,
 		); err != nil {
 			return nil, err
 		}
@@ -477,7 +482,8 @@ SELECT
 	providentia.physics_data.jerk,
 	providentia.physics_data.force,
 	providentia.physics_data.impulse,
-	providentia.physics_data.work
+	providentia.physics_data.work,
+	providentia.physics_data.power
 FROM providentia.training_log
 JOIN providentia.exercise
 	ON providentia.training_log.exercise_id=providentia.exercise.id
@@ -502,12 +508,12 @@ type GetAllWorkoutDataBetweenDatesParams struct {
 
 type GetAllWorkoutDataBetweenDatesRow struct {
 	Name             string                             `json:"name"`
-	Weight           float64                            `json:"weight"`
+	Weight           types.Kilogram                     `json:"weight"`
 	Sets             float64                            `json:"sets"`
 	Reps             int32                              `json:"reps"`
-	Effort           float64                            `json:"effort"`
-	Volume           float64                            `json:"volume"`
-	Exertion         float64                            `json:"exertion"`
+	Effort           types.RPE                          `json:"effort"`
+	Volume           types.Kilogram                     `json:"volume"`
+	Exertion         types.RPE                          `json:"exertion"`
 	TotalReps        float64                            `json:"total_reps"`
 	DatePerformed    pgtype.Date                        `json:"date_performed"`
 	InterSessionCntr int16                              `json:"inter_session_cntr"`
@@ -518,7 +524,8 @@ type GetAllWorkoutDataBetweenDatesRow struct {
 	Jerk             [][]types.Vec2[types.MeterPerSec3] `json:"jerk"`
 	Force            [][]types.Vec2[types.Newton]       `json:"force"`
 	Impulse          [][]types.Vec2[types.NewtonSec]    `json:"impulse"`
-	Work             [][]types.Vec2[types.Joule]        `json:"work"`
+	Work             [][]types.Joule                    `json:"work"`
+	Power            [][]types.Watt                     `json:"power"`
 }
 
 func (q *Queries) GetAllWorkoutDataBetweenDates(ctx context.Context, arg GetAllWorkoutDataBetweenDatesParams) ([]GetAllWorkoutDataBetweenDatesRow, error) {
@@ -549,6 +556,7 @@ func (q *Queries) GetAllWorkoutDataBetweenDates(ctx context.Context, arg GetAllW
 			&i.Force,
 			&i.Impulse,
 			&i.Work,
+			&i.Power,
 		); err != nil {
 			return nil, err
 		}
@@ -588,13 +596,13 @@ type GetClientTrainingLogDataParams struct {
 }
 
 type GetClientTrainingLogDataRow struct {
-	Name             string      `json:"name"`
-	DatePerformed    pgtype.Date `json:"date_performed"`
-	InterSessionCntr int16       `json:"inter_session_cntr"`
-	Weight           float64     `json:"weight"`
-	Sets             float64     `json:"sets"`
-	Reps             int32       `json:"reps"`
-	Effort           float64     `json:"effort"`
+	Name             string         `json:"name"`
+	DatePerformed    pgtype.Date    `json:"date_performed"`
+	InterSessionCntr int16          `json:"inter_session_cntr"`
+	Weight           types.Kilogram `json:"weight"`
+	Sets             float64        `json:"sets"`
+	Reps             int32          `json:"reps"`
+	Effort           types.RPE      `json:"effort"`
 }
 
 func (q *Queries) GetClientTrainingLogData(ctx context.Context, arg GetClientTrainingLogDataParams) ([]GetClientTrainingLogDataRow, error) {

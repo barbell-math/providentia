@@ -64,7 +64,8 @@ type PhysicsData struct {
 	Jerk         [][]types.Vec2[types.MeterPerSec3] `json:"jerk"`
 	Force        [][]types.Vec2[types.Newton]       `json:"force"`
 	Impulse      [][]types.Vec2[types.NewtonSec]    `json:"impulse"`
-	Work         [][]types.Vec2[types.Joule]        `json:"work"`
+	Work         [][]types.Joule                    `json:"work"`
+	Power        [][]types.Watt                     `json:"power"`
 }
 
 type ProvidentiaModel struct {
@@ -74,18 +75,18 @@ type ProvidentiaModel struct {
 }
 
 type TrainingLog struct {
-	ID               int64       `json:"id"`
-	ExerciseID       int32       `json:"exercise_id"`
-	ClientID         int64       `json:"client_id"`
-	PhysicsID        pgtype.Int8 `json:"physics_id"`
-	DatePerformed    pgtype.Date `json:"date_performed"`
-	InterSessionCntr int16       `json:"inter_session_cntr"`
-	InterWorkoutCntr int16       `json:"inter_workout_cntr"`
-	Weight           float64     `json:"weight"`
-	Sets             float64     `json:"sets"`
-	Reps             int32       `json:"reps"`
-	Effort           float64     `json:"effort"`
-	Volume           float64     `json:"volume"`
-	Exertion         float64     `json:"exertion"`
-	TotalReps        float64     `json:"total_reps"`
+	ID               int64          `json:"id"`
+	ExerciseID       int32          `json:"exercise_id"`
+	ClientID         int64          `json:"client_id"`
+	PhysicsID        pgtype.Int8    `json:"physics_id"`
+	DatePerformed    pgtype.Date    `json:"date_performed"`
+	InterSessionCntr int16          `json:"inter_session_cntr"`
+	InterWorkoutCntr int16          `json:"inter_workout_cntr"`
+	Weight           types.Kilogram `json:"weight"`
+	Sets             float64        `json:"sets"`
+	Reps             int32          `json:"reps"`
+	Effort           types.RPE      `json:"effort"`
+	Volume           types.Kilogram `json:"volume"`
+	Exertion         types.RPE      `json:"exertion"`
+	TotalReps        float64        `json:"total_reps"`
 }
