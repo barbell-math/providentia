@@ -44,7 +44,9 @@ CREATE TABLE IF NOT EXISTS providentia.physics_data (
 	force POINT[][] NOT NULL,
 	impulse POINT[][] NOT NULL,
 	work FLOAT8[][] NOT NULL,
-	power FLOAT8[][] NOT NULL
+	power FLOAT8[][] NOT NULL,
+
+	rep_splits POINT[][] NOT NULL
 
 	-- TODO - this seems to require rep identification?
 	-- avg_power FLOAT8 NOT NULL,

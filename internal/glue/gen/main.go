@@ -20,6 +20,8 @@ func main() {
 			reflect.TypeFor[types.Vec2[types.MeterPerSec3]]().Name(): "jerkVec2",
 			reflect.TypeFor[types.Vec2[types.Newton]]().Name():       "forceVec2",
 			reflect.TypeFor[types.Vec2[types.NewtonSec]]().Name():    "impulseVec2",
+			reflect.TypeFor[types.Split[types.Second]]().Name():      "repSplit",
+			reflect.TypeFor[barpathphysdata.Data]().Name():           "barPathData",
 		},
 	})
 	sbcgoglue.RegisterEnum(
@@ -32,13 +34,15 @@ func main() {
 		barpathphysdata.BarPathCalcErrCodeNames(),
 		barpathphysdata.BarPathCalcErrCodeValues(),
 	)
-	sbcgoglue.RegisterStruct[types.BarPathCalcConf](g)
-	sbcgoglue.RegisterStruct[types.PhysicsDataConf](g)
 	sbcgoglue.RegisterStruct[types.Vec2[types.Meter]](g)
 	sbcgoglue.RegisterStruct[types.Vec2[types.MeterPerSec]](g)
 	sbcgoglue.RegisterStruct[types.Vec2[types.MeterPerSec2]](g)
 	sbcgoglue.RegisterStruct[types.Vec2[types.MeterPerSec3]](g)
 	sbcgoglue.RegisterStruct[types.Vec2[types.Newton]](g)
 	sbcgoglue.RegisterStruct[types.Vec2[types.NewtonSec]](g)
+	sbcgoglue.RegisterStruct[types.Split[types.Second]](g)
+	sbcgoglue.RegisterStruct[barpathphysdata.Data](g)
+	sbcgoglue.RegisterStruct[types.BarPathCalcConf](g)
+	sbcgoglue.RegisterStruct[types.PhysicsDataConf](g)
 	g.WriteTo("./glue.h")
 }

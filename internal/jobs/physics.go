@@ -38,6 +38,7 @@ func (p *Physics) Run(ctxt context.Context) error {
 		Impulse:      make([][]types.Vec2[types.NewtonSec], len(p.BarPath)),
 		Work:         make([][]types.Joule, len(p.BarPath)),
 		Power:        make([][]types.Watt, len(p.BarPath)),
+		RepSplits:    make([][]types.Split[types.Second], len(p.BarPath)),
 	}
 
 	if err := p.processData(ctxt, &physData); err != nil {
@@ -66,25 +67,7 @@ func (p *Physics) processData(
 		if rawData, ok := set.TimeSeriesData(); ok {
 			data.Time[i] = rawData.TimeData
 			data.Position[i] = rawData.PositionData
-			data.Velocity[i] = make(
-				[]types.Vec2[types.MeterPerSec], len(rawData.TimeData),
-			)
-			data.Acceleration[i] = make(
-				[]types.Vec2[types.MeterPerSec2], len(rawData.TimeData),
-			)
-			data.Jerk[i] = make(
-				[]types.Vec2[types.MeterPerSec3], len(rawData.TimeData),
-			)
-			data.Impulse[i] = make(
-				[]types.Vec2[types.NewtonSec], len(rawData.TimeData),
-			)
-			data.Force[i] = make(
-				[]types.Vec2[types.Newton], len(rawData.TimeData),
-			)
-			data.Work[i] = make([]types.Joule, len(rawData.TimeData))
-			data.Power[i] = make([]types.Watt, len(rawData.TimeData))
-
-			if err := barpathphysdata.Calc(p.S, p.Tl.Weight, data, i); err != nil {
+			if err := barpathphysdata.Calc(p.S, p.Tl, data, i); err != nil {
 				return err
 			}
 		}

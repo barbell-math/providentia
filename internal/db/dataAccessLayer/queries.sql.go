@@ -175,9 +175,10 @@ const createPhysicsData = `-- name: CreatePhysicsData :one
 INSERT INTO providentia.physics_data(
 	path,
 	time, position, velocity, acceleration, jerk,
-	force, impulse, work, power
+	force, impulse, work, power,
+	rep_splits
 ) VALUES (
-	$1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+	$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
 ) RETURNING id
 `
 
@@ -192,6 +193,7 @@ type CreatePhysicsDataParams struct {
 	Impulse      [][]types.Vec2[types.NewtonSec]    `json:"impulse"`
 	Work         [][]types.Joule                    `json:"work"`
 	Power        [][]types.Watt                     `json:"power"`
+	RepSplits    [][]types.Split[types.Second]      `json:"rep_splits"`
 }
 
 func (q *Queries) CreatePhysicsData(ctx context.Context, arg CreatePhysicsDataParams) (int64, error) {
@@ -206,6 +208,7 @@ func (q *Queries) CreatePhysicsData(ctx context.Context, arg CreatePhysicsDataPa
 		arg.Impulse,
 		arg.Work,
 		arg.Power,
+		arg.RepSplits,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -384,7 +387,8 @@ SELECT
 	providentia.physics_data.force,
 	providentia.physics_data.impulse,
 	providentia.physics_data.work,
-	providentia.physics_data.power
+	providentia.physics_data.power,
+	providentia.physics_data.rep_splits
 FROM providentia.training_log
 JOIN providentia.exercise
 	ON providentia.training_log.exercise_id=providentia.exercise.id
@@ -423,6 +427,7 @@ type GetAllWorkoutDataRow struct {
 	Impulse      [][]types.Vec2[types.NewtonSec]    `json:"impulse"`
 	Work         [][]types.Joule                    `json:"work"`
 	Power        [][]types.Watt                     `json:"power"`
+	RepSplits    [][]types.Split[types.Second]      `json:"rep_splits"`
 }
 
 func (q *Queries) GetAllWorkoutData(ctx context.Context, arg GetAllWorkoutDataParams) ([]GetAllWorkoutDataRow, error) {
@@ -452,6 +457,7 @@ func (q *Queries) GetAllWorkoutData(ctx context.Context, arg GetAllWorkoutDataPa
 			&i.Impulse,
 			&i.Work,
 			&i.Power,
+			&i.RepSplits,
 		); err != nil {
 			return nil, err
 		}
@@ -483,7 +489,8 @@ SELECT
 	providentia.physics_data.force,
 	providentia.physics_data.impulse,
 	providentia.physics_data.work,
-	providentia.physics_data.power
+	providentia.physics_data.power,
+	providentia.physics_data.rep_splits
 FROM providentia.training_log
 JOIN providentia.exercise
 	ON providentia.training_log.exercise_id=providentia.exercise.id
@@ -526,6 +533,7 @@ type GetAllWorkoutDataBetweenDatesRow struct {
 	Impulse          [][]types.Vec2[types.NewtonSec]    `json:"impulse"`
 	Work             [][]types.Joule                    `json:"work"`
 	Power            [][]types.Watt                     `json:"power"`
+	RepSplits        [][]types.Split[types.Second]      `json:"rep_splits"`
 }
 
 func (q *Queries) GetAllWorkoutDataBetweenDates(ctx context.Context, arg GetAllWorkoutDataBetweenDatesParams) ([]GetAllWorkoutDataBetweenDatesRow, error) {
@@ -557,6 +565,7 @@ func (q *Queries) GetAllWorkoutDataBetweenDates(ctx context.Context, arg GetAllW
 			&i.Impulse,
 			&i.Work,
 			&i.Power,
+			&i.RepSplits,
 		); err != nil {
 			return nil, err
 		}

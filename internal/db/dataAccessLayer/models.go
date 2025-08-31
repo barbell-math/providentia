@@ -66,6 +66,7 @@ type PhysicsData struct {
 	Impulse      [][]types.Vec2[types.NewtonSec]    `json:"impulse"`
 	Work         [][]types.Joule                    `json:"work"`
 	Power        [][]types.Watt                     `json:"power"`
+	RepSplits    [][]types.Split[types.Second]      `json:"rep_splits"`
 }
 
 type ProvidentiaModel struct {

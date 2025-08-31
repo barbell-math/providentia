@@ -52,20 +52,41 @@ extern "C" {
 		double_t Y;
 	} jerkVec2_t;
 
-	typedef struct physDataConf{
-		uint64_t MinNumSamples;
-		double_t TimeDeltaEps;
-	} physDataConf_t;
-
 	typedef struct posVec2{
 		double_t X;
 		double_t Y;
 	} posVec2_t;
 
+	typedef struct repSplit{
+		double_t Start;
+		double_t End;
+	} repSplit_t;
+
 	typedef struct velVec2{
 		double_t X;
 		double_t Y;
 	} velVec2_t;
+
+	typedef struct barPathData{
+		double_t Mass;
+		int64_t timeLen;
+		double_t* time;
+		posVec2_t* pos;
+		velVec2_t* vel;
+		accVec2_t* acc;
+		jerkVec2_t* jerk;
+		forceVec2_t* force;
+		impulseVec2_t* impulse;
+		double_t* power;
+		double_t* work;
+		int32_t Reps;
+		repSplit_t* repSplit;
+	} barPathData_t;
+
+	typedef struct physDataConf{
+		uint64_t MinNumSamples;
+		double_t TimeDeltaEps;
+	} physDataConf_t;
 
 #ifdef __cplusplus
 }

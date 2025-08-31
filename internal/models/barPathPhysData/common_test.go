@@ -43,6 +43,9 @@ func TestTimeSeriesNotIncreasingErr(t *testing.T) {
 		},
 		Work:  [][]types.Joule{make([]types.Joule, 7)},
 		Power: [][]types.Watt{make([]types.Watt, 7)},
+		RepSplits: [][]types.Split[types.Second]{
+			make([]types.Split[types.Second], 7),
+		},
 	}
 	state := types.State{
 		BarPathCalc: types.BarPathCalcConf{
@@ -53,7 +56,12 @@ func TestTimeSeriesNotIncreasingErr(t *testing.T) {
 			TimeDeltaEps:  1e-6,
 		},
 	}
-	err := Calc(&state, 1, &rawData, 0)
+	baseData := dal.BulkCreateTrainingLogsParams{
+		Weight: 1,
+		Reps:   1,
+		Sets:   1,
+	}
+	err := Calc(&state, &baseData, &rawData, 0)
 	sbtest.ContainsError(t, types.TimeSeriesDecreaseErr, err)
 }
 
@@ -86,6 +94,9 @@ func TestTimeSeriesNotMonotonicErr(t *testing.T) {
 		},
 		Work:  [][]types.Joule{make([]types.Joule, 7)},
 		Power: [][]types.Watt{make([]types.Watt, 7)},
+		RepSplits: [][]types.Split[types.Second]{
+			make([]types.Split[types.Second], 7),
+		},
 	}
 	state := types.State{
 		BarPathCalc: types.BarPathCalcConf{
@@ -96,7 +107,12 @@ func TestTimeSeriesNotMonotonicErr(t *testing.T) {
 			TimeDeltaEps:  1e-6,
 		},
 	}
-	err := Calc(&state, 1, &rawData, 0)
+	baseData := dal.BulkCreateTrainingLogsParams{
+		Weight: 1,
+		Reps:   1,
+		Sets:   1,
+	}
+	err := Calc(&state, &baseData, &rawData, 0)
 	sbtest.ContainsError(t, types.TimeSeriesNotMonotonicErr, err)
 }
 
@@ -129,6 +145,9 @@ func TestInvalidApproxErrErr(t *testing.T) {
 		},
 		Work:  [][]types.Joule{make([]types.Joule, 7)},
 		Power: [][]types.Watt{make([]types.Watt, 7)},
+		RepSplits: [][]types.Split[types.Second]{
+			make([]types.Split[types.Second], 7),
+		},
 	}
 	state := types.State{
 		BarPathCalc: types.BarPathCalcConf{
@@ -139,7 +158,12 @@ func TestInvalidApproxErrErr(t *testing.T) {
 			TimeDeltaEps:  1e-6,
 		},
 	}
-	err := Calc(&state, 1, &rawData, 0)
+	baseData := dal.BulkCreateTrainingLogsParams{
+		Weight: 1,
+		Reps:   1,
+		Sets:   1,
+	}
+	err := Calc(&state, &baseData, &rawData, 0)
 	sbtest.ContainsError(t, types.ErrInvalidApproximationError, err)
 }
 
@@ -151,6 +175,7 @@ func testForAccuracy(
 	d3 func(x float64) float64,
 	samples int,
 	state *types.State,
+	baseData *dal.BulkCreateTrainingLogsParams,
 ) {
 	rawData := dal.CreatePhysicsDataParams{
 		Time:         [][]types.Second{make([]types.Second, samples)},
@@ -162,6 +187,7 @@ func testForAccuracy(
 		Force:        [][]types.Vec2[types.Newton]{make([]types.Vec2[types.Newton], samples)},
 		Work:         [][]types.Joule{make([]types.Joule, samples)},
 		Power:        [][]types.Watt{make([]types.Watt, samples)},
+		RepSplits:    [][]types.Split[types.Second]{make([]types.Split[types.Second], samples)},
 	}
 	for i := range samples {
 		rawData.Time[0][i] = types.Second(i)
@@ -170,7 +196,7 @@ func testForAccuracy(
 			Y: types.Meter(f1(float64(i))),
 		}
 	}
-	err := Calc(state, 1, &rawData, 0)
+	err := Calc(state, baseData, &rawData, 0)
 	sbtest.Nil(t, err)
 
 	edgeGap := 2
@@ -259,6 +285,11 @@ func TestQuadPolynomialSecondOrderAccuracy(t *testing.T) {
 				TimeDeltaEps:  1e-6,
 			},
 		},
+		&dal.BulkCreateTrainingLogsParams{
+			Weight: 1,
+			Reps:   1,
+			Sets:   1,
+		},
 	)
 }
 
@@ -281,6 +312,11 @@ func TestQuadPolynomialFourthOrderAccuracy(t *testing.T) {
 				TimeDeltaEps:  1e-6,
 			},
 		},
+		&dal.BulkCreateTrainingLogsParams{
+			Weight: 1,
+			Reps:   1,
+			Sets:   1,
+		},
 	)
 }
 
@@ -289,6 +325,7 @@ func loadAndTestCsv(
 	rawDataFile string,
 	outFile string,
 	state *types.State,
+	baseData *dal.BulkCreateTrainingLogsParams,
 ) {
 	f, err := os.ReadFile(rawDataFile)
 	sbtest.Nil(t, err)
@@ -306,6 +343,7 @@ func loadAndTestCsv(
 		Force:        [][]types.Vec2[types.Newton]{make([]types.Vec2[types.Newton], samples)},
 		Work:         [][]types.Joule{make([]types.Joule, samples)},
 		Power:        [][]types.Watt{make([]types.Watt, samples)},
+		RepSplits:    [][]types.Split[types.Second]{make([]types.Split[types.Second], samples)},
 	}
 	for i := range samples {
 		rawTime, err := strconv.ParseFloat(rawData[i+1][1], 64)
@@ -321,7 +359,7 @@ func loadAndTestCsv(
 			Y: types.Meter(rawYPos) / 100,
 		}
 	}
-	err = Calc(state, 1, &inputData, 0)
+	err = Calc(state, baseData, &inputData, 0)
 	sbtest.Nil(t, err)
 
 	outF, err := os.Create(outFile)
@@ -388,11 +426,17 @@ func TestSquatDataSecondOrder(t *testing.T) {
 			TimeDeltaEps:  1e-2,
 		},
 	}
+	baseData := dal.BulkCreateTrainingLogsParams{
+		Weight: 1,
+		Reps:   8,
+		Sets:   1,
+	}
 	loadAndTestCsv(
 		t,
 		"./testData/15_08_2025_squat.csv",
 		"./testData/15_08_2025_squat.secondOrder.csv",
 		&state,
+		&baseData,
 	)
 }
 
@@ -411,10 +455,18 @@ func TestSquatDataFourthOrder(t *testing.T) {
 			TimeDeltaEps:  1e-2,
 		},
 	}
+	baseData := dal.BulkCreateTrainingLogsParams{
+		Weight: 1,
+		Reps:   8,
+		Sets:   1,
+	}
 	loadAndTestCsv(
 		t,
 		"./testData/15_08_2025_squat.csv",
 		"./testData/15_08_2025_squat.fourthOrder.csv",
 		&state,
+		&baseData,
 	)
 }
+
+// TODO - test fractional sets produce correct num of reps

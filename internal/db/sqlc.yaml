@@ -64,6 +64,9 @@ sql:
           - column: providentia.physics_data.power
             go_type:
               type: "[][]types.Watt"
+          - column: providentia.physics_data.rep_splits
+            go_type:
+              type: "[][]types.Split[types.Second]"
 
 overrides:
  go:

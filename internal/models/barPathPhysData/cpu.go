@@ -6,6 +6,8 @@ package barpathphysdata
 import "C"
 import (
 	"errors"
+	"math"
+	"runtime"
 	"unsafe"
 
 	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
@@ -23,6 +25,23 @@ type (
 	//	InvalidApproximationErrErr
 	// )
 	BarPathCalcErrCode int64
+
+	Data struct {
+		Mass    types.Kilogram
+		timeLen int64
+		time    *types.Second
+		pos     *types.Vec2[types.Meter]
+		vel     *types.Vec2[types.MeterPerSec]
+		acc     *types.Vec2[types.MeterPerSec2]
+		jerk    *types.Vec2[types.MeterPerSec3]
+		force   *types.Vec2[types.Newton]
+		impulse *types.Vec2[types.NewtonSec]
+		power   *types.Watt
+		work    *types.Joule
+
+		Reps     int32
+		repSplit *types.Split[types.Second]
+	}
 )
 
 var (
@@ -32,10 +51,26 @@ var (
 
 func Calc(
 	state *types.State,
-	weight types.Kilogram,
+	tl *dal.BulkCreateTrainingLogsParams,
 	rawData *dal.CreatePhysicsDataParams,
 	idx int,
 ) error {
+	ceilSets := math.Ceil(tl.Sets)
+	floorSets := math.Floor(tl.Sets)
+	if idx >= int(ceilSets) {
+		return sberr.Wrap(
+			InvalidRawDataIdxErr,
+			"Supplied index (%d) >= the ceiling of the number of sets (%f)",
+			idx, ceilSets,
+		)
+	}
+	if tl.Reps <= 0 {
+		return sberr.Wrap(
+			InvalidRawDataLenErr,
+			"Supplied data must have at least 1 rep",
+		)
+	}
+
 	if len(rawData.Time) <= idx {
 		return sberr.Wrap(
 			InvalidRawDataIdxErr,
@@ -48,55 +83,6 @@ func Calc(
 			InvalidRawDataIdxErr,
 			"Supplied index (%d) outside allowed position range: [0, %d)",
 			idx, len(rawData.Position),
-		)
-	}
-	if len(rawData.Velocity) <= idx {
-		return sberr.Wrap(
-			InvalidRawDataIdxErr,
-			"Supplied index (%d) outside allowed velocity range: [0, %d)",
-			idx, len(rawData.Velocity),
-		)
-	}
-	if len(rawData.Acceleration) <= idx {
-		return sberr.Wrap(
-			InvalidRawDataIdxErr,
-			"Supplied index (%d) outside allowed acceleration range: [0, %d)",
-			idx, len(rawData.Acceleration),
-		)
-	}
-	if len(rawData.Jerk) <= idx {
-		return sberr.Wrap(
-			InvalidRawDataIdxErr,
-			"Supplied index (%d) outside allowed jerk range: [0, %d)",
-			idx, len(rawData.Jerk),
-		)
-	}
-	if len(rawData.Work) <= idx {
-		return sberr.Wrap(
-			InvalidRawDataIdxErr,
-			"Supplied index (%d) outside allowed work range: [0, %d)",
-			idx, len(rawData.Work),
-		)
-	}
-	if len(rawData.Power) <= idx {
-		return sberr.Wrap(
-			InvalidRawDataIdxErr,
-			"Supplied index (%d) outside allowed power range: [0, %d)",
-			idx, len(rawData.Work),
-		)
-	}
-	if len(rawData.Impulse) <= idx {
-		return sberr.Wrap(
-			InvalidRawDataIdxErr,
-			"Supplied index (%d) outside allowed impulse range: [0, %d)",
-			idx, len(rawData.Impulse),
-		)
-	}
-	if len(rawData.Force) <= idx {
-		return sberr.Wrap(
-			InvalidRawDataIdxErr,
-			"Supplied index (%d) outside allowed force range: [0, %d)",
-			idx, len(rawData.Force),
 		)
 	}
 
@@ -115,75 +101,61 @@ func Calc(
 			expLen, len(rawData.Position[idx]),
 		)
 	}
-	if len(rawData.Velocity[idx]) != expLen {
-		return sberr.Wrap(
-			InvalidRawDataLenErr,
-			"Expected velocity slice of len %d, got len %d",
-			expLen, len(rawData.Velocity[idx]),
-		)
+
+	expReps := tl.Reps
+	if ceilSets > tl.Sets && int(floorSets) == idx {
+		expReps = int32((tl.Sets - floorSets) * float64(tl.Reps))
 	}
-	if len(rawData.Acceleration[idx]) != expLen {
-		return sberr.Wrap(
-			InvalidRawDataLenErr,
-			"Expected acceleration slice of len %d, got len %d",
-			expLen, len(rawData.Acceleration[idx]),
-		)
-	}
-	if len(rawData.Jerk[idx]) != expLen {
-		return sberr.Wrap(
-			InvalidRawDataLenErr,
-			"Expected jerk slice of len %d, got len %d",
-			expLen, len(rawData.Jerk[idx]),
-		)
-	}
-	if len(rawData.Work[idx]) != expLen {
-		return sberr.Wrap(
-			InvalidRawDataLenErr,
-			"Expected work slice of len %d, got len %d",
-			expLen, len(rawData.Work[idx]),
-		)
-	}
-	if len(rawData.Power[idx]) != expLen {
-		return sberr.Wrap(
-			InvalidRawDataLenErr,
-			"Expected power slice of len %d, got len %d",
-			expLen, len(rawData.Power[idx]),
-		)
-	}
-	if len(rawData.Impulse[idx]) != expLen {
-		return sberr.Wrap(
-			InvalidRawDataLenErr,
-			"Expected impulse slice of len %d, got len %d",
-			expLen, len(rawData.Impulse[idx]),
-		)
-	}
-	if len(rawData.Force[idx]) != expLen {
-		return sberr.Wrap(
-			InvalidRawDataLenErr,
-			"Expected force slice of len %d, got len %d",
-			expLen, len(rawData.Force[idx]),
-		)
-	}
+
+	rawData.Velocity[idx] = make([]types.Vec2[types.MeterPerSec], expLen)
+	rawData.Acceleration[idx] = make([]types.Vec2[types.MeterPerSec2], expLen)
+	rawData.Jerk[idx] = make([]types.Vec2[types.MeterPerSec3], expLen)
+	rawData.Impulse[idx] = make([]types.Vec2[types.NewtonSec], expLen)
+	rawData.Force[idx] = make([]types.Vec2[types.Newton], expLen)
+	rawData.Work[idx] = make([]types.Joule, expLen)
+	rawData.Power[idx] = make([]types.Watt, expLen)
+	rawData.RepSplits[idx] = make([]types.Split[types.Second], expReps)
+
 	// Note:
 	// Checks for monotonically increasing time series data are done in the
 	// [C.calcBarPathPhysData] func because those checks can be performance
 	// intensive operations.
 
+	baseData := Data{
+		timeLen:  int64(len(rawData.Time[idx])),
+		Mass:     tl.Weight,
+		time:     &rawData.Time[idx][0],
+		pos:      &rawData.Position[idx][0],
+		vel:      &rawData.Velocity[idx][0],
+		acc:      &rawData.Acceleration[idx][0],
+		jerk:     &rawData.Jerk[idx][0],
+		force:    &rawData.Force[idx][0],
+		impulse:  &rawData.Impulse[idx][0],
+		power:    &rawData.Power[idx][0],
+		work:     &rawData.Work[idx][0],
+		Reps:     expReps,
+		repSplit: &rawData.RepSplits[idx][0],
+	}
+
+	pinner := runtime.Pinner{}
+	pinner.Pin(baseData.time)
+	pinner.Pin(baseData.pos)
+	pinner.Pin(baseData.vel)
+	pinner.Pin(baseData.acc)
+	pinner.Pin(baseData.jerk)
+	pinner.Pin(baseData.force)
+	pinner.Pin(baseData.impulse)
+	pinner.Pin(baseData.power)
+	pinner.Pin(baseData.work)
+	pinner.Pin(baseData.repSplit)
+
 	err := C.calcBarPathPhysData(
-		C.double(weight),
-		C.int64_t(len(rawData.Time[idx])),
-		(*C.double)(unsafe.SliceData(rawData.Time[idx])),
-		(*C.posVec2_t)(unsafe.Pointer(&rawData.Position[idx][0])),
-		(*C.velVec2_t)(unsafe.Pointer(&rawData.Velocity[idx][0])),
-		(*C.accVec2_t)(unsafe.Pointer(&rawData.Acceleration[idx][0])),
-		(*C.jerkVec2_t)(unsafe.Pointer(&rawData.Jerk[idx][0])),
-		(*C.impulseVec2_t)(unsafe.Pointer(&rawData.Impulse[idx][0])),
-		(*C.forceVec2_t)(unsafe.Pointer(&rawData.Force[idx][0])),
-		(*C.double)(unsafe.Pointer(&rawData.Work[idx][0])),
-		(*C.double)(unsafe.Pointer(&rawData.Power[idx][0])),
+		(*C.barPathData_t)(unsafe.Pointer(&baseData)),
 		(*C.barPathCalcConf_t)(unsafe.Pointer(&state.BarPathCalc)),
 		(*C.physDataConf_t)(unsafe.Pointer(&state.PhysicsData)),
 	)
+
+	pinner.Unpin()
 
 	switch BarPathCalcErrCode(err) {
 	case TimeSeriesNotIncreasingErr:

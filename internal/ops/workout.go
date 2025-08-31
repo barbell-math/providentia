@@ -410,6 +410,7 @@ func ReadWorkoutsInDateRange(
 				Impulse:      rawData[i].Impulse,
 				Work:         rawData[i].Work,
 				Power:        rawData[i].Power,
+				RepSplits:    rawData[i].RepSplits,
 			},
 		)
 	}
