@@ -41,11 +41,9 @@ func TestTimeSeriesNotIncreasingErr(t *testing.T) {
 		Force: [][]types.Vec2[types.Newton]{
 			make([]types.Vec2[types.Newton], 7),
 		},
-		Work:  [][]types.Joule{make([]types.Joule, 7)},
-		Power: [][]types.Watt{make([]types.Watt, 7)},
-		RepSplits: [][]types.Split[types.Second]{
-			make([]types.Split[types.Second], 7),
-		},
+		Work:      [][]types.Joule{make([]types.Joule, 7)},
+		Power:     [][]types.Watt{make([]types.Watt, 7)},
+		RepSplits: [][]types.Split{make([]types.Split, 7)},
 	}
 	state := types.State{
 		BarPathCalc: types.BarPathCalcConf{
@@ -92,11 +90,9 @@ func TestTimeSeriesNotMonotonicErr(t *testing.T) {
 		Force: [][]types.Vec2[types.Newton]{
 			make([]types.Vec2[types.Newton], 7),
 		},
-		Work:  [][]types.Joule{make([]types.Joule, 7)},
-		Power: [][]types.Watt{make([]types.Watt, 7)},
-		RepSplits: [][]types.Split[types.Second]{
-			make([]types.Split[types.Second], 7),
-		},
+		Work:      [][]types.Joule{make([]types.Joule, 7)},
+		Power:     [][]types.Watt{make([]types.Watt, 7)},
+		RepSplits: [][]types.Split{make([]types.Split, 7)},
 	}
 	state := types.State{
 		BarPathCalc: types.BarPathCalcConf{
@@ -143,11 +139,9 @@ func TestInvalidApproxErrErr(t *testing.T) {
 		Force: [][]types.Vec2[types.Newton]{
 			make([]types.Vec2[types.Newton], 7),
 		},
-		Work:  [][]types.Joule{make([]types.Joule, 7)},
-		Power: [][]types.Watt{make([]types.Watt, 7)},
-		RepSplits: [][]types.Split[types.Second]{
-			make([]types.Split[types.Second], 7),
-		},
+		Work:      [][]types.Joule{make([]types.Joule, 7)},
+		Power:     [][]types.Watt{make([]types.Watt, 7)},
+		RepSplits: [][]types.Split{make([]types.Split, 7)},
 	}
 	state := types.State{
 		BarPathCalc: types.BarPathCalcConf{
@@ -187,7 +181,7 @@ func testForAccuracy(
 		Force:        [][]types.Vec2[types.Newton]{make([]types.Vec2[types.Newton], samples)},
 		Work:         [][]types.Joule{make([]types.Joule, samples)},
 		Power:        [][]types.Watt{make([]types.Watt, samples)},
-		RepSplits:    [][]types.Split[types.Second]{make([]types.Split[types.Second], samples)},
+		RepSplits:    [][]types.Split{make([]types.Split, samples)},
 	}
 	for i := range samples {
 		rawData.Time[0][i] = types.Second(i)
@@ -343,7 +337,7 @@ func loadAndTestCsv(
 		Force:        [][]types.Vec2[types.Newton]{make([]types.Vec2[types.Newton], samples)},
 		Work:         [][]types.Joule{make([]types.Joule, samples)},
 		Power:        [][]types.Watt{make([]types.Watt, samples)},
-		RepSplits:    [][]types.Split[types.Second]{make([]types.Split[types.Second], samples)},
+		RepSplits:    [][]types.Split{make([]types.Split, samples)},
 	}
 	for i := range samples {
 		rawTime, err := strconv.ParseFloat(rawData[i+1][1], 64)

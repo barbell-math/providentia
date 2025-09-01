@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-	int64_t calcBarPathPhysData(
+	enum BarPathCalcErrCode_t calcBarPathPhysData(
 		barPathData_t* data,
 		barPathCalcConf_t* bpOpts,
 		physDataConf_t* pdOpts

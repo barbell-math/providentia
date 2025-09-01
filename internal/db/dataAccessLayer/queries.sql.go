@@ -193,7 +193,7 @@ type CreatePhysicsDataParams struct {
 	Impulse      [][]types.Vec2[types.NewtonSec]    `json:"impulse"`
 	Work         [][]types.Joule                    `json:"work"`
 	Power        [][]types.Watt                     `json:"power"`
-	RepSplits    [][]types.Split[types.Second]      `json:"rep_splits"`
+	RepSplits    [][]types.Split                    `json:"rep_splits"`
 }
 
 func (q *Queries) CreatePhysicsData(ctx context.Context, arg CreatePhysicsDataParams) (int64, error) {
@@ -427,7 +427,7 @@ type GetAllWorkoutDataRow struct {
 	Impulse      [][]types.Vec2[types.NewtonSec]    `json:"impulse"`
 	Work         [][]types.Joule                    `json:"work"`
 	Power        [][]types.Watt                     `json:"power"`
-	RepSplits    [][]types.Split[types.Second]      `json:"rep_splits"`
+	RepSplits    [][]types.Split                    `json:"rep_splits"`
 }
 
 func (q *Queries) GetAllWorkoutData(ctx context.Context, arg GetAllWorkoutDataParams) ([]GetAllWorkoutDataRow, error) {
@@ -533,7 +533,7 @@ type GetAllWorkoutDataBetweenDatesRow struct {
 	Impulse          [][]types.Vec2[types.NewtonSec]    `json:"impulse"`
 	Work             [][]types.Joule                    `json:"work"`
 	Power            [][]types.Watt                     `json:"power"`
-	RepSplits        [][]types.Split[types.Second]      `json:"rep_splits"`
+	RepSplits        [][]types.Split                    `json:"rep_splits"`
 }
 
 func (q *Queries) GetAllWorkoutDataBetweenDates(ctx context.Context, arg GetAllWorkoutDataBetweenDatesParams) ([]GetAllWorkoutDataBetweenDatesRow, error) {

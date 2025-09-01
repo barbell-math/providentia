@@ -76,7 +76,7 @@ type (
 		Impulse      [][]Vec2[NewtonSec]
 		Work         [][]Joule
 		Power        [][]Watt
-		RepSplits    [][]Split[Second]
+		RepSplits    [][]Split
 	}
 )
 

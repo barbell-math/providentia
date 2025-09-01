@@ -1,8 +1,11 @@
 #include <cmath>
+#include <vector>
+#include <iostream>
+#include <bits/stdc++.h>
 #include "cpu.h"
 #include "../../glue/glue.h"
 
-extern "C" int64_t calcBarPathPhysData(
+enum BarPathCalcErrCode_t validateSuppliedData(
 	barPathData_t* data,
 	barPathCalcConf_t* bpOpts,
 	physDataConf_t* pdOpts
@@ -19,8 +22,18 @@ extern "C" int64_t calcBarPathPhysData(
 		}
 	}
 
-	// For an explanation of the formulas refer to here:
-	// http://code.barbellmath.net/barbell-math/providentia/wiki/Numerical-Difference-Methods
+	return NoErr;
+}
+
+// For an explanation of the formulas refer to here:
+// http://code.barbellmath.net/barbell-math/providentia/wiki/Numerical-Difference-Methods
+enum BarPathCalcErrCode_t calcDerivatives(
+	barPathData_t* data,
+	barPathCalcConf_t* bpOpts,
+	physDataConf_t* pdOpts
+) {
+	double_t h=data->time[1]-data->time[0];
+
 	switch (bpOpts->ApproxErr) {
 	case SecondOrder:
 		for (int i=2; i<data->timeLen-2; i++) {
@@ -66,7 +79,7 @@ extern "C" int64_t calcBarPathPhysData(
 			data->jerk[i]=data->jerk[data->timeLen-3];
 		}
 
-		break;
+		return NoErr;
 	case FourthOrder:
 		for (int i=3; i<data->timeLen-3; i++) {
 			data->vel[i].X=(
@@ -137,11 +150,17 @@ extern "C" int64_t calcBarPathPhysData(
 			data->jerk[i]=data->jerk[data->timeLen-4];
 		}
 
-		break;
+		return NoErr;
 	default:
 		return InvalidApproximationErrErr;
 	}
+}
 
+enum BarPathCalcErrCode_t runSmoother(
+	barPathData_t* data,
+	barPathCalcConf_t* bpOpts,
+	physDataConf_t* pdOpts
+) {
 	float_t wTot=(
 		bpOpts->SmootherWeight1+
 		bpOpts->SmootherWeight2+
@@ -196,15 +215,92 @@ extern "C" int64_t calcBarPathPhysData(
 		)/(wTot);
 	}
 
-	// For an explanation of some of these formulas:
-	// http://code.barbellmath.net/barbell-math/providentia/wiki/Bar-Path-Calcs
+	return NoErr;
+}
+
+
+// For an explanation of some of these formulas:
+// http://code.barbellmath.net/barbell-math/providentia/wiki/Bar-Path-Calcs
+enum BarPathCalcErrCode_t calcHigherOrderData(
+	barPathData_t* data,
+	barPathCalcConf_t* bpOpts,
+	physDataConf_t* pdOpts
+) {
 	for (int i=0; i<data->timeLen; i++) {
-		data->force[i].X=data->Mass*data->acc[i].X;
-		data->force[i].Y=data->Mass*data->acc[i].Y;
-		data->power[i]=data->force[i].X*data->vel[i].X + data->force[i].Y*data->vel[i].Y;
-		data->impulse[i].X = data->Mass*data->vel[i].X;
-		data->impulse[i].Y = data->Mass*data->vel[i].Y;
-		data->work[i]=(data->Mass/2) * (data->vel[i].X*data->vel[i].X + data->vel[i].Y*data->vel[i].Y);
+		data->force[i].X=data->mass*data->acc[i].X;
+		data->force[i].Y=data->mass*data->acc[i].Y;
+		data->power[i]=(
+			data->force[i].X*data->vel[i].X + data->force[i].Y*data->vel[i].Y
+		);
+		data->impulse[i].X = data->mass*data->vel[i].X;
+		data->impulse[i].Y = data->mass*data->vel[i].Y;
+		data->work[i]=(data->mass/2) * (
+			data->vel[i].X*data->vel[i].X + data->vel[i].Y*data->vel[i].Y
+		);
+	}
+
+	return NoErr;
+}
+
+enum BarPathCalcErrCode_t calcRepSplits(
+	barPathData_t* data,
+	barPathCalcConf_t* bpOpts,
+	physDataConf_t* pdOpts
+) {
+	// 1. find minimums
+	std::vector<double_t> maxPositions(data->reps+1);
+	for (int i=0; i<data->reps+1; i++) {
+		maxPositions[i]=-std::fabs(data->pos[i].Y);
+	}
+	std::make_heap(maxPositions.begin(), maxPositions.end());
+
+	for (int i=0; i<data->timeLen; i++) {
+		double_t iterPos=-std::fabs(data->pos[i].Y);
+		if (iterPos<maxPositions[0]) {
+			std::pop_heap(maxPositions.begin(), maxPositions.end());
+			maxPositions[maxPositions.size()-1]=iterPos;
+			std::push_heap(maxPositions.begin(), maxPositions.end());
+		}
+	}
+
+	for (int i=0; i<maxPositions.size(); i++){
+		std::cout << maxPositions[i] << ", ";
+	}
+	std::cout << std::endl;
+
+	// 2. follow minimums until vel crosses 0 on both sides
+
+	return NoErr;
+}
+
+extern "C" enum BarPathCalcErrCode_t calcBarPathPhysData(
+	barPathData_t* data,
+	barPathCalcConf_t* bpOpts,
+	physDataConf_t* pdOpts
+) {
+	BarPathCalcErrCode_t err = validateSuppliedData(data, bpOpts, pdOpts);
+	if (err!=NoErr) {
+		return  err;
+	}
+
+	err = calcDerivatives(data, bpOpts, pdOpts);
+	if (err!=NoErr) {
+		return  err;
+	}
+
+	err = runSmoother(data, bpOpts, pdOpts);
+	if (err!=NoErr) {
+		return  err;
+	}
+
+	err = calcHigherOrderData(data, bpOpts, pdOpts);
+	if (err!=NoErr) {
+		return  err;
+	}
+
+	err = calcRepSplits(data, bpOpts, pdOpts);
+	if (err!=NoErr) {
+		return  err;
 	}
 
 	return NoErr;

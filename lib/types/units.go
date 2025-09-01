@@ -25,9 +25,9 @@ type (
 		Y T
 	}
 
-	Split[T ~float64] struct {
-		Start T
-		End   T
+	Split struct {
+		Start int64
+		End   int64
 	}
 )
 
@@ -43,12 +43,12 @@ func (v Vec2[T]) PointValue() (pgtype.Point, error) {
 	}, nil
 }
 
-func (v *Split[T]) ScanPoint(newVal pgtype.Point) error {
-	*v = Split[T]{Start: T(newVal.P.X), End: T(newVal.P.Y)}
+func (v *Split) ScanPoint(newVal pgtype.Point) error {
+	*v = Split{Start: int64(newVal.P.X), End: int64(newVal.P.Y)}
 	return nil
 }
 
-func (v Split[T]) PointValue() (pgtype.Point, error) {
+func (v Split) PointValue() (pgtype.Point, error) {
 	return pgtype.Point{
 		P:     pgtype.Vec2{X: float64(v.Start), Y: float64(v.End)},
 		Valid: true,

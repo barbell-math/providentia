@@ -27,7 +27,7 @@ type (
 	BarPathCalcErrCode int64
 
 	Data struct {
-		Mass    types.Kilogram
+		mass    types.Kilogram
 		timeLen int64
 		time    *types.Second
 		pos     *types.Vec2[types.Meter]
@@ -39,8 +39,8 @@ type (
 		power   *types.Watt
 		work    *types.Joule
 
-		Reps     int32
-		repSplit *types.Split[types.Second]
+		reps     int32
+		repSplit *types.Split
 	}
 )
 
@@ -114,7 +114,7 @@ func Calc(
 	rawData.Force[idx] = make([]types.Vec2[types.Newton], expLen)
 	rawData.Work[idx] = make([]types.Joule, expLen)
 	rawData.Power[idx] = make([]types.Watt, expLen)
-	rawData.RepSplits[idx] = make([]types.Split[types.Second], expReps)
+	rawData.RepSplits[idx] = make([]types.Split, expReps)
 
 	// Note:
 	// Checks for monotonically increasing time series data are done in the
@@ -123,7 +123,7 @@ func Calc(
 
 	baseData := Data{
 		timeLen:  int64(len(rawData.Time[idx])),
-		Mass:     tl.Weight,
+		mass:     tl.Weight,
 		time:     &rawData.Time[idx][0],
 		pos:      &rawData.Position[idx][0],
 		vel:      &rawData.Velocity[idx][0],
@@ -133,7 +133,7 @@ func Calc(
 		impulse:  &rawData.Impulse[idx][0],
 		power:    &rawData.Power[idx][0],
 		work:     &rawData.Work[idx][0],
-		Reps:     expReps,
+		reps:     expReps,
 		repSplit: &rawData.RepSplits[idx][0],
 	}
 

@@ -20,7 +20,7 @@ func main() {
 			reflect.TypeFor[types.Vec2[types.MeterPerSec3]]().Name(): "jerkVec2",
 			reflect.TypeFor[types.Vec2[types.Newton]]().Name():       "forceVec2",
 			reflect.TypeFor[types.Vec2[types.NewtonSec]]().Name():    "impulseVec2",
-			reflect.TypeFor[types.Split[types.Second]]().Name():      "repSplit",
+			reflect.TypeFor[types.Split]().Name():                    "split",
 			reflect.TypeFor[barpathphysdata.Data]().Name():           "barPathData",
 		},
 	})
@@ -40,7 +40,7 @@ func main() {
 	sbcgoglue.RegisterStruct[types.Vec2[types.MeterPerSec3]](g)
 	sbcgoglue.RegisterStruct[types.Vec2[types.Newton]](g)
 	sbcgoglue.RegisterStruct[types.Vec2[types.NewtonSec]](g)
-	sbcgoglue.RegisterStruct[types.Split[types.Second]](g)
+	sbcgoglue.RegisterStruct[types.Split](g)
 	sbcgoglue.RegisterStruct[barpathphysdata.Data](g)
 	sbcgoglue.RegisterStruct[types.BarPathCalcConf](g)
 	sbcgoglue.RegisterStruct[types.PhysicsDataConf](g)
