@@ -1,9 +1,11 @@
 #include <cmath>
 #include <vector>
 #include <iostream>
+#include <algorithm>
 #include <bits/stdc++.h>
 #include "cpu.h"
 #include "../../glue/glue.h"
+#include "../../glue/common.h"
 
 enum BarPathCalcErrCode_t validateSuppliedData(
 	barPathData_t* data,
@@ -247,28 +249,68 @@ enum BarPathCalcErrCode_t calcRepSplits(
 	barPathCalcConf_t* bpOpts,
 	physDataConf_t* pdOpts
 ) {
-	// 1. find minimums
-	std::vector<double_t> maxPositions(data->reps+1);
-	for (int i=0; i<data->reps+1; i++) {
-		maxPositions[i]=-std::fabs(data->pos[i].Y);
+	int centersAdded=0;
+	std::vector<TimestampedVal> repCenters(data->reps);
+	for (int i=1; i<data->timeLen-1; i++) {
+		if (std::signbit(data->vel[i].Y)!=std::signbit(data->vel[i-1].Y)) {
+			TimestampedVal localMin=TimestampedVal{
+				.idx = i,
+				.time = data->time[i],
+				.value=-std::fabs(data->pos[i].Y),
+			};
+			if (centersAdded<data->reps) {
+				repCenters[centersAdded]=localMin;
+				std::make_heap(
+					repCenters.begin(), repCenters.end(),
+					TimestampedVal::sortByValue
+				);
+				centersAdded++;
+			} else if (localMin.value<repCenters[0].value) {
+				std::pop_heap(
+					repCenters.begin(), repCenters.end(),
+					TimestampedVal::sortByValue
+				);
+				repCenters[repCenters.size()-1]=localMin;
+				std::push_heap(
+					repCenters.begin(), repCenters.end(),
+					TimestampedVal::sortByValue
+				);
+			}
+		}
 	}
-	std::make_heap(maxPositions.begin(), maxPositions.end());
+	// TODO - check if centersAdded==data->reps, ret err if not
+	std::sort(repCenters.begin(), repCenters.end(), TimestampedVal::sortByTime);
 
-	for (int i=0; i<data->timeLen; i++) {
-		double_t iterPos=-std::fabs(data->pos[i].Y);
-		if (iterPos<maxPositions[0]) {
-			std::pop_heap(maxPositions.begin(), maxPositions.end());
-			maxPositions[maxPositions.size()-1]=iterPos;
-			std::push_heap(maxPositions.begin(), maxPositions.end());
+	// for (int i=0; i<repCenters.size(); i++){
+	// 	std::cout << repCenters[i].time << ", " << repCenters[i].value << " | ";
+	// }
+	// std::cout << std::endl;
+
+	for (int i=0; i<repCenters.size(); i++) {
+		TimestampedVal& iterRep=repCenters[i];
+
+		for (int j=iterRep.idx+2; j<data->timeLen; j++) {
+			if (std::signbit(data->vel[j].Y)!=std::signbit(data->vel[j-1].Y)) {
+				data->repSplit[i].End=j;
+				break;
+			}
+		}
+
+		for (int j=iterRep.idx-2; j>=0; j--) {
+			if (std::signbit(data->vel[j].Y)!=std::signbit(data->vel[j+1].Y)) {
+				data->repSplit[i].Start=j;
+				break;
+			}
 		}
 	}
 
-	for (int i=0; i<maxPositions.size(); i++){
-		std::cout << maxPositions[i] << ", ";
-	}
-	std::cout << std::endl;
-
-	// 2. follow minimums until vel crosses 0 on both sides
+	// for (int i=0; i<data->reps; i++){
+	// 	std::cout << "(" 
+	// 		<< data->repSplit[i].Start << "[" << data->time[data->repSplit[i].Start] << "], " 
+	// 		<< data->repSplit[i].End << "[" << data->time[data->repSplit[i].End] << "], " 
+	// 	<< ") ";
+	// }
+	// std::cout << std::endl;
 
 	return NoErr;
 }
@@ -302,6 +344,8 @@ extern "C" enum BarPathCalcErrCode_t calcBarPathPhysData(
 	if (err!=NoErr) {
 		return  err;
 	}
+
+	// TODO - calc rep stats! :D
 
 	return NoErr;
 }
