@@ -118,7 +118,7 @@ INSERT INTO providentia.training_log(
 	$1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 );
 
--- name: GetTotalNumExercisesForClient :one
+-- name: GetTotalNumTrainingLogEntriesForClient :one
 SELECT COUNT(*) FROM providentia.training_log
 JOIN providentia.client
 	ON providentia.training_log.client_id = providentia.client.id

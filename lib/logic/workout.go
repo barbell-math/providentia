@@ -67,14 +67,13 @@ func CreateWorkouts(
 // The context must have a [types.State] variable.
 //
 // No changes will be made to the database.
-// TODO - rename, exercises already means something else
-func ReadClientTotalNumExercises(
+func ReadClientTotalNumTrainingLogEntries(
 	ctxt context.Context,
 	clientEmail string,
 ) (res int64, opErr error) {
 	opErr = runOp(ctxt, opCalls{
 		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			res, err = ops.ReadClientTotalNumExercises(
+			res, err = ops.ReadClientTotalNumTrainingLogEntries(
 				ctxt, state, queries, clientEmail,
 			)
 			return err

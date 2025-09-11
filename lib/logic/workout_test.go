@@ -52,7 +52,7 @@ func workoutFailingNoWrites(t *testing.T) {
 	numClients, err = ReadNumClients(ctxt)
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, 1, numClients)
-	numExercises, err := ReadClientTotalNumExercises(ctxt, "email@email.com")
+	numExercises, err := ReadClientTotalNumTrainingLogEntries(ctxt, "email@email.com")
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, 0, numExercises)
 	numRawWorkouts, err := ReadClientNumWorkouts(ctxt, "email@email.com")
@@ -445,7 +445,7 @@ func workoutDuplicateWorkout(t *testing.T) {
 
 	err = CreateWorkouts(ctxt, workouts[:]...)
 	sbtest.Nil(t, err)
-	numExercises, err := ReadClientTotalNumExercises(ctxt, "email@email.com")
+	numExercises, err := ReadClientTotalNumTrainingLogEntries(ctxt, "email@email.com")
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, 1, numExercises)
 	numRawWorkouts, err := ReadClientNumWorkouts(ctxt, "email@email.com")
@@ -463,7 +463,7 @@ func workoutDuplicateWorkout(t *testing.T) {
 		t, types.CouldNotAddWorkoutErr, err,
 		"duplicate key value violates unique constraint",
 	)
-	numExercises, err = ReadClientTotalNumExercises(ctxt, "email@email.com")
+	numExercises, err = ReadClientTotalNumTrainingLogEntries(ctxt, "email@email.com")
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, 1, numExercises)
 	numRawWorkouts, err = ReadClientNumWorkouts(ctxt, "email@email.com")
@@ -526,7 +526,7 @@ func workoutAddGetNoPhysicsData(t *testing.T) {
 
 	err = CreateWorkouts(ctxt, workouts[:]...)
 	sbtest.Nil(t, err)
-	numExercises, err := ReadClientTotalNumExercises(ctxt, "email@email.com")
+	numExercises, err := ReadClientTotalNumTrainingLogEntries(ctxt, "email@email.com")
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, 3, numExercises)
 	numRawWorkouts, err := ReadClientNumWorkouts(ctxt, "email@email.com")
@@ -667,7 +667,7 @@ func workoutAddGetTimeSeriesPhysicsData(t *testing.T) {
 
 	err = CreateWorkouts(ctxt, workouts[:]...)
 	sbtest.Nil(t, err)
-	numExercises, err := ReadClientTotalNumExercises(ctxt, "email@email.com")
+	numExercises, err := ReadClientTotalNumTrainingLogEntries(ctxt, "email@email.com")
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, 3, numExercises)
 	numRawWorkouts, err := ReadClientNumWorkouts(ctxt, "email@email.com")
@@ -777,7 +777,7 @@ func workoutAddGetDateRange(t *testing.T) {
 
 	err = CreateWorkouts(ctxt, workouts[:]...)
 	sbtest.Nil(t, err)
-	numExercises, err := ReadClientTotalNumExercises(ctxt, "email@email.com")
+	numExercises, err := ReadClientTotalNumTrainingLogEntries(ctxt, "email@email.com")
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, 3, numExercises)
 	numRawWorkouts, err := ReadClientNumWorkouts(ctxt, "email@email.com")
@@ -972,7 +972,7 @@ func workoutAddDeleteGet(t *testing.T) {
 
 	err = CreateWorkouts(ctxt, workouts[:]...)
 	sbtest.Nil(t, err)
-	numExercises, err := ReadClientTotalNumExercises(ctxt, "email@email.com")
+	numExercises, err := ReadClientTotalNumTrainingLogEntries(ctxt, "email@email.com")
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, 3, numExercises)
 	numRawWorkouts, err := ReadClientNumWorkouts(ctxt, "email@email.com")
@@ -984,7 +984,7 @@ func workoutAddDeleteGet(t *testing.T) {
 
 	err = DeleteWorkouts(ctxt, workouts[0].WorkoutID)
 	sbtest.Nil(t, err)
-	numExercises, err = ReadClientTotalNumExercises(ctxt, "email@email.com")
+	numExercises, err = ReadClientTotalNumTrainingLogEntries(ctxt, "email@email.com")
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, 1, numExercises)
 	numRawWorkouts, err = ReadClientNumWorkouts(ctxt, "email@email.com")
@@ -1000,7 +1000,7 @@ func workoutAddDeleteGet(t *testing.T) {
 
 	err = DeleteWorkouts(ctxt, workouts[1].WorkoutID)
 	sbtest.Nil(t, err)
-	numExercises, err = ReadClientTotalNumExercises(ctxt, "email@email.com")
+	numExercises, err = ReadClientTotalNumTrainingLogEntries(ctxt, "email@email.com")
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, 0, numExercises)
 	numRawWorkouts, err = ReadClientNumWorkouts(ctxt, "email@email.com")
@@ -1016,7 +1016,7 @@ func workoutAddDeleteGet(t *testing.T) {
 
 	err = DeleteWorkouts(ctxt, workouts[1].WorkoutID)
 	sbtest.ContainsError(t, types.CouldNotFindRequestedWorkoutErr, err)
-	numExercises, err = ReadClientTotalNumExercises(ctxt, "email@email.com")
+	numExercises, err = ReadClientTotalNumTrainingLogEntries(ctxt, "email@email.com")
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, 0, numExercises)
 	numRawWorkouts, err = ReadClientNumWorkouts(ctxt, "email@email.com")
@@ -1118,7 +1118,7 @@ func workoutAddDeleteGetDateRange(t *testing.T) {
 
 	err = CreateWorkouts(ctxt, workouts[:]...)
 	sbtest.Nil(t, err)
-	numExercises, err := ReadClientTotalNumExercises(ctxt, "email@email.com")
+	numExercises, err := ReadClientTotalNumTrainingLogEntries(ctxt, "email@email.com")
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, 3, numExercises)
 	numRawWorkouts, err := ReadClientNumWorkouts(ctxt, "email@email.com")

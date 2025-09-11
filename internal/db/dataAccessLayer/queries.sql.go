@@ -792,20 +792,6 @@ func (q *Queries) GetNumWorkoutsForClient(ctx context.Context, email string) (in
 	return count, err
 }
 
-const getTotalNumExercisesForClient = `-- name: GetTotalNumExercisesForClient :one
-SELECT COUNT(*) FROM providentia.training_log
-JOIN providentia.client
-	ON providentia.training_log.client_id = providentia.client.id
-WHERE providentia.client.email = $1
-`
-
-func (q *Queries) GetTotalNumExercisesForClient(ctx context.Context, email string) (int64, error) {
-	row := q.db.QueryRow(ctx, getTotalNumExercisesForClient, email)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
 const getTotalNumPhysicsEntriesForClient = `-- name: GetTotalNumPhysicsEntriesForClient :one
 SELECT COUNT(*) FROM providentia.physics_data
 JOIN providentia.training_log
@@ -818,6 +804,20 @@ WHERE
 
 func (q *Queries) GetTotalNumPhysicsEntriesForClient(ctx context.Context, email string) (int64, error) {
 	row := q.db.QueryRow(ctx, getTotalNumPhysicsEntriesForClient, email)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const getTotalNumTrainingLogEntriesForClient = `-- name: GetTotalNumTrainingLogEntriesForClient :one
+SELECT COUNT(*) FROM providentia.training_log
+JOIN providentia.client
+	ON providentia.training_log.client_id = providentia.client.id
+WHERE providentia.client.email = $1
+`
+
+func (q *Queries) GetTotalNumTrainingLogEntriesForClient(ctx context.Context, email string) (int64, error) {
+	row := q.db.QueryRow(ctx, getTotalNumTrainingLogEntriesForClient, email)
 	var count int64
 	err := row.Scan(&count)
 	return count, err

@@ -215,14 +215,14 @@ func validateWorkout(state *types.State, w *types.RawWorkout) (opErr error) {
 	return
 }
 
-func ReadClientTotalNumExercises(
+func ReadClientTotalNumTrainingLogEntries(
 	ctxt context.Context,
 	state *types.State,
 	queries *dal.SyncQueries,
 	clientEmail string,
 ) (res int64, opErr error) {
 	res, opErr = dal.Query1x2(
-		dal.Q.GetTotalNumExercisesForClient, queries, ctxt, clientEmail,
+		dal.Q.GetTotalNumTrainingLogEntriesForClient, queries, ctxt, clientEmail,
 	)
 	if opErr != nil {
 		opErr = sberr.AppendError(types.CouldNotGetTotalNumExercisesErr, opErr)
