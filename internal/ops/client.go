@@ -18,6 +18,12 @@ func CreateClients(
 	clients ...types.Client,
 ) (opErr error) {
 	for start, end := range batchIndexes(clients, int(state.Global.BatchSize)) {
+		select {
+		case <-ctxt.Done():
+			return
+		default:
+		}
+
 		for i := start; i < end; i++ {
 			iterCd := clients[i]
 			if iterCd.FirstName == "" {
@@ -92,6 +98,12 @@ func ReadClientsByEmail(
 ) (res []types.Client, opErr error) {
 	res = make([]types.Client, len(emails))
 	for start, end := range batchIndexes(emails, int(state.Global.BatchSize)) {
+		select {
+		case <-ctxt.Done():
+			return
+		default:
+		}
+
 		var rawData []dal.GetClientsByEmailRow
 		rawData, opErr = dal.Query1x2(
 			dal.Q.GetClientsByEmail, queries, ctxt, emails[start:end],
@@ -129,6 +141,12 @@ func UpdateClients(
 ) (opErr error) {
 	cntr := 0
 	for _, c := range clients {
+		select {
+		case <-ctxt.Done():
+			return
+		default:
+		}
+
 		_ = dal.UpdateClientByEmailParams(types.Client{})
 		opErr = dal.Query1x1(
 			dal.Q.UpdateClientByEmail, queries, ctxt,

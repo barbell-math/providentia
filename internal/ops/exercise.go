@@ -17,6 +17,12 @@ func CreateExercises(
 	exercises ...types.Exercise,
 ) (opErr error) {
 	for start, end := range batchIndexes(exercises, int(state.Global.BatchSize)) {
+		select {
+		case <-ctxt.Done():
+			return
+		default:
+		}
+
 		for i := start; i < end; i++ {
 			iterEd := exercises[i]
 			if iterEd.Name == "" {
@@ -88,6 +94,12 @@ func ReadExercisesByName(
 	res = make([]types.Exercise, len(names))
 
 	for start, end := range batchIndexes(names, int(state.Global.BatchSize)) {
+		select {
+		case <-ctxt.Done():
+			return
+		default:
+		}
+
 		var rawData []dal.GetExercisesByNameRow
 		rawData, opErr = dal.Query1x2(dal.Q.GetExercisesByName, queries, ctxt, names[start:end])
 		if opErr != nil {
@@ -123,6 +135,12 @@ func UpdateExercises(
 ) (opErr error) {
 	cntr := 0
 	for _, e := range exercises {
+		select {
+		case <-ctxt.Done():
+			return
+		default:
+		}
+
 		_ = dal.UpdateExerciseByNameParams(types.Exercise{})
 		opErr = dal.Query1x1(
 			dal.Q.UpdateExerciseByName, queries, ctxt,

@@ -41,8 +41,22 @@ func (p *Physics) Run(ctxt context.Context) error {
 		RepSplits:    make([][]types.Split, len(p.BarPath)),
 	}
 
-	if err := p.processData(ctxt, &physData); err != nil {
-		return sberr.AppendError(types.PhysicsJobQueueErr, err)
+	for i, set := range p.BarPath {
+		select {
+		case <-ctxt.Done():
+			return nil
+		default:
+		}
+
+		if rawData, ok := set.TimeSeriesData(); ok {
+			physData.Time[i] = rawData.TimeData
+			physData.Position[i] = rawData.PositionData
+			if err := barpathphysdata.Calc(p.S, p.Tl, &physData, i); err != nil {
+				return sberr.AppendError(types.PhysicsJobQueueErr, err)
+			}
+		} else if _, ok := set.VideoData(); ok {
+			// TODO - dont forget to set path in the physics data!!
+		}
 	}
 
 	var id int64
@@ -55,23 +69,3 @@ func (p *Physics) Run(ctxt context.Context) error {
 
 	return nil
 }
-
-func (p *Physics) processData(
-	ctxt context.Context,
-	data *dal.CreatePhysicsDataParams,
-) error {
-	for i, set := range p.BarPath {
-		// TODO - check if ctxt was canceled to stop job early
-		if rawData, ok := set.TimeSeriesData(); ok {
-			data.Time[i] = rawData.TimeData
-			data.Position[i] = rawData.PositionData
-			if err := barpathphysdata.Calc(p.S, p.Tl, data, i); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-// TODO - dont forget to set path in the physics data!!

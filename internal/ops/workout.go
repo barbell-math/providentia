@@ -44,8 +44,11 @@ func CreateWorkouts(
 	)
 
 	for _, iterW := range data {
-		// TODO - check if supplied ctxt was canceled; if it was break; look into
-		// similar things in other ops
+		select {
+		case <-ctxt.Done():
+			return
+		default:
+		}
 
 		if opErr = validateWorkout(state, &iterW); opErr != nil {
 			opErr = sberr.AppendError(types.InvalidWorkoutErr, opErr)
@@ -278,6 +281,12 @@ func ReadWorkoutsByID(
 	res = make([]types.Workout, len(ids))
 
 	for i, id := range ids {
+		select {
+		case <-ctxt.Done():
+			return
+		default:
+		}
+
 		var rawData []dal.GetAllWorkoutDataRow
 		rawData, opErr = dal.Query1x2(
 			dal.Q.GetAllWorkoutData, queries, ctxt,
@@ -388,6 +397,12 @@ func ReadWorkoutsInDateRange(
 
 	res = make([]types.Workout, 0, 10)
 	for i := range len(rawData) {
+		select {
+		case <-ctxt.Done():
+			return
+		default:
+		}
+
 		iterID := types.WorkoutID{
 			ClientEmail:   clientEmail,
 			Session:       uint16(rawData[i].InterSessionCntr),
@@ -451,6 +466,12 @@ func DeleteWorkouts(
 	ids ...types.WorkoutID,
 ) (opErr error) {
 	for _, id := range ids {
+		select {
+		case <-ctxt.Done():
+			return
+		default:
+		}
+
 		var count int64
 		count, opErr = dal.Query1x2(
 			dal.Q.DeleteWorkout, queries, ctxt,
