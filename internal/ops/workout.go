@@ -21,13 +21,12 @@ import (
 func CreateWorkouts(
 	ctxt context.Context,
 	state *types.State,
-	queries *dal.Queries,
+	queries *dal.SyncQueries,
 	data ...types.RawWorkout,
 ) (opErr error) {
-	syncQueries := dal.NewSyncQueries(queries)
 	batch, _ := sbjobqueue.BatchWithContext(ctxt)
-	clientCacheLoader := dal.NewClientCacheLoader(syncQueries)
-	exerciseCacheLoader := dal.NewExerciseCacheLoader(syncQueries)
+	clientCache := dal.NewClientIdCache(state.Global.PerRequestIdCacheSize)
+	exerciseCache := dal.NewExerciseIdCache(state.Global.PerRequestIdCacheSize)
 	bufWriter := dal.NewBufferedWriter(
 		state.Global.BatchSize,
 		func(
@@ -37,9 +36,9 @@ func CreateWorkouts(
 			if err := batch.Wait(); err != nil {
 				return 0, err
 			}
-			syncQueries.Run(func(q *dal.Queries) {
-				count, err = q.BulkCreateTrainingLogs(ctxt, arg)
-			})
+			count, err = dal.Query1x2(
+				dal.Q.BulkCreateTrainingLogs, queries, ctxt, arg,
+			)
 			return
 		},
 	)
@@ -53,9 +52,9 @@ func CreateWorkouts(
 			return
 		}
 
-		var iterClient types.IdWrapper[int64, types.Client]
-		if iterClient, opErr = state.ClientCache.Get(
-			ctxt, iterW.ClientEmail, clientCacheLoader,
+		var iterClientId int64
+		if iterClientId, opErr = clientCache.Get(
+			ctxt, queries, iterW.ClientEmail,
 		); opErr != nil {
 			opErr = sberr.AppendError(
 				types.InvalidWorkoutErr,
@@ -69,9 +68,9 @@ func CreateWorkouts(
 		}
 
 		for i, iterE := range iterW.Exercises {
-			var iterExercise types.IdWrapper[int32, types.Exercise]
-			if iterExercise, opErr = state.ExerciseCache.Get(
-				ctxt, iterE.Name, exerciseCacheLoader,
+			var iterExerciseId int32
+			if iterExerciseId, opErr = exerciseCache.Get(
+				ctxt, queries, iterE.Name,
 			); opErr != nil {
 				opErr = sberr.AppendError(
 					types.InvalidWorkoutErr,
@@ -86,8 +85,8 @@ func CreateWorkouts(
 			}
 
 			if opErr = bufWriter.Write(ctxt, dal.BulkCreateTrainingLogsParams{
-				ClientID:   iterClient.Id,
-				ExerciseID: iterExercise.Id,
+				ClientID:   iterClientId,
+				ExerciseID: iterExerciseId,
 
 				DatePerformed: pgtype.Date{
 					Time:             iterW.DatePerformed,
@@ -112,7 +111,7 @@ func CreateWorkouts(
 					Tl:      bufWriter.Last(),
 					B:       batch,
 					S:       state,
-					Q:       syncQueries,
+					Q:       queries,
 				})
 			}
 		}
@@ -203,10 +202,10 @@ func validateWorkout(state *types.State, w *types.RawWorkout) (opErr error) {
 					))
 					return
 				}
-				if lenTimeData < int(state.PhysicsData.MinNumSamples) {
+				if lenTimeData < int(state.BarPathCalc.MinNumSamples) {
 					opErr = wrapErr(
 						"the minimum number of samples (%d) was not provided, got %d samples",
-						state.PhysicsData.MinNumSamples, lenTimeData,
+						state.BarPathCalc.MinNumSamples, lenTimeData,
 					)
 					return
 				}
@@ -219,10 +218,12 @@ func validateWorkout(state *types.State, w *types.RawWorkout) (opErr error) {
 func ReadClientTotalNumExercises(
 	ctxt context.Context,
 	state *types.State,
-	queries *dal.Queries,
+	queries *dal.SyncQueries,
 	clientEmail string,
 ) (res int64, opErr error) {
-	res, opErr = queries.GetTotalNumExercisesForClient(ctxt, clientEmail)
+	res, opErr = dal.Query1x2(
+		dal.Q.GetTotalNumExercisesForClient, queries, ctxt, clientEmail,
+	)
 	if opErr != nil {
 		opErr = sberr.AppendError(types.CouldNotGetTotalNumExercisesErr, opErr)
 		return
@@ -234,10 +235,12 @@ func ReadClientTotalNumExercises(
 func ReadClientTotalNumPhysEntries(
 	ctxt context.Context,
 	state *types.State,
-	queries *dal.Queries,
+	queries *dal.SyncQueries,
 	clientEmail string,
 ) (res int64, opErr error) {
-	res, opErr = queries.GetTotalNumPhysicsEntriesForClient(ctxt, clientEmail)
+	res, opErr = dal.Query1x2(
+		dal.Q.GetTotalNumPhysicsEntriesForClient, queries, ctxt, clientEmail,
+	)
 	if opErr != nil {
 		opErr = sberr.AppendError(types.CouldNotGetTotalNumPhysEntriesErr, opErr)
 		return
@@ -252,10 +255,12 @@ func ReadClientTotalNumPhysEntries(
 func ReadClientNumWorkouts(
 	ctxt context.Context,
 	state *types.State,
-	queries *dal.Queries,
+	queries *dal.SyncQueries,
 	clientEmail string,
 ) (res int64, opErr error) {
-	res, opErr = queries.GetNumWorkoutsForClient(ctxt, clientEmail)
+	res, opErr = dal.Query1x2(
+		dal.Q.GetNumWorkoutsForClient, queries, ctxt, clientEmail,
+	)
 	if opErr != nil {
 		opErr = sberr.AppendError(types.CouldNotGetNumWorkoutsErr, opErr)
 		return
@@ -267,15 +272,15 @@ func ReadClientNumWorkouts(
 func ReadWorkoutsByID(
 	ctxt context.Context,
 	state *types.State,
-	queries *dal.Queries,
+	queries *dal.SyncQueries,
 	ids ...types.WorkoutID,
 ) (res []types.Workout, opErr error) {
 	res = make([]types.Workout, len(ids))
 
 	for i, id := range ids {
 		var rawData []dal.GetAllWorkoutDataRow
-		rawData, opErr = queries.GetAllWorkoutData(
-			ctxt,
+		rawData, opErr = dal.Query1x2(
+			dal.Q.GetAllWorkoutData, queries, ctxt,
 			dal.GetAllWorkoutDataParams{
 				Email:            id.ClientEmail,
 				InterSessionCntr: int16(id.Session),
@@ -320,7 +325,7 @@ func ReadWorkoutsByID(
 func ReadWorkoutsInDateRange(
 	ctxt context.Context,
 	state *types.State,
-	queries *dal.Queries,
+	queries *dal.SyncQueries,
 	clientEmail string,
 	start time.Time,
 	end time.Time,
@@ -337,7 +342,8 @@ func ReadWorkoutsInDateRange(
 	}
 
 	var ok bool
-	if ok, opErr = queries.ClientExists(ctxt, clientEmail); opErr != nil {
+	ok, opErr = dal.Query1x2(dal.Q.ClientExists, queries, ctxt, clientEmail)
+	if opErr != nil {
 		opErr = sberr.AppendError(types.CouldNotFindRequestedWorkoutErr, opErr)
 		return
 	} else if !ok {
@@ -350,8 +356,8 @@ func ReadWorkoutsInDateRange(
 		return
 	}
 
-	rawData, opErr = queries.GetAllWorkoutDataBetweenDates(
-		ctxt,
+	rawData, opErr = dal.Query1x2(
+		dal.Q.GetAllWorkoutDataBetweenDates, queries, ctxt,
 		dal.GetAllWorkoutDataBetweenDatesParams{
 			Email: clientEmail,
 			Start: pgtype.Date{
@@ -427,7 +433,7 @@ func ReadWorkoutsInDateRange(
 func UpdateWorkouts(
 	ctxt context.Context,
 	state *types.State,
-	queries *dal.Queries,
+	queries *dal.SyncQueries,
 	data ...types.RawWorkout,
 ) (opErr error) {
 	// TODO
@@ -441,13 +447,13 @@ func UpdateWorkouts(
 func DeleteWorkouts(
 	ctxt context.Context,
 	state *types.State,
-	queries *dal.Queries,
+	queries *dal.SyncQueries,
 	ids ...types.WorkoutID,
 ) (opErr error) {
 	for _, id := range ids {
 		var count int64
-		count, opErr = queries.DeleteWorkout(
-			ctxt,
+		count, opErr = dal.Query1x2(
+			dal.Q.DeleteWorkout, queries, ctxt,
 			dal.DeleteWorkoutParams{
 				Email:            id.ClientEmail,
 				InterSessionCntr: int16(id.Session),
@@ -480,7 +486,7 @@ func DeleteWorkouts(
 func DeleteWorkoutsInDateRange(
 	ctxt context.Context,
 	state *types.State,
-	queries *dal.Queries,
+	queries *dal.SyncQueries,
 	clientEmail string,
 	start time.Time,
 	end time.Time,
@@ -495,7 +501,8 @@ func DeleteWorkoutsInDateRange(
 	}
 
 	var ok bool
-	if ok, opErr = queries.ClientExists(ctxt, clientEmail); opErr != nil {
+	ok, opErr = dal.Query1x2(dal.Q.ClientExists, queries, ctxt, clientEmail)
+	if opErr != nil {
 		opErr = sberr.AppendError(types.CouldNotFindRequestedWorkoutErr, opErr)
 		return
 	} else if !ok {
@@ -508,8 +515,8 @@ func DeleteWorkoutsInDateRange(
 		return
 	}
 
-	res, opErr = queries.DeleteWorkoutsBetweenDates(
-		ctxt,
+	res, opErr = dal.Query1x2(
+		dal.Q.DeleteWorkoutsBetweenDates, queries, ctxt,
 		dal.DeleteWorkoutsBetweenDatesParams{
 			Email: clientEmail,
 			Start: pgtype.Date{

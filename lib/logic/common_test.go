@@ -20,13 +20,17 @@ func TestCancelation(t *testing.T) {
 	ctxt, cleanup := resetApp(timeoutCtxt)
 	t.Cleanup(cleanup)
 
-	err := runOp(ctxt, func(state *types.State, queries *dal.Queries) error {
-		time.Sleep(5 * time.Second)
-		return nil
+	err := runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) error {
+			time.Sleep(5 * time.Second)
+			return nil
+		},
 	})
 	sbtest.ContainsError(t, context.DeadlineExceeded, err)
 }
 
+// TODO - this needs to move to sbtest and check for things like embeded field
+// equivalency and generic value equivalencacy
 func structsEquivalent[T any, U any](t *testing.T) {
 	tRef := reflect.TypeFor[T]()
 	uRef := reflect.TypeFor[T]()

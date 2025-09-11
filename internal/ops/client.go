@@ -14,7 +14,7 @@ import (
 func CreateClients(
 	ctxt context.Context,
 	state *types.State,
-	queries *dal.Queries,
+	queries *dal.SyncQueries,
 	clients ...dal.BulkCreateClientsParams,
 ) (opErr error) {
 	for start, end := range batchIndexes(clients, int(state.Global.BatchSize)) {
@@ -49,7 +49,9 @@ func CreateClients(
 		var numRows int64
 		// The buffered writer is not used because it would create a copy of the
 		// clients, which is unnecessary in this case
-		numRows, opErr = queries.BulkCreateClients(ctxt, clients[start:end])
+		numRows, opErr = dal.Query1x2(
+			dal.Q.BulkCreateClients, queries, ctxt, clients[start:end],
+		)
 		if opErr != nil {
 			opErr = sberr.AppendError(types.CouldNotAddClientsErr, opErr)
 			return
@@ -67,9 +69,9 @@ func CreateClients(
 func ReadNumClients(
 	ctxt context.Context,
 	state *types.State,
-	queries *dal.Queries,
+	queries *dal.SyncQueries,
 ) (res int64, opErr error) {
-	res, opErr = queries.GetNumClients(ctxt)
+	res, opErr = dal.Query0x2(dal.Q.GetNumClients, queries, ctxt)
 	if opErr != nil {
 		opErr = sberr.AppendError(types.CouldNotGetNumClientsErr, opErr)
 		return
@@ -84,18 +86,15 @@ func ReadNumClients(
 func ReadClientsByEmail(
 	ctxt context.Context,
 	state *types.State,
-	queries *dal.Queries,
+	queries *dal.SyncQueries,
 	emails ...string,
 ) (res []types.Client, opErr error) {
 	res = make([]types.Client, len(emails))
-
-	// Note: the client cache is not updated because that would require
-	// returning an types.IdWrapper rather than just a types.Client struct and
-	// that would require copying all of the returned results one at a time
-	// rather than in chunks with a copy command.
 	for start, end := range batchIndexes(emails, int(state.Global.BatchSize)) {
 		var rawData []dal.GetClientsByEmailRow
-		rawData, opErr = queries.GetClientsByEmail(ctxt, emails[start:end])
+		rawData, opErr = dal.Query1x2(
+			dal.Q.GetClientsByEmail, queries, ctxt, emails[start:end],
+		)
 		if opErr != nil {
 			opErr = sberr.AppendError(types.CouldNotFindRequestedClientErr, opErr)
 			return
@@ -124,14 +123,12 @@ func ReadClientsByEmail(
 func UpdateClients(
 	ctxt context.Context,
 	state *types.State,
-	queries *dal.Queries,
+	queries *dal.SyncQueries,
 	clients ...dal.UpdateClientByEmailParams,
 ) (opErr error) {
 	cntr := 0
 	for _, c := range clients {
-		// Note: the client cache does not need to be updated because the email
-		// (and hence id in the database) does not change.
-		opErr = queries.UpdateClientByEmail(ctxt, c)
+		opErr = dal.Query1x1(dal.Q.UpdateClientByEmail, queries, ctxt, c)
 		if opErr != nil {
 			opErr = sberr.AppendError(
 				types.CouldNotUpdateRequestedClientErr, opErr,
@@ -147,30 +144,22 @@ func UpdateClients(
 		)
 		return
 	}
-	state.Log.Log(
-		ctxt, sblog.VLevel(3),
-		"Updated clients",
-		"Num", cntr,
-	)
 
+	state.Log.Log(ctxt, sblog.VLevel(3), "Updated clients", "Num", cntr)
 	return
 }
 
 func DeleteClients(
 	ctxt context.Context,
 	state *types.State,
-	queries *dal.Queries,
+	queries *dal.SyncQueries,
 	emails ...string,
 ) (opErr error) {
 	// TODO - delete all referenced training log data, video data, model data
 	// Is this properly handled by cascade??
 
-	for _, e := range emails {
-		state.ClientCache.Invalidate(e)
-	}
-
 	var count int64
-	count, opErr = queries.DeleteClientsByEmail(ctxt, emails)
+	count, opErr = dal.Query1x2(dal.Q.DeleteClientsByEmail, queries, ctxt, emails)
 	if opErr != nil {
 		opErr = sberr.AppendError(types.CouldNotDeleteRequestedClientErr, opErr)
 		return
@@ -181,11 +170,11 @@ func DeleteClients(
 			types.CouldNotFindRequestedClientErr,
 		)
 	}
+
 	state.Log.Log(
 		ctxt, sblog.VLevel(3),
 		"Deleted clients",
 		"Num", count,
 	)
-
 	return
 }

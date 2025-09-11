@@ -12,7 +12,6 @@ require (
 	code.barbellmath.net/barbell-math/smoothbrain-sqlmigrate v0.0.0-20250831071515-53ff01a18bae
 	code.barbellmath.net/barbell-math/smoothbrain-test v0.0.0-20250831071138-3f0f71428ad0
 	github.com/jackc/pgx/v5 v5.7.5
-	github.com/maypok86/otter/v2 v2.2.1
 )
 
 require (

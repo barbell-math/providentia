@@ -48,7 +48,8 @@ CREATE TABLE IF NOT EXISTS providentia.physics_data (
 
 	rep_splits POINT[][] NOT NULL
 
-	-- TODO - this seems to require rep identification?
+	-- TODO - not sure how these should be represented because I am not sure
+	-- how they will be used...
 	-- avg_power FLOAT8 NOT NULL,
 	-- min_power FLOAT8 NOT NULL,
 	-- min_power_time FLOAT8 NOT NULL,
@@ -66,7 +67,7 @@ CREATE TABLE IF NOT EXISTS providentia.training_log (
 	id SERIAL8 NOT NULL PRIMARY KEY,
 	exercise_id INT4 NOT NULL REFERENCES providentia.exercise(id) ON DELETE CASCADE,
 	client_id INT8 NOT NULL REFERENCES providentia.client(id) ON DELETE CASCADE,
-	physics_id INT8 REFERENCES providentia.physics_data(id),
+	physics_id INT8 REFERENCES providentia.physics_data(id) ON DELETE SET NULL,
 
 	date_performed DATE NOT NULL,
 	inter_session_cntr INT2 NOT NULL CHECK (inter_session_cntr>0),

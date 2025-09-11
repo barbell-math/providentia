@@ -32,12 +32,12 @@ INSERT INTO providentia.client (first_name, last_name, email) VALUES ($1, $2, $3
 -- name: GetNumClients :one
 SELECT COUNT(*) FROM providentia.client;
 
+-- name: GetClientIdByEmail :one
+SELECT id FROM providentia.client WHERE email = $1;
+
 -- name: GetClientsByEmail :many
 SELECT first_name, last_name, email
 FROM providentia.client WHERE email = ANY($1::text[]);
-
--- name: GetFullClientByEmail :one
-SELECT id, first_name, last_name, email FROM providentia.client WHERE email = $1;
 
 -- name: ClientExists :one
 SELECT EXISTS( SELECT 1 FROM providentia.client WHERE email = $1);
@@ -75,12 +75,12 @@ INSERT INTO providentia.exercise (name, kind_id, focus_id) VALUES ($1, $2, $3);
 -- name: GetNumExercises :one
 SELECT COUNT(*) FROM providentia.exercise;
 
+-- name: GetExerciseIdByName :one
+SELECT id FROM providentia.exercise WHERE name = $1;
+
 -- name: GetExercisesByName :many
 SELECT name, kind_id, focus_id
 FROM providentia.exercise WHERE name = ANY($1::text[]);
-
--- name: GetFullExerciseByName :one
-SELECT id, name, kind_id, focus_id FROM providentia.exercise WHERE name = $1;
 
 -- name: UpdateExerciseByName :exec
 UPDATE providentia.exercise SET kind_id=$2, focus_id=$3

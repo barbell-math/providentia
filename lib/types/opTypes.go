@@ -6,13 +6,6 @@ import (
 )
 
 type (
-	// A wrapper that allows some of the structs defined in this file to be
-	// returned with an id some of the time.
-	IdWrapper[T int32 | int64, U any] struct {
-		Id    T
-		Value U
-	}
-
 	// Represents a client from the database
 	Client struct {
 		FirstName string // The first name of the client

@@ -9,10 +9,15 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func runOp(
-	ctxt context.Context,
-	op func(state *types.State, queries *dal.Queries) (err error),
-) (opErr error) {
+type (
+	opCalls struct {
+		preOp  func(state *types.State, queries *dal.SyncQueries) (err error)
+		op     func(state *types.State, queries *dal.SyncQueries) (err error)
+		postOp func(state *types.State, queries *dal.SyncQueries, opSucceeded bool)
+	}
+)
+
+func runOp(ctxt context.Context, calls opCalls) (opErr error) {
 	state, ok := StateFromContext(ctxt)
 	if !ok {
 		opErr = sberr.Wrap(types.InvalidCtxtErr, "missing State struct")
@@ -39,22 +44,43 @@ func runOp(
 
 	q := dal.New(state.DB)
 	queries := q.WithTx(tx)
+	syncQueries := dal.NewSyncQueries(queries)
+
 	defer func() {
 		if opErr != nil {
 			tx.Rollback(ctxt)
 		} else {
 			tx.Commit(ctxt)
 		}
+		if calls.postOp != nil {
+			calls.postOp(state, syncQueries, opErr == nil)
+		}
 	}()
 
 	errRes := make(chan error)
-	go func() { errRes <- op(state, queries) }()
+	if calls.preOp != nil {
+		go func() { errRes <- calls.preOp(state, syncQueries) }()
 
-	select {
-	case <-ctxt.Done():
-		opErr = ctxt.Err()
-	case err := <-errRes:
-		opErr = err
+		select {
+		case <-ctxt.Done():
+			opErr = ctxt.Err()
+		case err := <-errRes:
+			opErr = err
+			return
+		}
 	}
+
+	if calls.op != nil {
+		go func() { errRes <- calls.op(state, syncQueries) }()
+
+		select {
+		case <-ctxt.Done():
+			opErr = ctxt.Err()
+		case err := <-errRes:
+			opErr = err
+			return
+		}
+	}
+
 	return
 }

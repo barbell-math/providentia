@@ -27,12 +27,14 @@ func CreateClients(
 	if len(clients) == 0 {
 		return
 	}
-	return runOp(ctxt, func(state *types.State, queries *dal.Queries) error {
-		_ = dal.BulkCreateClientsParams(types.Client{})
-		return ops.CreateClients(
-			ctxt, state, queries,
-			*(*[]dal.BulkCreateClientsParams)(unsafe.Pointer(&clients))...,
-		)
+	return runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) error {
+			_ = dal.BulkCreateClientsParams(types.Client{})
+			return ops.CreateClients(
+				ctxt, state, queries,
+				*(*[]dal.BulkCreateClientsParams)(unsafe.Pointer(&clients))...,
+			)
+		},
 	})
 }
 
@@ -42,16 +44,17 @@ func CreateClients(
 //
 // No changes will be made to the database.
 func ReadNumClients(ctxt context.Context) (res int64, opErr error) {
-	opErr = runOp(ctxt, func(state *types.State, queries *dal.Queries) (err error) {
-		res, err = ops.ReadNumClients(ctxt, state, queries)
-		return err
+	opErr = runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			res, err = ops.ReadNumClients(ctxt, state, queries)
+			return err
+		},
 	})
 	return
 }
 
 // Gets the client data associated with the supplied emails if they exist. If
-// they do not exist an error will be returned. The order of the returned
-// clients may not match the order of the supplied emails.
+// they do not exist an error will be returned.
 //
 // The context must have a [types.State] variable.
 //
@@ -60,9 +63,11 @@ func ReadClientsByEmail(
 	ctxt context.Context,
 	emails ...string,
 ) (res []types.Client, opErr error) {
-	opErr = runOp(ctxt, func(state *types.State, queries *dal.Queries) (err error) {
-		res, err = ops.ReadClientsByEmail(ctxt, state, queries, emails...)
-		return err
+	opErr = runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			res, err = ops.ReadClientsByEmail(ctxt, state, queries, emails...)
+			return err
+		},
 	})
 	return
 }
@@ -82,12 +87,14 @@ func UpdateClients(
 	if len(clients) == 0 {
 		return
 	}
-	return runOp(ctxt, func(state *types.State, queries *dal.Queries) (err error) {
-		_ = dal.UpdateClientByEmailParams(types.Client{})
-		return ops.UpdateClients(
-			ctxt, state, queries,
-			*(*[]dal.UpdateClientByEmailParams)(unsafe.Pointer(&clients))...,
-		)
+	return runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			_ = dal.UpdateClientByEmailParams(types.Client{})
+			return ops.UpdateClients(
+				ctxt, state, queries,
+				*(*[]dal.UpdateClientByEmailParams)(unsafe.Pointer(&clients))...,
+			)
+		},
 	})
 }
 
@@ -101,7 +108,9 @@ func DeleteClients(ctxt context.Context, emails ...string) (opErr error) {
 	if len(emails) == 0 {
 		return
 	}
-	return runOp(ctxt, func(state *types.State, queries *dal.Queries) (err error) {
-		return ops.DeleteClients(ctxt, state, queries, emails...)
+	return runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			return ops.DeleteClients(ctxt, state, queries, emails...)
+		},
 	})
 }

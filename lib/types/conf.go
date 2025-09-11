@@ -3,25 +3,21 @@ package types
 import (
 	sbargp "code.barbellmath.net/barbell-math/smoothbrain-argparse"
 	sbjobqueue "code.barbellmath.net/barbell-math/smoothbrain-jobQueue"
-	"github.com/maypok86/otter/v2"
 )
 
 type (
 	// Global settings that configure many parts of providentia's behavior.
 	GlobalConf struct {
-		BatchSize uint
+		BatchSize             uint
+		PerRequestIdCacheSize uint
 		// SimplifiedNegativeSpaceModel simplifiednegativespace.Opts
 	}
 
-	// Configuration that is used when parsing, generating, and utilizing
-	// physics data.
-	PhysicsDataConf struct {
-		MinNumSamples uint64
-		TimeDeltaEps  Second
-	}
-
 	BarPathCalcConf struct {
+		MinNumSamples   uint64
+		TimeDeltaEps    Second
 		ApproxErr       ApproximationError
+		NearZeroFilter  float64
 		SmootherWeight1 float64
 		SmootherWeight2 float64
 		SmootherWeight3 float64
@@ -37,7 +33,6 @@ type (
 		DB      sbargp.DBConf
 
 		Global      GlobalConf
-		PhysicsData PhysicsDataConf
 		BarPathCalc BarPathCalcConf
 
 		// Configuraiton that is used when setting up the physics job queue. The
@@ -51,18 +46,5 @@ type (
 		// producing time series data that represents the bar path.
 		// Refer to: http://code.barbellmath.net/barbell-math/smoothbrain-jobQueue#Opts
 		VideoJobQueue sbjobqueue.Opts
-
-		// Configuration that is used when setting up the in memory client
-		// cache. This cache will be used to reduce database queries at expense
-		// of a larger memory footprint.
-		// Refer to: https://pkg.go.dev/github.com/maypok86/otter/v2#Options
-		// Note: not all conf options can be set through cmd line parameters.
-		ClientCache otter.Options[string, IdWrapper[int64, Client]]
-		// Configuration that is used when setting up the in memory exercise
-		// cache. This cache will be used to reduce database queries at expense
-		// of a larger memory footprint.
-		// Refer to: https://pkg.go.dev/github.com/maypok86/otter/v2#Options
-		// Note: not all conf options can be set through cmd line parameters.
-		ExerciseCache otter.Options[string, IdWrapper[int32, Exercise]]
 	}
 )

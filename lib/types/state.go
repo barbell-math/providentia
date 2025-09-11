@@ -6,7 +6,6 @@ import (
 
 	sbjobqueue "code.barbellmath.net/barbell-math/smoothbrain-jobQueue"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/maypok86/otter/v2"
 )
 
 type (
@@ -21,24 +20,20 @@ type (
 		DB              *pgxpool.Pool
 		PhysicsJobQueue *sbjobqueue.JobQueue[PhysicsJob]
 		VideoJobQueue   *sbjobqueue.JobQueue[VideoJob]
-		ClientCache     *otter.Cache[string, IdWrapper[int64, Client]]
-		ExerciseCache   *otter.Cache[string, IdWrapper[int32, Exercise]]
 
 		Global      GlobalConf
-		PhysicsData PhysicsDataConf
 		BarPathCalc BarPathCalcConf
 	}
 )
 
 var (
-	InvalidPhysicsDataErr   = errors.New("Invalid physics data conf")
-	InvalidMinNumSamplesErr = errors.New("Invalid min num samples")
-	InvalidTimeDeltaEpsErr  = errors.New("Invalid time delta eps")
-
 	InvalidGlobalErr    = errors.New("Invalid global conf")
 	InvalidBatchSizeErr = errors.New("Invalid batch size")
 
-	InvalidBarPathCalcErr = errors.New("Invalid bar path calc conf")
+	InvalidBarPathCalcErr    = errors.New("Invalid bar path calc conf")
+	InvalidMinNumSamplesErr  = errors.New("Invalid min num samples")
+	InvalidTimeDeltaEpsErr   = errors.New("Invalid time delta eps")
+	InvalidNearZeroFilterErr = errors.New("Invalid near zero filter")
 
 	InvalidLoggerErr          = errors.New("Invalid logger")
 	InvalidDBErr              = errors.New("Invalid database connection pool")

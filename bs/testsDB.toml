@@ -13,7 +13,7 @@ Name = "runningTest"
 [ Global ]
 BatchSize = 5
 
-[ PhysicsData ]
+[ BarPathCalc ]
 MinNumSamples = 5
 
 # To simplify testing

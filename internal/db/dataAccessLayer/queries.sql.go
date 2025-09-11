@@ -577,6 +577,17 @@ func (q *Queries) GetAllWorkoutDataBetweenDates(ctx context.Context, arg GetAllW
 	return items, nil
 }
 
+const getClientIdByEmail = `-- name: GetClientIdByEmail :one
+SELECT id FROM providentia.client WHERE email = $1
+`
+
+func (q *Queries) GetClientIdByEmail(ctx context.Context, email string) (int64, error) {
+	row := q.db.QueryRow(ctx, getClientIdByEmail, email)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getClientTrainingLogData = `-- name: GetClientTrainingLogData :many
 SELECT
 	providentia.exercise.name,
@@ -699,6 +710,17 @@ func (q *Queries) GetExerciseIDs(ctx context.Context, name string) (GetExerciseI
 	return i, err
 }
 
+const getExerciseIdByName = `-- name: GetExerciseIdByName :one
+SELECT id FROM providentia.exercise WHERE name = $1
+`
+
+func (q *Queries) GetExerciseIdByName(ctx context.Context, name string) (int32, error) {
+	row := q.db.QueryRow(ctx, getExerciseIdByName, name)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getExercisesByName = `-- name: GetExercisesByName :many
 SELECT name, kind_id, focus_id
 FROM providentia.exercise WHERE name = ANY($1::text[])
@@ -728,38 +750,6 @@ func (q *Queries) GetExercisesByName(ctx context.Context, dollar_1 []string) ([]
 		return nil, err
 	}
 	return items, nil
-}
-
-const getFullClientByEmail = `-- name: GetFullClientByEmail :one
-SELECT id, first_name, last_name, email FROM providentia.client WHERE email = $1
-`
-
-func (q *Queries) GetFullClientByEmail(ctx context.Context, email string) (Client, error) {
-	row := q.db.QueryRow(ctx, getFullClientByEmail, email)
-	var i Client
-	err := row.Scan(
-		&i.ID,
-		&i.FirstName,
-		&i.LastName,
-		&i.Email,
-	)
-	return i, err
-}
-
-const getFullExerciseByName = `-- name: GetFullExerciseByName :one
-SELECT id, name, kind_id, focus_id FROM providentia.exercise WHERE name = $1
-`
-
-func (q *Queries) GetFullExerciseByName(ctx context.Context, name string) (Exercise, error) {
-	row := q.db.QueryRow(ctx, getFullExerciseByName, name)
-	var i Exercise
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.KindID,
-		&i.FocusID,
-	)
-	return i, err
 }
 
 const getNumClients = `-- name: GetNumClients :one

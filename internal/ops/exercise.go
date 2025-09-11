@@ -13,7 +13,7 @@ import (
 func CreateExercises(
 	ctxt context.Context,
 	state *types.State,
-	queries *dal.Queries,
+	queries *dal.SyncQueries,
 	exercises ...dal.BulkCreateExercisesParams,
 ) (opErr error) {
 	for start, end := range batchIndexes(exercises, int(state.Global.BatchSize)) {
@@ -46,11 +46,14 @@ func CreateExercises(
 		var numRows int64
 		// The buffered writer is not used because it would create a copy of the
 		// exercises, which is unnecessary in this case
-		numRows, opErr = queries.BulkCreateExercises(ctxt, exercises[start:end])
+		numRows, opErr = dal.Query1x2(
+			dal.Q.BulkCreateExercises, queries, ctxt, exercises[start:end],
+		)
 		if opErr != nil {
 			opErr = sberr.AppendError(types.CouldNotAddExercisesErr, opErr)
 			return
 		}
+
 		state.Log.Log(
 			ctxt, sblog.VLevel(3),
 			"Added new exercises",
@@ -64,9 +67,9 @@ func CreateExercises(
 func ReadNumExercises(
 	ctxt context.Context,
 	state *types.State,
-	queries *dal.Queries,
+	queries *dal.SyncQueries,
 ) (res int64, opErr error) {
-	res, opErr = queries.GetNumExercises(ctxt)
+	res, opErr = dal.Query0x2(dal.Q.GetNumExercises, queries, ctxt)
 	if opErr != nil {
 		opErr = sberr.AppendError(types.CouldNotGetNumExercisesErr, opErr)
 		return
@@ -78,18 +81,14 @@ func ReadNumExercises(
 func ReadExercisesByName(
 	ctxt context.Context,
 	state *types.State,
-	queries *dal.Queries,
+	queries *dal.SyncQueries,
 	names ...string,
 ) (res []types.Exercise, opErr error) {
 	res = make([]types.Exercise, len(names))
 
-	// Note: the exercise cache is not updated because that would require
-	// returning an types.IdWrapper rather than just a types.Exercise struct and
-	// that would require copying all of the returned results one at a time
-	// rather than in chunks with a copy command.
 	for start, end := range batchIndexes(names, int(state.Global.BatchSize)) {
 		var rawData []dal.GetExercisesByNameRow
-		rawData, opErr = queries.GetExercisesByName(ctxt, names[start:end])
+		rawData, opErr = dal.Query1x2(dal.Q.GetExercisesByName, queries, ctxt, names[start:end])
 		if opErr != nil {
 			opErr = sberr.AppendError(types.CouldNotFindRequestedExerciseErr, opErr)
 			return
@@ -118,14 +117,12 @@ func ReadExercisesByName(
 func UpdateExercises(
 	ctxt context.Context,
 	state *types.State,
-	queries *dal.Queries,
+	queries *dal.SyncQueries,
 	exercises ...dal.UpdateExerciseByNameParams,
 ) (opErr error) {
 	cntr := 0
 	for _, e := range exercises {
-		// Note: the exercise cache does not need to be updated because the
-		// email (and hence id in the database) does not change.
-		opErr = queries.UpdateExerciseByName(ctxt, e)
+		opErr = dal.Query1x1(dal.Q.UpdateExerciseByName, queries, ctxt, e)
 		if opErr != nil {
 			opErr = sberr.AppendError(
 				types.CouldNotUpdateRequestedExerciseErr, opErr,
@@ -148,18 +145,14 @@ func UpdateExercises(
 func DeleteExercises(
 	ctxt context.Context,
 	state *types.State,
-	queries *dal.Queries,
+	queries *dal.SyncQueries,
 	names ...string,
 ) (opErr error) {
 	// TODO - delete all referenced training log data, video data, model data
 	// Is this properly handled by cascade??
 
-	for _, n := range names {
-		state.ExerciseCache.Invalidate(n)
-	}
-
 	var count int64
-	count, opErr = queries.DeleteExercisesByName(ctxt, names)
+	count, opErr = dal.Query1x2(dal.Q.DeleteExercisesByName, queries, ctxt, names)
 	if opErr != nil {
 		opErr = sberr.AppendError(types.CouldNotDeleteRequestedExerciseErr, opErr)
 		return
@@ -170,6 +163,7 @@ func DeleteExercises(
 			types.CouldNotFindRequestedExerciseErr,
 		)
 	}
+
 	state.Log.Log(ctxt, sblog.VLevel(3), "Deleted exercises", "Num", count)
 	return
 }

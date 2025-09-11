@@ -27,12 +27,14 @@ func CreateExercises(
 	if len(exercises) == 0 {
 		return
 	}
-	return runOp(ctxt, func(state *types.State, queries *dal.Queries) error {
-		_ = dal.BulkCreateExercisesParams(types.Exercise{})
-		return ops.CreateExercises(
-			ctxt, state, queries,
-			*(*[]dal.BulkCreateExercisesParams)(unsafe.Pointer(&exercises))...,
-		)
+	return runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) error {
+			_ = dal.BulkCreateExercisesParams(types.Exercise{})
+			return ops.CreateExercises(
+				ctxt, state, queries,
+				*(*[]dal.BulkCreateExercisesParams)(unsafe.Pointer(&exercises))...,
+			)
+		},
 	})
 }
 
@@ -42,16 +44,17 @@ func CreateExercises(
 //
 // No changes will be made to the database.
 func ReadNumExercises(ctxt context.Context) (res int64, opErr error) {
-	opErr = runOp(ctxt, func(state *types.State, queries *dal.Queries) (err error) {
-		res, err = ops.ReadNumExercises(ctxt, state, queries)
-		return err
+	opErr = runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			res, err = ops.ReadNumExercises(ctxt, state, queries)
+			return err
+		},
 	})
 	return
 }
 
 // Gets the exercise data associated with the supplied names if they exist. If
-// they do not exist an error will be returned. The order of the returned
-// exercises may not match the order of the supplied exercise names.
+// they do not exist an error will be returned.
 //
 // The context must have a [types.State] variable.
 //
@@ -60,9 +63,11 @@ func ReadExercisesByName(
 	ctxt context.Context,
 	names ...string,
 ) (res []types.Exercise, opErr error) {
-	opErr = runOp(ctxt, func(state *types.State, queries *dal.Queries) (err error) {
-		res, err = ops.ReadExercisesByName(ctxt, state, queries, names...)
-		return err
+	opErr = runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			res, err = ops.ReadExercisesByName(ctxt, state, queries, names...)
+			return err
+		},
 	})
 	return
 }
@@ -82,12 +87,14 @@ func UpdateExercises(
 	if len(exercises) == 0 {
 		return
 	}
-	return runOp(ctxt, func(state *types.State, queries *dal.Queries) (err error) {
-		_ = dal.UpdateExerciseByNameParams(types.Exercise{})
-		return ops.UpdateExercises(
-			ctxt, state, queries,
-			*(*[]dal.UpdateExerciseByNameParams)(unsafe.Pointer(&exercises))...,
-		)
+	return runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			_ = dal.UpdateExerciseByNameParams(types.Exercise{})
+			return ops.UpdateExercises(
+				ctxt, state, queries,
+				*(*[]dal.UpdateExerciseByNameParams)(unsafe.Pointer(&exercises))...,
+			)
+		},
 	})
 }
 
@@ -101,7 +108,9 @@ func DeleteExercises(ctxt context.Context, names ...string) (opErr error) {
 	if len(names) == 0 {
 		return
 	}
-	return runOp(ctxt, func(state *types.State, queries *dal.Queries) (err error) {
-		return ops.DeleteExercises(ctxt, state, queries, names...)
+	return runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			return ops.DeleteExercises(ctxt, state, queries, names...)
+		},
 	})
 }

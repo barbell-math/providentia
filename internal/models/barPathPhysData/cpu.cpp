@@ -4,13 +4,12 @@
 #include <algorithm>
 #include <bits/stdc++.h>
 #include "cpu.h"
-#include "../../glue/glue.h"
-#include "../../glue/common.h"
+#include "../../clib/glue.h"
+#include "../../clib/common.h"
 
 enum BarPathCalcErrCode_t validateSuppliedData(
 	barPathData_t* data,
-	barPathCalcConf_t* bpOpts,
-	physDataConf_t* pdOpts
+	barPathCalcConf_t* opts
 ) {
 	double_t h=data->time[1]-data->time[0];
 
@@ -19,7 +18,7 @@ enum BarPathCalcErrCode_t validateSuppliedData(
 		if (iterH<0) {
 			return TimeSeriesNotIncreasingErr;
 		}
-		if (std::fabs(iterH-h) > pdOpts->TimeDeltaEps) {
+		if (std::fabs(iterH-h) > opts->TimeDeltaEps) {
 			return TimeSeriesNotMonotonicErr;
 		}
 	}
@@ -31,12 +30,11 @@ enum BarPathCalcErrCode_t validateSuppliedData(
 // http://code.barbellmath.net/barbell-math/providentia/wiki/Numerical-Difference-Methods
 enum BarPathCalcErrCode_t calcDerivatives(
 	barPathData_t* data,
-	barPathCalcConf_t* bpOpts,
-	physDataConf_t* pdOpts
+	barPathCalcConf_t* opts
 ) {
 	double_t h=data->time[1]-data->time[0];
 
-	switch (bpOpts->ApproxErr) {
+	switch (opts->ApproxErr) {
 	case SecondOrder:
 		for (int i=2; i<data->timeLen-2; i++) {
 			data->vel[i].X=(-data->pos[i-1].X+data->pos[i+1].X)/(2*h);
@@ -160,60 +158,59 @@ enum BarPathCalcErrCode_t calcDerivatives(
 
 enum BarPathCalcErrCode_t runSmoother(
 	barPathData_t* data,
-	barPathCalcConf_t* bpOpts,
-	physDataConf_t* pdOpts
+	barPathCalcConf_t* opts
 ) {
 	float_t wTot=(
-		bpOpts->SmootherWeight1+
-		bpOpts->SmootherWeight2+
-		bpOpts->SmootherWeight3+
-		bpOpts->SmootherWeight4+
-		bpOpts->SmootherWeight5
+		opts->SmootherWeight1+
+		opts->SmootherWeight2+
+		opts->SmootherWeight3+
+		opts->SmootherWeight4+
+		opts->SmootherWeight5
 	);
 	for (int i=2; wTot>0 && i<data->timeLen-2; i++) {
 		data->vel[i].X=(
-			data->vel[i-2].X*bpOpts->SmootherWeight1+
-			data->vel[i-1].X*bpOpts->SmootherWeight2+
-			data->vel[i].X*bpOpts->SmootherWeight3+
-			data->vel[i+1].X*bpOpts->SmootherWeight4+
-			data->vel[i+2].X*bpOpts->SmootherWeight5
+			data->vel[i-2].X*opts->SmootherWeight1+
+			data->vel[i-1].X*opts->SmootherWeight2+
+			data->vel[i].X*opts->SmootherWeight3+
+			data->vel[i+1].X*opts->SmootherWeight4+
+			data->vel[i+2].X*opts->SmootherWeight5
 		)/(wTot);
 		data->vel[i].Y=(
-			data->vel[i-2].Y*bpOpts->SmootherWeight1+
-			data->vel[i-1].Y*bpOpts->SmootherWeight2+
-			data->vel[i].Y*bpOpts->SmootherWeight3+
-			data->vel[i+1].Y*bpOpts->SmootherWeight4+
-			data->vel[i+2].Y*bpOpts->SmootherWeight5
+			data->vel[i-2].Y*opts->SmootherWeight1+
+			data->vel[i-1].Y*opts->SmootherWeight2+
+			data->vel[i].Y*opts->SmootherWeight3+
+			data->vel[i+1].Y*opts->SmootherWeight4+
+			data->vel[i+2].Y*opts->SmootherWeight5
 		)/(wTot);
 
 		data->acc[i].X=(
-			data->acc[i-2].X*bpOpts->SmootherWeight1+
-			data->acc[i-1].X*bpOpts->SmootherWeight2+
-			data->acc[i].X*bpOpts->SmootherWeight3+
-			data->acc[i+1].X*bpOpts->SmootherWeight4+
-			data->acc[i+2].X*bpOpts->SmootherWeight5
+			data->acc[i-2].X*opts->SmootherWeight1+
+			data->acc[i-1].X*opts->SmootherWeight2+
+			data->acc[i].X*opts->SmootherWeight3+
+			data->acc[i+1].X*opts->SmootherWeight4+
+			data->acc[i+2].X*opts->SmootherWeight5
 		)/(wTot);
 		data->acc[i].Y=(
-			data->acc[i-2].Y*bpOpts->SmootherWeight1+
-			data->acc[i-1].Y*bpOpts->SmootherWeight2+
-			data->acc[i].Y*bpOpts->SmootherWeight3+
-			data->acc[i+1].Y*bpOpts->SmootherWeight4+
-			data->acc[i+2].Y*bpOpts->SmootherWeight5
+			data->acc[i-2].Y*opts->SmootherWeight1+
+			data->acc[i-1].Y*opts->SmootherWeight2+
+			data->acc[i].Y*opts->SmootherWeight3+
+			data->acc[i+1].Y*opts->SmootherWeight4+
+			data->acc[i+2].Y*opts->SmootherWeight5
 		)/(wTot);
 
 		data->jerk[i].X=(
-			data->jerk[i-2].X*bpOpts->SmootherWeight1+
-			data->jerk[i-1].X*bpOpts->SmootherWeight2+
-			data->jerk[i].X*bpOpts->SmootherWeight3+
-			data->jerk[i+1].X*bpOpts->SmootherWeight4+
-			data->jerk[i+2].X*bpOpts->SmootherWeight5
+			data->jerk[i-2].X*opts->SmootherWeight1+
+			data->jerk[i-1].X*opts->SmootherWeight2+
+			data->jerk[i].X*opts->SmootherWeight3+
+			data->jerk[i+1].X*opts->SmootherWeight4+
+			data->jerk[i+2].X*opts->SmootherWeight5
 		)/(wTot);
 		data->jerk[i].Y=(
-			data->jerk[i-2].Y*bpOpts->SmootherWeight1+
-			data->jerk[i-1].Y*bpOpts->SmootherWeight2+
-			data->jerk[i].Y*bpOpts->SmootherWeight3+
-			data->jerk[i+1].Y*bpOpts->SmootherWeight4+
-			data->jerk[i+2].Y*bpOpts->SmootherWeight5
+			data->jerk[i-2].Y*opts->SmootherWeight1+
+			data->jerk[i-1].Y*opts->SmootherWeight2+
+			data->jerk[i].Y*opts->SmootherWeight3+
+			data->jerk[i+1].Y*opts->SmootherWeight4+
+			data->jerk[i+2].Y*opts->SmootherWeight5
 		)/(wTot);
 	}
 
@@ -225,8 +222,7 @@ enum BarPathCalcErrCode_t runSmoother(
 // http://code.barbellmath.net/barbell-math/providentia/wiki/Bar-Path-Calcs
 enum BarPathCalcErrCode_t calcHigherOrderData(
 	barPathData_t* data,
-	barPathCalcConf_t* bpOpts,
-	physDataConf_t* pdOpts
+	barPathCalcConf_t* opts
 ) {
 	for (int i=0; i<data->timeLen; i++) {
 		data->force[i].X=data->mass*data->acc[i].X;
@@ -246,8 +242,7 @@ enum BarPathCalcErrCode_t calcHigherOrderData(
 
 enum BarPathCalcErrCode_t calcRepSplits(
 	barPathData_t* data,
-	barPathCalcConf_t* bpOpts,
-	physDataConf_t* pdOpts
+	barPathCalcConf_t* opts
 ) {
 	int centersAdded=0;
 	std::vector<TimestampedVal> repCenters(data->reps);
@@ -278,27 +273,27 @@ enum BarPathCalcErrCode_t calcRepSplits(
 			}
 		}
 	}
-	// TODO - check if centersAdded==data->reps, ret err if not
 	std::sort(repCenters.begin(), repCenters.end(), TimestampedVal::sortByTime);
-
-	// for (int i=0; i<repCenters.size(); i++){
-	// 	std::cout << repCenters[i].time << ", " << repCenters[i].value << " | ";
-	// }
-	// std::cout << std::endl;
 
 	for (int i=0; i<repCenters.size(); i++) {
 		TimestampedVal& iterRep=repCenters[i];
 
 		for (int j=iterRep.idx+2; j<data->timeLen; j++) {
-			if (std::signbit(data->vel[j].Y)!=std::signbit(data->vel[j-1].Y)) {
-				data->repSplit[i].End=j;
+			if (
+				std::signbit(data->vel[j].Y)!=std::signbit(data->vel[j-1].Y) &&
+				std::fabs(data->pos[i].Y)<opts->NearZeroFilter
+			) {
+				data->repSplit[i].EndIdx=j;
 				break;
 			}
 		}
 
 		for (int j=iterRep.idx-2; j>=0; j--) {
-			if (std::signbit(data->vel[j].Y)!=std::signbit(data->vel[j+1].Y)) {
-				data->repSplit[i].Start=j;
+			if (
+				std::signbit(data->vel[j].Y)!=std::signbit(data->vel[j+1].Y) &&
+				std::fabs(data->pos[i].Y)<opts->NearZeroFilter
+			) {
+				data->repSplit[i].StartIdx=j;
 				break;
 			}
 		}
@@ -306,8 +301,8 @@ enum BarPathCalcErrCode_t calcRepSplits(
 
 	// for (int i=0; i<data->reps; i++){
 	// 	std::cout << "(" 
-	// 		<< data->repSplit[i].Start << "[" << data->time[data->repSplit[i].Start] << "], " 
-	// 		<< data->repSplit[i].End << "[" << data->time[data->repSplit[i].End] << "], " 
+	// 		<< data->repSplit[i].StartIdx << "[" << data->time[data->repSplit[i].StartIdx] << "], " 
+	// 		<< data->repSplit[i].EndIdx << "[" << data->time[data->repSplit[i].EndIdx] << "], " 
 	// 	<< ") ";
 	// }
 	// std::cout << std::endl;
@@ -317,35 +312,32 @@ enum BarPathCalcErrCode_t calcRepSplits(
 
 extern "C" enum BarPathCalcErrCode_t calcBarPathPhysData(
 	barPathData_t* data,
-	barPathCalcConf_t* bpOpts,
-	physDataConf_t* pdOpts
+	barPathCalcConf_t* opts
 ) {
-	BarPathCalcErrCode_t err = validateSuppliedData(data, bpOpts, pdOpts);
+	BarPathCalcErrCode_t err = validateSuppliedData(data, opts);
 	if (err!=NoErr) {
 		return  err;
 	}
 
-	err = calcDerivatives(data, bpOpts, pdOpts);
+	err = calcDerivatives(data, opts);
 	if (err!=NoErr) {
 		return  err;
 	}
 
-	err = runSmoother(data, bpOpts, pdOpts);
+	err = runSmoother(data, opts);
 	if (err!=NoErr) {
 		return  err;
 	}
 
-	err = calcHigherOrderData(data, bpOpts, pdOpts);
+	err = calcHigherOrderData(data, opts);
 	if (err!=NoErr) {
 		return  err;
 	}
 
-	err = calcRepSplits(data, bpOpts, pdOpts);
+	err = calcRepSplits(data, opts);
 	if (err!=NoErr) {
 		return  err;
 	}
-
-	// TODO - calc rep stats! :D
 
 	return NoErr;
 }

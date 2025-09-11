@@ -38,7 +38,7 @@ func (p *Physics) Run(ctxt context.Context) error {
 		Impulse:      make([][]types.Vec2[types.NewtonSec], len(p.BarPath)),
 		Work:         make([][]types.Joule, len(p.BarPath)),
 		Power:        make([][]types.Watt, len(p.BarPath)),
-		RepSplits:    make([][]types.Split[types.Second], len(p.BarPath)),
+		RepSplits:    make([][]types.Split, len(p.BarPath)),
 	}
 
 	if err := p.processData(ctxt, &physData); err != nil {
@@ -47,9 +47,7 @@ func (p *Physics) Run(ctxt context.Context) error {
 
 	var id int64
 	var err error
-	p.Q.Run(func(q *dal.Queries) {
-		id, err = q.CreatePhysicsData(ctxt, physData)
-	})
+	id, err = dal.Query1x2(dal.Q.CreatePhysicsData, p.Q, ctxt, physData)
 	if err != nil {
 		return sberr.AppendError(types.PhysicsJobQueueErr, err)
 	}

@@ -2,54 +2,55 @@ package dal
 
 import (
 	"context"
-	"database/sql"
-	"errors"
-	"unsafe"
-
-	"code.barbellmath.net/barbell-math/providentia/lib/types"
-	"github.com/maypok86/otter/v2"
 )
 
-func NewClientCacheLoader(
-	queries *SyncQueries,
-) otter.LoaderFunc[string, types.IdWrapper[int64, types.Client]] {
-	return func(
-		ctxt context.Context,
-		key string,
-	) (res types.IdWrapper[int64, types.Client], err error) {
-		queries.Run(func(q *Queries) {
-			// TODO - some kind of check would be nice...
-			// _=types.IdWrapper[int64, types.Client](Client{})
-			var tmp Client
-			tmp, err = q.GetFullClientByEmail(ctxt, key)
-			res = *(*types.IdWrapper[int64, types.Client])(unsafe.Pointer(&tmp))
-			if errors.Is(err, sql.ErrNoRows) {
-				// Convert "not found" DB error to cache-specific error
-				err = otter.ErrNotFound
-			}
-		})
-		return
+type (
+	IdCache[PK comparable, V ~int32 | ~int64] struct {
+		curSize int
+		curIdx  int
+		keys    []PK
+		vals    []V
+		lookup  map[PK]*V
+		loader  func(*Queries, context.Context, PK) (V, error)
+	}
+)
+
+func NewClientIdCache(maxSize uint) IdCache[string, int64] {
+	return IdCache[string, int64]{
+		vals:   make([]int64, maxSize),
+		keys:   make([]string, maxSize),
+		lookup: map[string]*int64{},
+		loader: Q.GetClientIdByEmail,
 	}
 }
 
-func NewExerciseCacheLoader(
-	queries *SyncQueries,
-) otter.LoaderFunc[string, types.IdWrapper[int32, types.Exercise]] {
-	return func(
-		ctxt context.Context,
-		key string,
-	) (res types.IdWrapper[int32, types.Exercise], err error) {
-		queries.Run(func(q *Queries) {
-			// TODO - some kind of check would be nice...
-			// _=types.IdWrapper[int32, types.Exercise](Client{})
-			var tmp Exercise
-			tmp, err = q.GetFullExerciseByName(ctxt, key)
-			res = *(*types.IdWrapper[int32, types.Exercise])(unsafe.Pointer(&tmp))
-			if errors.Is(err, sql.ErrNoRows) {
-				// Convert "not found" DB error to cache-specific error
-				err = otter.ErrNotFound
-			}
-		})
-		return
+func NewExerciseIdCache(maxSize uint) IdCache[string, int32] {
+	return IdCache[string, int32]{
+		vals:   make([]int32, maxSize),
+		keys:   make([]string, maxSize),
+		lookup: map[string]*int32{},
+		loader: Q.GetExerciseIdByName,
 	}
+}
+
+func (i *IdCache[PK, V]) Get(
+	ctxt context.Context,
+	queries *SyncQueries,
+	key PK,
+) (V, error) {
+	if v, ok := i.lookup[key]; ok {
+		return *v, nil
+	}
+
+	tmp, err := Query1x2(i.loader, queries, ctxt, key)
+	if err != nil {
+		return tmp, err
+	}
+
+	delete(i.lookup, i.keys[i.curIdx])
+	i.keys[i.curIdx] = key
+	i.vals[i.curIdx] = tmp
+	i.lookup[key] = &i.vals[i.curIdx]
+	i.curIdx = (i.curIdx + 1) % len(i.vals)
+	return tmp, nil
 }

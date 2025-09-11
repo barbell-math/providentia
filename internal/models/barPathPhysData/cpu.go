@@ -87,11 +87,11 @@ func Calc(
 	}
 
 	expLen := len(rawData.Time[idx])
-	if expLen < int(state.PhysicsData.MinNumSamples) {
+	if expLen < int(state.BarPathCalc.MinNumSamples) {
 		return sberr.Wrap(
 			InvalidRawDataLenErr,
 			"the minimum number of samples (%d) was not provided, got %d samples",
-			state.PhysicsData.MinNumSamples, expLen,
+			state.BarPathCalc.MinNumSamples, expLen,
 		)
 	}
 	if len(rawData.Position[idx]) != expLen {
@@ -104,7 +104,7 @@ func Calc(
 
 	expReps := tl.Reps
 	if ceilSets > tl.Sets && int(floorSets) == idx {
-		expReps = int32((tl.Sets - floorSets) * float64(tl.Reps))
+		expReps = max(int32((tl.Sets-floorSets)*float64(tl.Reps)), 1)
 	}
 
 	rawData.Velocity[idx] = make([]types.Vec2[types.MeterPerSec], expLen)
@@ -152,7 +152,6 @@ func Calc(
 	err := C.calcBarPathPhysData(
 		(*C.barPathData_t)(unsafe.Pointer(&baseData)),
 		(*C.barPathCalcConf_t)(unsafe.Pointer(&state.BarPathCalc)),
-		(*C.physDataConf_t)(unsafe.Pointer(&state.PhysicsData)),
 	)
 
 	pinner.Unpin()
@@ -166,8 +165,8 @@ func Calc(
 	case TimeSeriesNotMonotonicErr:
 		return sberr.Wrap(
 			types.TimeSeriesNotMonotonicErr,
-			"Time samples must all have the same delta (within %f variance)",
-			state.PhysicsData.TimeDeltaEps,
+			"Adjacent time samples must all have the same delta (within %f variance)",
+			state.BarPathCalc.TimeDeltaEps,
 		)
 	case InvalidApproximationErrErr:
 		return types.ErrInvalidApproximationError

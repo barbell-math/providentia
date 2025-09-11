@@ -114,6 +114,7 @@ func workoutSetTimeAndPosDiffLen(ctxt context.Context) func(t *testing.T) {
 			Exercises: []types.RawExerciseData{
 				{
 					Sets: 1,
+					Reps: 1,
 					Name: "Squat",
 					BarPath: []types.BarPathVariant{
 						types.BarPathTimeSeriesData(
@@ -149,6 +150,7 @@ func workoutSetNotEnoughSamples(ctxt context.Context) func(t *testing.T) {
 			Exercises: []types.RawExerciseData{
 				{
 					Sets: 1,
+					Reps: 1,
 					Name: "Squat",
 					BarPath: []types.BarPathVariant{
 						types.BarPathTimeSeriesData(
@@ -184,6 +186,7 @@ func workoutSetBackwardsTime(ctxt context.Context) func(t *testing.T) {
 			Exercises: []types.RawExerciseData{
 				{
 					Sets: 1,
+					Reps: 1,
 					Name: "Squat",
 					BarPath: []types.BarPathVariant{
 						types.BarPathTimeSeriesData(
@@ -221,6 +224,7 @@ func workoutSetDiffTimeDelta(ctxt context.Context) func(t *testing.T) {
 			Exercises: []types.RawExerciseData{
 				{
 					Sets: 1,
+					Reps: 1,
 					Name: "Squat",
 					BarPath: []types.BarPathVariant{
 						types.BarPathTimeSeriesData(
@@ -241,7 +245,7 @@ func workoutSetDiffTimeDelta(ctxt context.Context) func(t *testing.T) {
 		})
 		sbtest.ContainsError(
 			t, types.CouldNotAddWorkoutErr, err,
-			"Time samples must all have the same delta",
+			"Adjacent time samples must all have the same delta",
 		)
 		sbtest.ContainsError(t, types.PhysicsJobQueueErr, err)
 		sbtest.ContainsError(t, types.TimeSeriesNotMonotonicErr, err)
@@ -258,6 +262,7 @@ func workoutSetDirInsteadOfVideoFile(ctxt context.Context) func(t *testing.T) {
 			Exercises: []types.RawExerciseData{
 				{
 					Sets:    1,
+					Reps:    1,
 					Name:    "Squat",
 					BarPath: []types.BarPathVariant{types.BarPathVideo(".")},
 				},
@@ -281,6 +286,7 @@ func workoutSetInvalidVideoFile(ctxt context.Context) func(t *testing.T) {
 			Exercises: []types.RawExerciseData{
 				{
 					Sets: 1,
+					Reps: 1,
 					Name: "Squat",
 					BarPath: []types.BarPathVariant{
 						types.BarPathVideo("./non-existant-dir"),
@@ -307,6 +313,7 @@ func workoutSetNotEnoughBarPathEntries(ctxt context.Context) func(t *testing.T) 
 				{
 					Name: "Squat",
 					Sets: 3,
+					Reps: 1,
 					BarPath: []types.BarPathVariant{
 						types.BarPathTimeSeriesData(
 							types.RawTimeSeriesData{
@@ -357,6 +364,7 @@ func workoutSetFractionalSetsAndExercisesLen(
 				{
 					Name: "Squat",
 					Sets: 2.5,
+					Reps: 1,
 					BarPath: []types.BarPathVariant{
 						types.BarPathTimeSeriesData(
 							types.RawTimeSeriesData{

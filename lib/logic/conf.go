@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log/slog"
 	"runtime"
 	"strings"
 
@@ -13,22 +12,7 @@ import (
 	sbjobqueue "code.barbellmath.net/barbell-math/smoothbrain-jobQueue"
 	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/maypok86/otter/v2"
 )
-
-type (
-	defaultCacheLogger struct {
-		log *slog.Logger
-	}
-)
-
-func (dl *defaultCacheLogger) Warn(ctx context.Context, msg string, err error) {
-	dl.log.WarnContext(ctx, msg, "err", err)
-}
-
-func (dl *defaultCacheLogger) Error(ctx context.Context, msg string, err error) {
-	dl.log.ErrorContext(ctx, msg, "err", err)
-}
 
 // Returns a [types.Conf] struct with sensible default values. Can be passed to
 // [ParseConfig] as the `_default` parameter.
@@ -46,14 +30,14 @@ func ConfDefaults() *types.Conf {
 			Port: 5432,
 		},
 		Global: types.GlobalConf{
-			BatchSize: 1e3,
-		},
-		PhysicsData: types.PhysicsDataConf{
-			MinNumSamples: 100,
-			TimeDeltaEps:  1e-6,
+			BatchSize:             1e3,
+			PerRequestIdCacheSize: 1e2,
 		},
 		BarPathCalc: types.BarPathCalcConf{
+			MinNumSamples:   100,
+			TimeDeltaEps:    1e-6,
 			ApproxErr:       types.FourthOrder,
+			NearZeroFilter:  0.1,
 			SmootherWeight1: 0.5,
 			SmootherWeight2: 0.5,
 			SmootherWeight3: 1,
@@ -70,18 +54,15 @@ func ConfDefaults() *types.Conf {
 			MaxNumWorkers:  uint32(runtime.NumCPU()),
 			MaxJobsPerPoll: 1,
 		},
-		ClientCache: otter.Options[
-			string, types.IdWrapper[int64, types.Client],
-		]{
-			MaximumSize:     100,
-			InitialCapacity: 100,
-		},
-		ExerciseCache: otter.Options[
-			string, types.IdWrapper[int32, types.Exercise],
-		]{
-			MaximumSize:     100,
-			InitialCapacity: 100,
-		},
+	}
+}
+
+// Returns a list of required arguments for the default conf configuration.
+// Depending on the defaults you choose to set the list of required args may
+// change.
+func ConfDefaultRequiredArgs() []string {
+	return []string{
+		"DB.User", "DB.PswdEnvVar", "DB.Name",
 	}
 }
 
@@ -103,6 +84,7 @@ func ConfDefaults() *types.Conf {
 //   - <longArgStart>.DB.Port
 //   - <longArgStart>.DB.Name
 //   - <longArgStart>.Global.BatchSize
+//   - <longArgStart>.Global.PerRequestIdCacheSize
 //   - <longArgStart>.PhysicsData.MinNumSamples
 //   - <longArgStart>.PhysicsData.TimeDeltaEps
 //   - <longArgStart>.PhysicsJobQueue.QueueLen
@@ -111,6 +93,15 @@ func ConfDefaults() *types.Conf {
 //   - <longArgStart>.VideoJobQueue.QueueLen
 //   - <longArgStart>.VideoJobQueue.MaxNumWorkers
 //   - <longArgStart>.VideoJobQueue.MaxJobsPerPoll
+//   - <longArgStart>.BarPathCalc.MinNumSamples
+//   - <longArgStart>.BarPathCalc.TimeDeltaEps
+//   - <longArgStart>.BarPathCalc.ApproxErr
+//   - <longArgStart>.BarPathCalc.NearZeroFilter
+//   - <longArgStart>.BarPathCalc.SmootherWeight1
+//   - <longArgStart>.BarPathCalc.SmootherWeight2
+//   - <longArgStart>.BarPathCalc.SmootherWeight3
+//   - <longArgStart>.BarPathCalc.SmootherWeight4
+//   - <longArgStart>.BarPathCalc.SmootherWeight5
 func ConfParser(
 	fs *flag.FlagSet,
 	val *types.Conf,
@@ -128,29 +119,18 @@ func ConfParser(
 
 	sbargp.Logging(fs, &val.Logging, startStr("Logging"), _default.Logging)
 	sbargp.DB(fs, &val.DB, startStr("DB"), _default.DB)
+
 	fs.UintVar(
 		&val.Global.BatchSize,
 		startStr("Global", "BatchSize"),
 		_default.Global.BatchSize,
 		"The batch size the library functions will work with. Smaller will use less memory but may be slightly slower",
 	)
-
-	fs.Func(
-		startStr("PhysicsData", "MinNumSamples"),
-		"The minimum number of samples that should be present in physics data",
-		sbargp.Uint(
-			&val.PhysicsData.MinNumSamples,
-			_default.PhysicsData.MinNumSamples,
-			10,
-		),
-	)
-	fs.Func(
-		startStr("PhysicsData", "TimeDeltaEps"),
-		"The maximum acceptable variance between time sample deltas",
-		sbargp.Float(
-			&val.PhysicsData.TimeDeltaEps,
-			_default.PhysicsData.TimeDeltaEps,
-		),
+	fs.UintVar(
+		&val.Global.PerRequestIdCacheSize,
+		startStr("Global", "PerRequestIdCacheSize"),
+		_default.Global.PerRequestIdCacheSize,
+		"The maximum allowed cache size for each requests id caches. Smaller numbers will use less memory at the potential expense of more netowrk trips.",
 	)
 
 	fs.Func(
@@ -210,43 +190,22 @@ func ConfParser(
 	)
 
 	fs.Func(
-		startStr("ClientCache", "MaximumSize"),
-		"The maximum number of client structs that can be held in the in memory client cache",
-		sbargp.Int(
-			&val.ClientCache.MaximumSize,
-			_default.ClientCache.MaximumSize,
+		startStr("BarPathCalc", "MinNumSamples"),
+		"The minimum number of samples that should be present in physics data",
+		sbargp.Uint(
+			&val.BarPathCalc.MinNumSamples,
+			_default.BarPathCalc.MinNumSamples,
 			10,
 		),
 	)
 	fs.Func(
-		startStr("ClientCache", "InitialCapacity"),
-		"The initial capacity of the in memory client cache",
-		sbargp.Int(
-			&val.ClientCache.MaximumSize,
-			_default.ClientCache.MaximumSize,
-			10,
+		startStr("BarPathCalc", "TimeDeltaEps"),
+		"The maximum acceptable variance between time sample deltas",
+		sbargp.Float(
+			&val.BarPathCalc.TimeDeltaEps,
+			_default.BarPathCalc.TimeDeltaEps,
 		),
 	)
-
-	fs.Func(
-		startStr("ExerciseCache", "MaximumSize"),
-		"The maximum number of exercise structs that can be held in the in memory exercise cache",
-		sbargp.Int(
-			&val.ExerciseCache.MaximumSize,
-			_default.ExerciseCache.MaximumSize,
-			10,
-		),
-	)
-	fs.Func(
-		startStr("ExerciseCache", "InitialCapacity"),
-		"The initial capacity of the in memory exercise cache",
-		sbargp.Int(
-			&val.ExerciseCache.MaximumSize,
-			_default.ExerciseCache.MaximumSize,
-			10,
-		),
-	)
-
 	fs.Func(
 		startStr("BarPathCalc", "ApproxErr"),
 		fmt.Sprintf(
@@ -256,6 +215,14 @@ func ConfParser(
 		sbargp.FromTextUnmarshaler(
 			&val.BarPathCalc.ApproxErr,
 			_default.BarPathCalc.ApproxErr,
+		),
+	)
+	fs.Func(
+		startStr("BarPathCalc", "NearZeroFilter"),
+		"How close to 0 the vertical bar position can be for it to be considered 0",
+		sbargp.Float(
+			&val.BarPathCalc.NearZeroFilter,
+			_default.BarPathCalc.NearZeroFilter,
 		),
 	)
 	fs.Func(
@@ -313,7 +280,6 @@ func ConfToState(
 	state = &s
 
 	state.Global = c.Global
-	state.PhysicsData = c.PhysicsData
 	state.BarPathCalc = c.BarPathCalc
 
 	if state.PhysicsJobQueue, err = sbjobqueue.NewJobQueue[types.PhysicsJob](
@@ -336,23 +302,6 @@ func ConfToState(
 			MaxLogSizeBytes: uint64(c.Logging.MaxLogSizeBytes),
 		},
 	}); err != nil {
-		return
-	}
-
-	c.ClientCache.Logger = &defaultCacheLogger{log: state.Log}
-	if state.ClientCache, err = otter.New[
-		string, types.IdWrapper[int64, types.Client],
-	](
-		&c.ClientCache,
-	); err != nil {
-		return
-	}
-	c.ExerciseCache.Logger = &defaultCacheLogger{log: state.Log}
-	if state.ExerciseCache, err = otter.New[
-		string, types.IdWrapper[int32, types.Exercise],
-	](
-		&c.ExerciseCache,
-	); err != nil {
 		return
 	}
 

@@ -14,7 +14,6 @@ import (
 
 func TestExercisesTypeConversions(t *testing.T) {
 	structsEquivalent[dal.BulkCreateExercisesParams, types.Exercise](t)
-	structsEquivalent[dal.GetExercisesByNameRow, types.Exercise](t)
 }
 
 func TestExercise(t *testing.T) {

@@ -54,8 +54,10 @@ func CreateWorkouts(
 	if len(workouts) == 0 {
 		return
 	}
-	return runOp(ctxt, func(state *types.State, queries *dal.Queries) error {
-		return ops.CreateWorkouts(ctxt, state, queries, workouts...)
+	return runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) error {
+			return ops.CreateWorkouts(ctxt, state, queries, workouts...)
+		},
 	})
 }
 
@@ -65,15 +67,18 @@ func CreateWorkouts(
 // The context must have a [types.State] variable.
 //
 // No changes will be made to the database.
+// TODO - rename, exercises already means something else
 func ReadClientTotalNumExercises(
 	ctxt context.Context,
 	clientEmail string,
 ) (res int64, opErr error) {
-	opErr = runOp(ctxt, func(state *types.State, queries *dal.Queries) (err error) {
-		res, err = ops.ReadClientTotalNumExercises(
-			ctxt, state, queries, clientEmail,
-		)
-		return err
+	opErr = runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			res, err = ops.ReadClientTotalNumExercises(
+				ctxt, state, queries, clientEmail,
+			)
+			return err
+		},
 	})
 	return
 }
@@ -89,11 +94,13 @@ func ReadClientTotalNumPhysEntries(
 	ctxt context.Context,
 	clientEmail string,
 ) (res int64, opErr error) {
-	opErr = runOp(ctxt, func(state *types.State, queries *dal.Queries) (err error) {
-		res, err = ops.ReadClientTotalNumPhysEntries(
-			ctxt, state, queries, clientEmail,
-		)
-		return err
+	opErr = runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			res, err = ops.ReadClientTotalNumPhysEntries(
+				ctxt, state, queries, clientEmail,
+			)
+			return err
+		},
 	})
 	return
 }
@@ -107,9 +114,11 @@ func ReadClientNumWorkouts(
 	ctxt context.Context,
 	clientEmail string,
 ) (res int64, opErr error) {
-	opErr = runOp(ctxt, func(state *types.State, queries *dal.Queries) (err error) {
-		res, err = ops.ReadClientNumWorkouts(ctxt, state, queries, clientEmail)
-		return err
+	opErr = runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			res, err = ops.ReadClientNumWorkouts(ctxt, state, queries, clientEmail)
+			return err
+		},
 	})
 	return
 }
@@ -124,9 +133,11 @@ func ReadWorkoutsByID(
 	ctxt context.Context,
 	ids ...types.WorkoutID,
 ) (res []types.Workout, opErr error) {
-	opErr = runOp(ctxt, func(state *types.State, queries *dal.Queries) (err error) {
-		res, err = ops.ReadWorkoutsByID(ctxt, state, queries, ids...)
-		return err
+	opErr = runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			res, err = ops.ReadWorkoutsByID(ctxt, state, queries, ids...)
+			return err
+		},
 	})
 	return
 }
@@ -148,11 +159,13 @@ func ReadWorkoutsInDateRange(
 	start time.Time,
 	end time.Time,
 ) (res []types.Workout, opErr error) {
-	opErr = runOp(ctxt, func(state *types.State, queries *dal.Queries) (err error) {
-		res, err = ops.ReadWorkoutsInDateRange(
-			ctxt, state, queries, clientEmail, start, end,
-		)
-		return err
+	opErr = runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			res, err = ops.ReadWorkoutsInDateRange(
+				ctxt, state, queries, clientEmail, start, end,
+			)
+			return err
+		},
 	})
 	return
 }
@@ -167,9 +180,11 @@ func DeleteWorkouts(
 	ctxt context.Context,
 	ids ...types.WorkoutID,
 ) (opErr error) {
-	opErr = runOp(ctxt, func(state *types.State, queries *dal.Queries) (err error) {
-		err = ops.DeleteWorkouts(ctxt, state, queries, ids...)
-		return err
+	opErr = runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			err = ops.DeleteWorkouts(ctxt, state, queries, ids...)
+			return err
+		},
 	})
 	return
 }
@@ -191,11 +206,13 @@ func DeleteWorkoutsInDateRange(
 	start time.Time,
 	end time.Time,
 ) (res int64, opErr error) {
-	opErr = runOp(ctxt, func(state *types.State, queries *dal.Queries) (err error) {
-		res, err = ops.DeleteWorkoutsInDateRange(
-			ctxt, state, queries, clientEmail, start, end,
-		)
-		return err
+	opErr = runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			res, err = ops.DeleteWorkoutsInDateRange(
+				ctxt, state, queries, clientEmail, start, end,
+			)
+			return err
+		},
 	})
 	return
 }

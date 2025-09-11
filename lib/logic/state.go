@@ -45,9 +45,6 @@ func ValidateState(s *types.State) error {
 	if err := checkStateGlobalConf(s); err != nil {
 		return err
 	}
-	if err := checkStatePhysicsDataConf(s); err != nil {
-		return err
-	}
 	if err := checkStateBarPathCalc(s); err != nil {
 		return err
 	}
@@ -78,29 +75,7 @@ func checkStateGlobalConf(state *types.State) error {
 			types.InvalidGlobalErr,
 			sberr.Wrap(
 				types.InvalidBatchSizeErr,
-				"Must be >=2. Got: %d", state.PhysicsData.MinNumSamples,
-			),
-		)
-	}
-	return nil
-}
-
-func checkStatePhysicsDataConf(state *types.State) error {
-	if state.PhysicsData.MinNumSamples < 2 {
-		return sberr.AppendError(
-			types.InvalidPhysicsDataErr,
-			sberr.Wrap(
-				types.InvalidMinNumSamplesErr,
-				"Must be >=2. Got: %d", state.PhysicsData.MinNumSamples,
-			),
-		)
-	}
-	if state.PhysicsData.TimeDeltaEps <= 0 {
-		return sberr.AppendError(
-			types.InvalidPhysicsDataErr,
-			sberr.Wrap(
-				types.InvalidTimeDeltaEpsErr,
-				"Must be >=0. Got: %f", state.PhysicsData.TimeDeltaEps,
+				"Must be >0. Got: %d", state.Global.BatchSize,
 			),
 		)
 	}
@@ -108,10 +83,37 @@ func checkStatePhysicsDataConf(state *types.State) error {
 }
 
 func checkStateBarPathCalc(state *types.State) error {
+	if state.BarPathCalc.MinNumSamples < 2 {
+		return sberr.AppendError(
+			types.InvalidBarPathCalcErr,
+			sberr.Wrap(
+				types.InvalidMinNumSamplesErr,
+				"Must be >=2. Got: %d", state.BarPathCalc.MinNumSamples,
+			),
+		)
+	}
+	if state.BarPathCalc.TimeDeltaEps <= 0 {
+		return sberr.AppendError(
+			types.InvalidBarPathCalcErr,
+			sberr.Wrap(
+				types.InvalidTimeDeltaEpsErr,
+				"Must be >=0. Got: %f", state.BarPathCalc.TimeDeltaEps,
+			),
+		)
+	}
 	if !state.BarPathCalc.ApproxErr.IsValid() {
 		return sberr.AppendError(
 			types.InvalidBarPathCalcErr,
 			types.ErrInvalidApproximationError,
+		)
+	}
+	if state.BarPathCalc.NearZeroFilter < 0 {
+		return sberr.AppendError(
+			types.InvalidBarPathCalcErr,
+			sberr.Wrap(
+				types.InvalidNearZeroFilterErr,
+				"Must be >0. Got: %f", state.BarPathCalc.NearZeroFilter,
+			),
 		)
 	}
 	return nil
