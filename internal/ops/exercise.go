@@ -14,7 +14,7 @@ func CreateExercises(
 	ctxt context.Context,
 	state *types.State,
 	queries *dal.SyncQueries,
-	exercises ...dal.BulkCreateExercisesParams,
+	exercises ...types.Exercise,
 ) (opErr error) {
 	for start, end := range batchIndexes(exercises, int(state.Global.BatchSize)) {
 		for i := start; i < end; i++ {
@@ -44,10 +44,11 @@ func CreateExercises(
 		}
 
 		var numRows int64
-		// The buffered writer is not used because it would create a copy of the
-		// exercises, which is unnecessary in this case
+		chunk := exercises[start:end]
+		_ = dal.BulkCreateExercisesParams(types.Exercise{})
 		numRows, opErr = dal.Query1x2(
-			dal.Q.BulkCreateExercises, queries, ctxt, exercises[start:end],
+			dal.Q.BulkCreateExercises, queries, ctxt,
+			*(*[]dal.BulkCreateExercisesParams)(unsafe.Pointer(&chunk)),
 		)
 		if opErr != nil {
 			opErr = sberr.AppendError(types.CouldNotAddExercisesErr, opErr)
@@ -118,11 +119,15 @@ func UpdateExercises(
 	ctxt context.Context,
 	state *types.State,
 	queries *dal.SyncQueries,
-	exercises ...dal.UpdateExerciseByNameParams,
+	exercises ...types.Exercise,
 ) (opErr error) {
 	cntr := 0
 	for _, e := range exercises {
-		opErr = dal.Query1x1(dal.Q.UpdateExerciseByName, queries, ctxt, e)
+		_ = dal.UpdateExerciseByNameParams(types.Exercise{})
+		opErr = dal.Query1x1(
+			dal.Q.UpdateExerciseByName, queries, ctxt,
+			*(*dal.UpdateExerciseByNameParams)(unsafe.Pointer(&e)),
+		)
 		if opErr != nil {
 			opErr = sberr.AppendError(
 				types.CouldNotUpdateRequestedExerciseErr, opErr,

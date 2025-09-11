@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"unsafe"
 
 	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
 	"code.barbellmath.net/barbell-math/providentia/internal/ops"
@@ -29,11 +28,7 @@ func CreateClients(
 	}
 	return runOp(ctxt, opCalls{
 		op: func(state *types.State, queries *dal.SyncQueries) error {
-			_ = dal.BulkCreateClientsParams(types.Client{})
-			return ops.CreateClients(
-				ctxt, state, queries,
-				*(*[]dal.BulkCreateClientsParams)(unsafe.Pointer(&clients))...,
-			)
+			return ops.CreateClients(ctxt, state, queries, clients...)
 		},
 	})
 }
@@ -54,7 +49,8 @@ func ReadNumClients(ctxt context.Context) (res int64, opErr error) {
 }
 
 // Gets the client data associated with the supplied emails if they exist. If
-// they do not exist an error will be returned.
+// they do not exist an error will be returned. The order of the returned
+// clients may not match the order of the supplied client emails.
 //
 // The context must have a [types.State] variable.
 //
@@ -89,11 +85,7 @@ func UpdateClients(
 	}
 	return runOp(ctxt, opCalls{
 		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			_ = dal.UpdateClientByEmailParams(types.Client{})
-			return ops.UpdateClients(
-				ctxt, state, queries,
-				*(*[]dal.UpdateClientByEmailParams)(unsafe.Pointer(&clients))...,
-			)
+			return ops.UpdateClients(ctxt, state, queries, clients...)
 		},
 	})
 }

@@ -15,7 +15,7 @@ func CreateClients(
 	ctxt context.Context,
 	state *types.State,
 	queries *dal.SyncQueries,
-	clients ...dal.BulkCreateClientsParams,
+	clients ...types.Client,
 ) (opErr error) {
 	for start, end := range batchIndexes(clients, int(state.Global.BatchSize)) {
 		for i := start; i < end; i++ {
@@ -47,10 +47,11 @@ func CreateClients(
 		}
 
 		var numRows int64
-		// The buffered writer is not used because it would create a copy of the
-		// clients, which is unnecessary in this case
+		chunk := clients[start:end]
+		_ = dal.BulkCreateClientsParams(types.Client{})
 		numRows, opErr = dal.Query1x2(
-			dal.Q.BulkCreateClients, queries, ctxt, clients[start:end],
+			dal.Q.BulkCreateClients, queries, ctxt,
+			*(*[]dal.BulkCreateClientsParams)(unsafe.Pointer(&chunk)),
 		)
 		if opErr != nil {
 			opErr = sberr.AppendError(types.CouldNotAddClientsErr, opErr)
@@ -124,11 +125,15 @@ func UpdateClients(
 	ctxt context.Context,
 	state *types.State,
 	queries *dal.SyncQueries,
-	clients ...dal.UpdateClientByEmailParams,
+	clients ...types.Client,
 ) (opErr error) {
 	cntr := 0
 	for _, c := range clients {
-		opErr = dal.Query1x1(dal.Q.UpdateClientByEmail, queries, ctxt, c)
+		_ = dal.UpdateClientByEmailParams(types.Client{})
+		opErr = dal.Query1x1(
+			dal.Q.UpdateClientByEmail, queries, ctxt,
+			*(*dal.UpdateClientByEmailParams)(unsafe.Pointer(&c)),
+		)
 		if opErr != nil {
 			opErr = sberr.AppendError(
 				types.CouldNotUpdateRequestedClientErr, opErr,

@@ -5,13 +5,18 @@ import (
 )
 
 type (
-	IdCache[PK comparable, V ~int32 | ~int64] struct {
+	// Used to map unique fields to database ids (primary keys). This is often
+	// useful when creating a new row that has foreign keys that reference a
+	// tables id field.
+	//
+	// Note: this cache is not safe for concurrent usage!
+	IdCache[K comparable, V ~int32 | ~int64] struct {
 		curSize int
 		curIdx  int
-		keys    []PK
+		keys    []K
 		vals    []V
-		lookup  map[PK]*V
-		loader  func(*Queries, context.Context, PK) (V, error)
+		lookup  map[K]*V
+		loader  func(*Queries, context.Context, K) (V, error)
 	}
 )
 
@@ -33,10 +38,10 @@ func NewExerciseIdCache(maxSize uint) IdCache[string, int32] {
 	}
 }
 
-func (i *IdCache[PK, V]) Get(
+func (i *IdCache[K, V]) Get(
 	ctxt context.Context,
 	queries *SyncQueries,
-	key PK,
+	key K,
 ) (V, error) {
 	if v, ok := i.lookup[key]; ok {
 		return *v, nil

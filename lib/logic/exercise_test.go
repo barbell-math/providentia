@@ -6,15 +6,10 @@ import (
 	"math"
 	"testing"
 
-	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
 	"code.barbellmath.net/barbell-math/providentia/internal/db/migrations"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	sbtest "code.barbellmath.net/barbell-math/smoothbrain-test"
 )
-
-func TestExercisesTypeConversions(t *testing.T) {
-	structsEquivalent[dal.BulkCreateExercisesParams, types.Exercise](t)
-}
 
 func TestExercise(t *testing.T) {
 	t.Run("failingNoWrites", exerciseFailingNoWrites)

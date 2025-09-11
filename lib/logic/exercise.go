@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"unsafe"
 
 	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
 	"code.barbellmath.net/barbell-math/providentia/internal/ops"
@@ -29,11 +28,7 @@ func CreateExercises(
 	}
 	return runOp(ctxt, opCalls{
 		op: func(state *types.State, queries *dal.SyncQueries) error {
-			_ = dal.BulkCreateExercisesParams(types.Exercise{})
-			return ops.CreateExercises(
-				ctxt, state, queries,
-				*(*[]dal.BulkCreateExercisesParams)(unsafe.Pointer(&exercises))...,
-			)
+			return ops.CreateExercises(ctxt, state, queries, exercises...)
 		},
 	})
 }
@@ -54,7 +49,8 @@ func ReadNumExercises(ctxt context.Context) (res int64, opErr error) {
 }
 
 // Gets the exercise data associated with the supplied names if they exist. If
-// they do not exist an error will be returned.
+// they do not exist an error will be returned. The order of the returned
+// exercises may not match the order of the supplied exercise names.
 //
 // The context must have a [types.State] variable.
 //
@@ -89,11 +85,7 @@ func UpdateExercises(
 	}
 	return runOp(ctxt, opCalls{
 		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			_ = dal.UpdateExerciseByNameParams(types.Exercise{})
-			return ops.UpdateExercises(
-				ctxt, state, queries,
-				*(*[]dal.UpdateExerciseByNameParams)(unsafe.Pointer(&exercises))...,
-			)
+			return ops.UpdateExercises(ctxt, state, queries, exercises...)
 		},
 	})
 }

@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"reflect"
 	"testing"
 	"time"
 
@@ -27,19 +26,4 @@ func TestCancelation(t *testing.T) {
 		},
 	})
 	sbtest.ContainsError(t, context.DeadlineExceeded, err)
-}
-
-// TODO - this needs to move to sbtest and check for things like embeded field
-// equivalency and generic value equivalencacy
-func structsEquivalent[T any, U any](t *testing.T) {
-	tRef := reflect.TypeFor[T]()
-	uRef := reflect.TypeFor[T]()
-
-	sbtest.Eq(t, tRef.Kind(), reflect.Struct)
-	sbtest.Eq(t, uRef.Kind(), reflect.Struct)
-	sbtest.Eq(t, tRef.NumField(), uRef.NumField())
-
-	for i := range tRef.NumField() {
-		sbtest.Eq(t, tRef.Field(i).Type.Kind(), uRef.Field(i).Type.Kind())
-	}
 }
