@@ -39,7 +39,9 @@ import (
 // Valid video bar path data must:
 //
 //   - Point to a valid path
-//   - Point to a video longer than [state.??? TODO]
+//   - Point to a video longer than [state.BarPathTracker.MinLength]
+//   - Point to a video file with a size greater than [state.BarPathTracker.MinSize]
+//   - Point to a video file with a size less than [state.BarPathTracker.MaxSize]
 //
 // The context must have a [types.State] variable.
 //

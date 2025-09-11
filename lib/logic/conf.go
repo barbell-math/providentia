@@ -44,6 +44,11 @@ func ConfDefaults() *types.Conf {
 			SmootherWeight4: 0.5,
 			SmootherWeight5: 0.5,
 		},
+		BarPathTracker: types.BarPathTrackerConf{
+			MinLength:   5,
+			MinFileSize: 5e7, // 50MB
+			MaxFileSize: 5e8, // 500MB
+		},
 		PhysicsJobQueue: sbjobqueue.Opts{
 			QueueLen:       10,
 			MaxNumWorkers:  uint32(runtime.NumCPU()),
@@ -120,17 +125,23 @@ func ConfParser(
 	sbargp.Logging(fs, &val.Logging, startStr("Logging"), _default.Logging)
 	sbargp.DB(fs, &val.DB, startStr("DB"), _default.DB)
 
-	fs.UintVar(
-		&val.Global.BatchSize,
+	fs.Func(
 		startStr("Global", "BatchSize"),
-		_default.Global.BatchSize,
 		"The batch size the library functions will work with. Smaller will use less memory but may be slightly slower",
+		sbargp.Uint(
+			&val.Global.BatchSize,
+			_default.Global.BatchSize,
+			10,
+		),
 	)
-	fs.UintVar(
-		&val.Global.PerRequestIdCacheSize,
+	fs.Func(
 		startStr("Global", "PerRequestIdCacheSize"),
-		_default.Global.PerRequestIdCacheSize,
 		"The maximum allowed cache size for each requests id caches. Smaller numbers will use less memory at the potential expense of more netowrk trips.",
+		sbargp.Uint(
+			&val.Global.PerRequestIdCacheSize,
+			_default.Global.PerRequestIdCacheSize,
+			10,
+		),
 	)
 
 	fs.Func(
@@ -265,6 +276,33 @@ func ConfParser(
 			_default.BarPathCalc.SmootherWeight5,
 		),
 	)
+
+	fs.Func(
+		startStr("BarPathTracker", "MinLength"),
+		"The minimum length of a video provided for bar path analysis in seconds",
+		sbargp.Float(
+			&val.BarPathTracker.MinLength,
+			_default.BarPathTracker.MinLength,
+		),
+	)
+	fs.Func(
+		startStr("BarPathTracker", "MinFileSize"),
+		"The minimum file size of a video provided for bar path analysis in bytes",
+		sbargp.Uint(
+			&val.BarPathTracker.MinFileSize,
+			_default.BarPathTracker.MinFileSize,
+			10,
+		),
+	)
+	fs.Func(
+		startStr("BarPathTracker", "MaxFileSize"),
+		"The maximum file size of a video provided for bar path analysis in bytes",
+		sbargp.Uint(
+			&val.BarPathTracker.MaxFileSize,
+			_default.BarPathTracker.MaxFileSize,
+			10,
+		),
+	)
 }
 
 // Takes the supplied [types.Conf] struct and translates it into a [types.State]
@@ -281,6 +319,7 @@ func ConfToState(
 
 	state.Global = c.Global
 	state.BarPathCalc = c.BarPathCalc
+	state.BarPathTracker = c.BarPathTracker
 
 	if state.PhysicsJobQueue, err = sbjobqueue.NewJobQueue[types.PhysicsJob](
 		&c.PhysicsJobQueue,
