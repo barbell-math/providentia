@@ -61,15 +61,29 @@ type (
 		Exertion     RPE
 		TotalReps    float64
 		Time         [][]Second
-		Position     [][]Vec2[Meter]
-		Velocity     [][]Vec2[MeterPerSec]
-		Acceleration [][]Vec2[MeterPerSec2]
-		Jerk         [][]Vec2[MeterPerSec3]
-		Force        [][]Vec2[Newton]
-		Impulse      [][]Vec2[NewtonSec]
+		Position     [][]Vec2[Meter, Meter]
+		Velocity     [][]Vec2[MeterPerSec, MeterPerSec]
+		Acceleration [][]Vec2[MeterPerSec2, MeterPerSec2]
+		Jerk         [][]Vec2[MeterPerSec3, MeterPerSec3]
+		Force        [][]Vec2[Newton, Newton]
+		Impulse      [][]Vec2[NewtonSec, NewtonSec]
 		Work         [][]Joule
 		Power        [][]Watt
 		RepSplits    [][]Split
+		MinVel       [][]PointInTime[Second, MeterPerSec]
+		MaxVel       [][]PointInTime[Second, MeterPerSec]
+		MinAcc       [][]PointInTime[Second, MeterPerSec2]
+		MaxAcc       [][]PointInTime[Second, MeterPerSec2]
+		MinForce     [][]PointInTime[Second, Newton]
+		MaxForce     [][]PointInTime[Second, Newton]
+		MinImpulse   [][]PointInTime[Second, NewtonSec]
+		MaxImpulse   [][]PointInTime[Second, NewtonSec]
+		AvgWork      [][]Joule
+		MinWork      [][]PointInTime[Second, Joule]
+		MaxWork      [][]PointInTime[Second, Joule]
+		AvgPower     [][]Watt
+		MinPower     [][]PointInTime[Second, Watt]
+		MaxPower     [][]PointInTime[Second, Watt]
 	}
 )
 

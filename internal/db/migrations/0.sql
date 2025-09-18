@@ -46,21 +46,27 @@ CREATE TABLE IF NOT EXISTS providentia.physics_data (
 	work FLOAT8[][] NOT NULL,
 	power FLOAT8[][] NOT NULL,
 
-	rep_splits POINT[][] NOT NULL
+	rep_splits POINT[][] NOT NULL,
 
-	-- TODO - not sure how these should be represented because I am not sure
-	-- how they will be used...
-	-- avg_power FLOAT8 NOT NULL,
-	-- min_power FLOAT8 NOT NULL,
-	-- min_power_time FLOAT8 NOT NULL,
-	-- max_power FLOAT8 NOT NULL,
-	-- max_power_time FLOAT8 NOT NULL,
+	min_vel POINT[][] NOT NULL,
+	max_vel POINT[][] NOT NULL,
 
-	-- avg_force POINT NOT NULL,
-	-- min_force POINT NOT NULL,
-	-- min_force_time FLOAT8 NOT NULL,
-	-- max_force POINT NOT NULL,
-	-- max_force_time FLOAT8 NOT NULL
+	min_acc POINT[][] NOT NULL,
+	max_acc POINT[][] NOT NULL,
+
+	min_force POINT[][] NOT NULL,
+	max_force POINT[][] NOT NULL,
+
+	min_impulse POINT[][] NOT NULL,
+	max_impulse POINT[][] NOT NULL,
+
+	avg_work FLOAT8[][] NOT NULL,
+	min_work POINT[][] NOT NULL,
+	max_work POINT[][] NOT NULL,
+
+	avg_power FLOAT8[][] NOT NULL,
+	min_power POINT[][] NOT NULL,
+	max_power POINT[][] NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS providentia.training_log (

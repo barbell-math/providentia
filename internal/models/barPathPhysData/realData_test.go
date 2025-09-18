@@ -30,16 +30,66 @@ func loadAndTestCsv(a *args) {
 
 	samples := len(rawData) - 1
 	inputData := dal.CreatePhysicsDataParams{
-		Time:         [][]types.Second{make([]types.Second, samples)},
-		Position:     [][]types.Vec2[types.Meter]{make([]types.Vec2[types.Meter], samples)},
-		Velocity:     [][]types.Vec2[types.MeterPerSec]{make([]types.Vec2[types.MeterPerSec], samples)},
-		Acceleration: [][]types.Vec2[types.MeterPerSec2]{make([]types.Vec2[types.MeterPerSec2], samples)},
-		Jerk:         [][]types.Vec2[types.MeterPerSec3]{make([]types.Vec2[types.MeterPerSec3], samples)},
-		Impulse:      [][]types.Vec2[types.NewtonSec]{make([]types.Vec2[types.NewtonSec], samples)},
-		Force:        [][]types.Vec2[types.Newton]{make([]types.Vec2[types.Newton], samples)},
-		Work:         [][]types.Joule{make([]types.Joule, samples)},
-		Power:        [][]types.Watt{make([]types.Watt, samples)},
-		RepSplits:    [][]types.Split{make([]types.Split, samples)},
+		Time: [][]types.Second{make([]types.Second, samples)},
+		Position: [][]types.Vec2[types.Meter, types.Meter]{
+			make([]types.Vec2[types.Meter, types.Meter], samples),
+		},
+		Velocity: [][]types.Vec2[types.MeterPerSec, types.MeterPerSec]{
+			[]types.Vec2[types.MeterPerSec, types.MeterPerSec]{},
+		},
+		Acceleration: [][]types.Vec2[types.MeterPerSec2, types.MeterPerSec2]{
+			[]types.Vec2[types.MeterPerSec2, types.MeterPerSec2]{},
+		},
+		Jerk: [][]types.Vec2[types.MeterPerSec3, types.MeterPerSec3]{
+			[]types.Vec2[types.MeterPerSec3, types.MeterPerSec3]{},
+		},
+		Impulse: [][]types.Vec2[types.NewtonSec, types.NewtonSec]{
+			[]types.Vec2[types.NewtonSec, types.NewtonSec]{},
+		},
+		Force: [][]types.Vec2[types.Newton, types.Newton]{
+			[]types.Vec2[types.Newton, types.Newton]{},
+		},
+		Work:      [][]types.Joule{[]types.Joule{}},
+		Power:     [][]types.Watt{[]types.Watt{}},
+		RepSplits: [][]types.Split{[]types.Split{}},
+		MinVel: [][]types.PointInTime[types.Second, types.MeterPerSec]{
+			[]types.PointInTime[types.Second, types.MeterPerSec]{},
+		},
+		MaxVel: [][]types.PointInTime[types.Second, types.MeterPerSec]{
+			[]types.PointInTime[types.Second, types.MeterPerSec]{},
+		},
+		MinAcc: [][]types.PointInTime[types.Second, types.MeterPerSec2]{
+			[]types.PointInTime[types.Second, types.MeterPerSec2]{},
+		},
+		MaxAcc: [][]types.PointInTime[types.Second, types.MeterPerSec2]{
+			[]types.PointInTime[types.Second, types.MeterPerSec2]{},
+		},
+		MinForce: [][]types.PointInTime[types.Second, types.Newton]{
+			[]types.PointInTime[types.Second, types.Newton]{},
+		},
+		MaxForce: [][]types.PointInTime[types.Second, types.Newton]{
+			[]types.PointInTime[types.Second, types.Newton]{},
+		},
+		MinImpulse: [][]types.PointInTime[types.Second, types.NewtonSec]{
+			[]types.PointInTime[types.Second, types.NewtonSec]{},
+		},
+		MaxImpulse: [][]types.PointInTime[types.Second, types.NewtonSec]{
+			[]types.PointInTime[types.Second, types.NewtonSec]{},
+		},
+		AvgWork: [][]types.Joule{[]types.Joule{}},
+		MinWork: [][]types.PointInTime[types.Second, types.Joule]{
+			[]types.PointInTime[types.Second, types.Joule]{},
+		},
+		MaxWork: [][]types.PointInTime[types.Second, types.Joule]{
+			[]types.PointInTime[types.Second, types.Joule]{},
+		},
+		AvgPower: [][]types.Watt{[]types.Watt{}},
+		MinPower: [][]types.PointInTime[types.Second, types.Watt]{
+			[]types.PointInTime[types.Second, types.Watt]{},
+		},
+		MaxPower: [][]types.PointInTime[types.Second, types.Watt]{
+			[]types.PointInTime[types.Second, types.Watt]{},
+		},
 	}
 	for i := range samples {
 		rawTime, err := strconv.ParseFloat(rawData[i+1][1], 64)
@@ -50,7 +100,7 @@ func loadAndTestCsv(a *args) {
 		sbtest.Nil(a.t, err)
 		rawYPos, err := strconv.ParseFloat(rawData[i+1][2], 64)
 		sbtest.Nil(a.t, err)
-		inputData.Position[0][i] = types.Vec2[types.Meter]{
+		inputData.Position[0][i] = types.Vec2[types.Meter, types.Meter]{
 			X: types.Meter(rawXPos) / 100,
 			Y: types.Meter(rawYPos) / 100,
 		}

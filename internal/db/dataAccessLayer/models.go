@@ -55,18 +55,32 @@ type ModelState struct {
 }
 
 type PhysicsData struct {
-	ID           int64                              `json:"id"`
-	Path         []string                           `json:"path"`
-	Time         [][]types.Second                   `json:"time"`
-	Position     [][]types.Vec2[types.Meter]        `json:"position"`
-	Velocity     [][]types.Vec2[types.MeterPerSec]  `json:"velocity"`
-	Acceleration [][]types.Vec2[types.MeterPerSec2] `json:"acceleration"`
-	Jerk         [][]types.Vec2[types.MeterPerSec3] `json:"jerk"`
-	Force        [][]types.Vec2[types.Newton]       `json:"force"`
-	Impulse      [][]types.Vec2[types.NewtonSec]    `json:"impulse"`
-	Work         [][]types.Joule                    `json:"work"`
-	Power        [][]types.Watt                     `json:"power"`
-	RepSplits    [][]types.Split                    `json:"rep_splits"`
+	ID           int64                                                   `json:"id"`
+	Path         []string                                                `json:"path"`
+	Time         [][]types.Second                                        `json:"time"`
+	Position     [][]types.Vec2[types.Meter, types.Meter]                `json:"position"`
+	Velocity     [][]types.Vec2[types.MeterPerSec, types.MeterPerSec]    `json:"velocity"`
+	Acceleration [][]types.Vec2[types.MeterPerSec2, types.MeterPerSec2]  `json:"acceleration"`
+	Jerk         [][]types.Vec2[types.MeterPerSec3, types.MeterPerSec3]  `json:"jerk"`
+	Force        [][]types.Vec2[types.Newton, types.Newton]              `json:"force"`
+	Impulse      [][]types.Vec2[types.NewtonSec, types.NewtonSec]        `json:"impulse"`
+	Work         [][]types.Joule                                         `json:"work"`
+	Power        [][]types.Watt                                          `json:"power"`
+	RepSplits    [][]types.Split                                         `json:"rep_splits"`
+	MinVel       [][]types.PointInTime[types.Second, types.MeterPerSec]  `json:"min_vel"`
+	MaxVel       [][]types.PointInTime[types.Second, types.MeterPerSec]  `json:"max_vel"`
+	MinAcc       [][]types.PointInTime[types.Second, types.MeterPerSec2] `json:"min_acc"`
+	MaxAcc       [][]types.PointInTime[types.Second, types.MeterPerSec2] `json:"max_acc"`
+	MinForce     [][]types.PointInTime[types.Second, types.Newton]       `json:"min_force"`
+	MaxForce     [][]types.PointInTime[types.Second, types.Newton]       `json:"max_force"`
+	MinImpulse   [][]types.PointInTime[types.Second, types.NewtonSec]    `json:"min_impulse"`
+	MaxImpulse   [][]types.PointInTime[types.Second, types.NewtonSec]    `json:"max_impulse"`
+	AvgWork      [][]types.Joule                                         `json:"avg_work"`
+	MinWork      [][]types.PointInTime[types.Second, types.Joule]        `json:"min_work"`
+	MaxWork      [][]types.PointInTime[types.Second, types.Joule]        `json:"max_work"`
+	AvgPower     [][]types.Watt                                          `json:"avg_power"`
+	MinPower     [][]types.PointInTime[types.Second, types.Watt]         `json:"min_power"`
+	MaxPower     [][]types.PointInTime[types.Second, types.Watt]         `json:"max_power"`
 }
 
 type ProvidentiaModel struct {

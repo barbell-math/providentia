@@ -15,7 +15,6 @@ import (
 	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
 	sbjobqueue "code.barbellmath.net/barbell-math/smoothbrain-jobQueue"
 	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func CreateWorkouts(
@@ -88,21 +87,15 @@ func CreateWorkouts(
 			}
 
 			if opErr = bufWriter.Write(ctxt, dal.BulkCreateTrainingLogsParams{
-				ClientID:   iterClientId,
-				ExerciseID: iterExerciseId,
-
-				DatePerformed: pgtype.Date{
-					Time:             iterW.DatePerformed,
-					InfinityModifier: pgtype.Finite,
-					Valid:            true,
-				},
+				ClientID:         iterClientId,
+				ExerciseID:       iterExerciseId,
+				DatePerformed:    dal.TimeToPGDate(iterW.DatePerformed),
 				InterSessionCntr: int16(iterW.Session),
 				InterWorkoutCntr: int16(i + 1),
-
-				Weight: iterE.Weight,
-				Sets:   iterE.Sets,
-				Reps:   iterE.Reps,
-				Effort: iterE.Effort,
+				Weight:           iterE.Weight,
+				Sets:             iterE.Sets,
+				Reps:             iterE.Reps,
+				Effort:           iterE.Effort,
 			}); opErr != nil {
 				opErr = sberr.AppendError(types.CouldNotAddWorkoutErr, opErr)
 				return
@@ -293,11 +286,7 @@ func ReadWorkoutsByID(
 			dal.GetAllWorkoutDataParams{
 				Email:            id.ClientEmail,
 				InterSessionCntr: int16(id.Session),
-				DatePerformed: pgtype.Date{
-					Time:             id.DatePerformed,
-					InfinityModifier: pgtype.Finite,
-					Valid:            true,
-				},
+				DatePerformed:    dal.TimeToPGDate(id.DatePerformed),
 			},
 		)
 		if opErr != nil {
@@ -368,17 +357,9 @@ func ReadWorkoutsInDateRange(
 	rawData, opErr = dal.Query1x2(
 		dal.Q.GetAllWorkoutDataBetweenDates, queries, ctxt,
 		dal.GetAllWorkoutDataBetweenDatesParams{
-			Email: clientEmail,
-			Start: pgtype.Date{
-				Time:             start,
-				InfinityModifier: pgtype.Finite,
-				Valid:            true,
-			},
-			Ending: pgtype.Date{
-				Time:             end,
-				InfinityModifier: pgtype.Finite,
-				Valid:            true,
-			},
+			Email:  clientEmail,
+			Start:  dal.TimeToPGDate(start),
+			Ending: dal.TimeToPGDate(end),
 		},
 	)
 	if opErr != nil {
@@ -478,11 +459,7 @@ func DeleteWorkouts(
 			dal.DeleteWorkoutParams{
 				Email:            id.ClientEmail,
 				InterSessionCntr: int16(id.Session),
-				DatePerformed: pgtype.Date{
-					Time:             id.DatePerformed,
-					InfinityModifier: pgtype.Finite,
-					Valid:            true,
-				},
+				DatePerformed:    dal.TimeToPGDate(id.DatePerformed),
 			},
 		)
 		if opErr != nil {
@@ -539,17 +516,9 @@ func DeleteWorkoutsInDateRange(
 	res, opErr = dal.Query1x2(
 		dal.Q.DeleteWorkoutsBetweenDates, queries, ctxt,
 		dal.DeleteWorkoutsBetweenDatesParams{
-			Email: clientEmail,
-			Start: pgtype.Date{
-				Time:             start,
-				InfinityModifier: pgtype.Finite,
-				Valid:            true,
-			},
-			Ending: pgtype.Date{
-				Time:             end,
-				InfinityModifier: pgtype.Finite,
-				Valid:            true,
-			},
+			Email:  clientEmail,
+			Start:  dal.TimeToPGDate(start),
+			Ending: dal.TimeToPGDate(end),
 		},
 	)
 	if opErr != nil {

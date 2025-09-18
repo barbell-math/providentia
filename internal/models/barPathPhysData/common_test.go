@@ -9,10 +9,21 @@ import (
 	sbtest "code.barbellmath.net/barbell-math/smoothbrain-test"
 )
 
-func TestTimeSeriesNotIncreasingErr(t *testing.T) {
-	rawData := dal.CreatePhysicsDataParams{
-		Time: [][]types.Second{{0, 1, 2, 3, 2, 5, 6}},
-		Position: [][]types.Vec2[types.Meter]{{
+func getBasicRawData() dal.CreatePhysicsDataParams {
+	return dal.CreatePhysicsDataParams{
+		Time: [][]types.Second{
+			{0, 1, 2, 3, 4, 5, 6},
+			{0, 1, 2, 3, 4, 5, 6},
+		},
+		Position: [][]types.Vec2[types.Meter, types.Meter]{{
+			{X: 0 * 0, Y: 0 * 0},
+			{X: 1 * 1, Y: 1 * 1},
+			{X: 2 * 2, Y: 2 * 2},
+			{X: 3 * 3, Y: 3 * 3},
+			{X: 4 * 4, Y: 4 * 4},
+			{X: 5 * 5, Y: 5 * 5},
+			{X: 6 * 6, Y: 6 * 6},
+		}, {
 			{X: 0 * 0, Y: 0 * 0},
 			{X: 1 * 1, Y: 1 * 1},
 			{X: 2 * 2, Y: 2 * 2},
@@ -21,25 +32,85 @@ func TestTimeSeriesNotIncreasingErr(t *testing.T) {
 			{X: 5 * 5, Y: 5 * 5},
 			{X: 6 * 6, Y: 6 * 6},
 		}},
-		Velocity: [][]types.Vec2[types.MeterPerSec]{
-			make([]types.Vec2[types.MeterPerSec], 7),
+		Velocity: [][]types.Vec2[types.MeterPerSec, types.MeterPerSec]{
+			[]types.Vec2[types.MeterPerSec, types.MeterPerSec]{},
+			[]types.Vec2[types.MeterPerSec, types.MeterPerSec]{},
 		},
-		Acceleration: [][]types.Vec2[types.MeterPerSec2]{
-			make([]types.Vec2[types.MeterPerSec2], 7),
+		Acceleration: [][]types.Vec2[types.MeterPerSec2, types.MeterPerSec2]{
+			[]types.Vec2[types.MeterPerSec2, types.MeterPerSec2]{},
+			[]types.Vec2[types.MeterPerSec2, types.MeterPerSec2]{},
 		},
-		Jerk: [][]types.Vec2[types.MeterPerSec3]{
-			make([]types.Vec2[types.MeterPerSec3], 7),
+		Jerk: [][]types.Vec2[types.MeterPerSec3, types.MeterPerSec3]{
+			[]types.Vec2[types.MeterPerSec3, types.MeterPerSec3]{},
+			[]types.Vec2[types.MeterPerSec3, types.MeterPerSec3]{},
 		},
-		Impulse: [][]types.Vec2[types.NewtonSec]{
-			make([]types.Vec2[types.NewtonSec], 7),
+		Impulse: [][]types.Vec2[types.NewtonSec, types.NewtonSec]{
+			[]types.Vec2[types.NewtonSec, types.NewtonSec]{},
+			[]types.Vec2[types.NewtonSec, types.NewtonSec]{},
 		},
-		Force: [][]types.Vec2[types.Newton]{
-			make([]types.Vec2[types.Newton], 7),
+		Force: [][]types.Vec2[types.Newton, types.Newton]{
+			[]types.Vec2[types.Newton, types.Newton]{},
+			[]types.Vec2[types.Newton, types.Newton]{},
 		},
-		Work:      [][]types.Joule{make([]types.Joule, 7)},
-		Power:     [][]types.Watt{make([]types.Watt, 7)},
-		RepSplits: [][]types.Split{make([]types.Split, 7)},
+		Work:      [][]types.Joule{[]types.Joule{}, []types.Joule{}},
+		Power:     [][]types.Watt{[]types.Watt{}, []types.Watt{}},
+		RepSplits: [][]types.Split{[]types.Split{}, []types.Split{}},
+		MinVel: [][]types.PointInTime[types.Second, types.MeterPerSec]{
+			[]types.PointInTime[types.Second, types.MeterPerSec]{},
+			[]types.PointInTime[types.Second, types.MeterPerSec]{},
+		},
+		MaxVel: [][]types.PointInTime[types.Second, types.MeterPerSec]{
+			[]types.PointInTime[types.Second, types.MeterPerSec]{},
+			[]types.PointInTime[types.Second, types.MeterPerSec]{},
+		},
+		MinAcc: [][]types.PointInTime[types.Second, types.MeterPerSec2]{
+			[]types.PointInTime[types.Second, types.MeterPerSec2]{},
+			[]types.PointInTime[types.Second, types.MeterPerSec2]{},
+		},
+		MaxAcc: [][]types.PointInTime[types.Second, types.MeterPerSec2]{
+			[]types.PointInTime[types.Second, types.MeterPerSec2]{},
+			[]types.PointInTime[types.Second, types.MeterPerSec2]{},
+		},
+		MinForce: [][]types.PointInTime[types.Second, types.Newton]{
+			[]types.PointInTime[types.Second, types.Newton]{},
+			[]types.PointInTime[types.Second, types.Newton]{},
+		},
+		MaxForce: [][]types.PointInTime[types.Second, types.Newton]{
+			[]types.PointInTime[types.Second, types.Newton]{},
+			[]types.PointInTime[types.Second, types.Newton]{},
+		},
+		MinImpulse: [][]types.PointInTime[types.Second, types.NewtonSec]{
+			[]types.PointInTime[types.Second, types.NewtonSec]{},
+			[]types.PointInTime[types.Second, types.NewtonSec]{},
+		},
+		MaxImpulse: [][]types.PointInTime[types.Second, types.NewtonSec]{
+			[]types.PointInTime[types.Second, types.NewtonSec]{},
+			[]types.PointInTime[types.Second, types.NewtonSec]{},
+		},
+		AvgWork: [][]types.Joule{[]types.Joule{}, []types.Joule{}},
+		MinWork: [][]types.PointInTime[types.Second, types.Joule]{
+			[]types.PointInTime[types.Second, types.Joule]{},
+			[]types.PointInTime[types.Second, types.Joule]{},
+		},
+		MaxWork: [][]types.PointInTime[types.Second, types.Joule]{
+			[]types.PointInTime[types.Second, types.Joule]{},
+			[]types.PointInTime[types.Second, types.Joule]{},
+		},
+		AvgPower: [][]types.Watt{[]types.Watt{}, []types.Watt{}},
+		MinPower: [][]types.PointInTime[types.Second, types.Watt]{
+			[]types.PointInTime[types.Second, types.Watt]{},
+			[]types.PointInTime[types.Second, types.Watt]{},
+		},
+		MaxPower: [][]types.PointInTime[types.Second, types.Watt]{
+			[]types.PointInTime[types.Second, types.Watt]{},
+			[]types.PointInTime[types.Second, types.Watt]{},
+		},
 	}
+}
+
+func TestTimeSeriesNotIncreasingErr(t *testing.T) {
+	rawData := getBasicRawData()
+	rawData.Time[0] = []types.Second{0, 1, 2, 3, 2, 5, 6}
 	state := types.State{
 		BarPathCalc: types.BarPathCalcConf{
 			ApproxErr:     types.FourthOrder,
@@ -57,36 +128,8 @@ func TestTimeSeriesNotIncreasingErr(t *testing.T) {
 }
 
 func TestTimeSeriesNotMonotonicErr(t *testing.T) {
-	rawData := dal.CreatePhysicsDataParams{
-		Time: [][]types.Second{{0, 1, 2, 4, 4, 5, 6}},
-		Position: [][]types.Vec2[types.Meter]{{
-			{X: 0 * 0, Y: 0 * 0},
-			{X: 1 * 1, Y: 1 * 1},
-			{X: 2 * 2, Y: 2 * 2},
-			{X: 3 * 3, Y: 3 * 3},
-			{X: 4 * 4, Y: 4 * 4},
-			{X: 5 * 5, Y: 5 * 5},
-			{X: 6 * 6, Y: 6 * 6},
-		}},
-		Velocity: [][]types.Vec2[types.MeterPerSec]{
-			make([]types.Vec2[types.MeterPerSec], 7),
-		},
-		Acceleration: [][]types.Vec2[types.MeterPerSec2]{
-			make([]types.Vec2[types.MeterPerSec2], 7),
-		},
-		Jerk: [][]types.Vec2[types.MeterPerSec3]{
-			make([]types.Vec2[types.MeterPerSec3], 7),
-		},
-		Impulse: [][]types.Vec2[types.NewtonSec]{
-			make([]types.Vec2[types.NewtonSec], 7),
-		},
-		Force: [][]types.Vec2[types.Newton]{
-			make([]types.Vec2[types.Newton], 7),
-		},
-		Work:      [][]types.Joule{make([]types.Joule, 7)},
-		Power:     [][]types.Watt{make([]types.Watt, 7)},
-		RepSplits: [][]types.Split{make([]types.Split, 7)},
-	}
+	rawData := getBasicRawData()
+	rawData.Time[0] = []types.Second{0, 1, 2, 4, 4, 5, 6}
 	state := types.State{
 		BarPathCalc: types.BarPathCalcConf{
 			ApproxErr:     types.FourthOrder,
@@ -104,36 +147,7 @@ func TestTimeSeriesNotMonotonicErr(t *testing.T) {
 }
 
 func TestInvalidApproxErrErr(t *testing.T) {
-	rawData := dal.CreatePhysicsDataParams{
-		Time: [][]types.Second{{0, 1, 2, 3, 4, 5, 6}},
-		Position: [][]types.Vec2[types.Meter]{{
-			{X: 0 * 0, Y: 0 * 0},
-			{X: 1 * 1, Y: 1 * 1},
-			{X: 2 * 2, Y: 2 * 2},
-			{X: 3 * 3, Y: 3 * 3},
-			{X: 4 * 4, Y: 4 * 4},
-			{X: 5 * 5, Y: 5 * 5},
-			{X: 6 * 6, Y: 6 * 6},
-		}},
-		Velocity: [][]types.Vec2[types.MeterPerSec]{
-			make([]types.Vec2[types.MeterPerSec], 7),
-		},
-		Acceleration: [][]types.Vec2[types.MeterPerSec2]{
-			make([]types.Vec2[types.MeterPerSec2], 7),
-		},
-		Jerk: [][]types.Vec2[types.MeterPerSec3]{
-			make([]types.Vec2[types.MeterPerSec3], 7),
-		},
-		Impulse: [][]types.Vec2[types.NewtonSec]{
-			make([]types.Vec2[types.NewtonSec], 7),
-		},
-		Force: [][]types.Vec2[types.Newton]{
-			make([]types.Vec2[types.Newton], 7),
-		},
-		Work:      [][]types.Joule{make([]types.Joule, 7)},
-		Power:     [][]types.Watt{make([]types.Watt, 7)},
-		RepSplits: [][]types.Split{make([]types.Split, 7)},
-	}
+	rawData := getBasicRawData()
 	state := types.State{
 		BarPathCalc: types.BarPathCalcConf{
 			ApproxErr:     types.ApproximationError(500),
@@ -151,52 +165,7 @@ func TestInvalidApproxErrErr(t *testing.T) {
 }
 
 func TestFractionalSets(t *testing.T) {
-	rawData := dal.CreatePhysicsDataParams{
-		Time: [][]types.Second{
-			{0, 1, 2, 3, 4, 5, 6},
-			{0, 1, 2, 3, 4, 5, 6},
-		},
-		Position: [][]types.Vec2[types.Meter]{{
-			{X: 0 * 0, Y: 0 * 0},
-			{X: 1 * 1, Y: 1 * 1},
-			{X: 2 * 2, Y: 2 * 2},
-			{X: 3 * 3, Y: 3 * 3},
-			{X: 4 * 4, Y: 4 * 4},
-			{X: 5 * 5, Y: 5 * 5},
-			{X: 6 * 6, Y: 6 * 6},
-		}, {
-			{X: 0 * 0, Y: 0 * 0},
-			{X: 1 * 1, Y: 1 * 1},
-			{X: 2 * 2, Y: 2 * 2},
-			{X: 3 * 3, Y: 3 * 3},
-			{X: 4 * 4, Y: 4 * 4},
-			{X: 5 * 5, Y: 5 * 5},
-			{X: 6 * 6, Y: 6 * 6},
-		}},
-		Velocity: [][]types.Vec2[types.MeterPerSec]{
-			[]types.Vec2[types.MeterPerSec]{},
-			[]types.Vec2[types.MeterPerSec]{},
-		},
-		Acceleration: [][]types.Vec2[types.MeterPerSec2]{
-			[]types.Vec2[types.MeterPerSec2]{},
-			[]types.Vec2[types.MeterPerSec2]{},
-		},
-		Jerk: [][]types.Vec2[types.MeterPerSec3]{
-			[]types.Vec2[types.MeterPerSec3]{},
-			[]types.Vec2[types.MeterPerSec3]{},
-		},
-		Impulse: [][]types.Vec2[types.NewtonSec]{
-			[]types.Vec2[types.NewtonSec]{},
-			[]types.Vec2[types.NewtonSec]{},
-		},
-		Force: [][]types.Vec2[types.Newton]{
-			[]types.Vec2[types.Newton]{},
-			[]types.Vec2[types.Newton]{},
-		},
-		Work:      [][]types.Joule{[]types.Joule{}, []types.Joule{}},
-		Power:     [][]types.Watt{[]types.Watt{}, []types.Watt{}},
-		RepSplits: [][]types.Split{[]types.Split{}, []types.Split{}},
-	}
+	rawData := getBasicRawData()
 	state := types.State{
 		BarPathCalc: types.BarPathCalcConf{
 			ApproxErr:     types.SecondOrder,
@@ -246,21 +215,70 @@ func testForAccuracy(
 	baseData *dal.BulkCreateTrainingLogsParams,
 ) {
 	rawData := dal.CreatePhysicsDataParams{
-		Time:         [][]types.Second{make([]types.Second, samples)},
-		Position:     [][]types.Vec2[types.Meter]{make([]types.Vec2[types.Meter], samples)},
-		Velocity:     [][]types.Vec2[types.MeterPerSec]{make([]types.Vec2[types.MeterPerSec], samples)},
-		Acceleration: [][]types.Vec2[types.MeterPerSec2]{make([]types.Vec2[types.MeterPerSec2], samples)},
-		Jerk:         [][]types.Vec2[types.MeterPerSec3]{make([]types.Vec2[types.MeterPerSec3], samples)},
-		Impulse:      [][]types.Vec2[types.NewtonSec]{make([]types.Vec2[types.NewtonSec], samples)},
-		Force:        [][]types.Vec2[types.Newton]{make([]types.Vec2[types.Newton], samples)},
-
-		Work:      [][]types.Joule{make([]types.Joule, samples)},
-		Power:     [][]types.Watt{make([]types.Watt, samples)},
-		RepSplits: [][]types.Split{make([]types.Split, samples)},
+		Time: [][]types.Second{make([]types.Second, samples)},
+		Position: [][]types.Vec2[types.Meter, types.Meter]{
+			make([]types.Vec2[types.Meter, types.Meter], samples),
+		},
+		Velocity: [][]types.Vec2[types.MeterPerSec, types.MeterPerSec]{
+			[]types.Vec2[types.MeterPerSec, types.MeterPerSec]{},
+		},
+		Acceleration: [][]types.Vec2[types.MeterPerSec2, types.MeterPerSec2]{
+			[]types.Vec2[types.MeterPerSec2, types.MeterPerSec2]{},
+		},
+		Jerk: [][]types.Vec2[types.MeterPerSec3, types.MeterPerSec3]{
+			[]types.Vec2[types.MeterPerSec3, types.MeterPerSec3]{},
+		},
+		Impulse: [][]types.Vec2[types.NewtonSec, types.NewtonSec]{
+			[]types.Vec2[types.NewtonSec, types.NewtonSec]{},
+		},
+		Force: [][]types.Vec2[types.Newton, types.Newton]{
+			[]types.Vec2[types.Newton, types.Newton]{},
+		},
+		Work:      [][]types.Joule{[]types.Joule{}},
+		Power:     [][]types.Watt{[]types.Watt{}},
+		RepSplits: [][]types.Split{[]types.Split{}},
+		MinVel: [][]types.PointInTime[types.Second, types.MeterPerSec]{
+			[]types.PointInTime[types.Second, types.MeterPerSec]{},
+		},
+		MaxVel: [][]types.PointInTime[types.Second, types.MeterPerSec]{
+			[]types.PointInTime[types.Second, types.MeterPerSec]{},
+		},
+		MinAcc: [][]types.PointInTime[types.Second, types.MeterPerSec2]{
+			[]types.PointInTime[types.Second, types.MeterPerSec2]{},
+		},
+		MaxAcc: [][]types.PointInTime[types.Second, types.MeterPerSec2]{
+			[]types.PointInTime[types.Second, types.MeterPerSec2]{},
+		},
+		MinForce: [][]types.PointInTime[types.Second, types.Newton]{
+			[]types.PointInTime[types.Second, types.Newton]{},
+		},
+		MaxForce: [][]types.PointInTime[types.Second, types.Newton]{
+			[]types.PointInTime[types.Second, types.Newton]{},
+		},
+		MinImpulse: [][]types.PointInTime[types.Second, types.NewtonSec]{
+			[]types.PointInTime[types.Second, types.NewtonSec]{},
+		},
+		MaxImpulse: [][]types.PointInTime[types.Second, types.NewtonSec]{
+			[]types.PointInTime[types.Second, types.NewtonSec]{},
+		},
+		AvgWork: [][]types.Joule{[]types.Joule{}},
+		MinWork: [][]types.PointInTime[types.Second, types.Joule]{
+			[]types.PointInTime[types.Second, types.Joule]{},
+		},
+		MaxWork: [][]types.PointInTime[types.Second, types.Joule]{
+			[]types.PointInTime[types.Second, types.Joule]{},
+		},
+		AvgPower: [][]types.Watt{[]types.Watt{}},
+		MinPower: [][]types.PointInTime[types.Second, types.Watt]{
+			[]types.PointInTime[types.Second, types.Watt]{},
+		},
+		MaxPower: [][]types.PointInTime[types.Second, types.Watt]{
+			[]types.PointInTime[types.Second, types.Watt]{},
+		},
 	}
 	for i := range samples {
 		rawData.Time[0][i] = types.Second(i)
-		rawData.Position[0][i] = types.Vec2[types.Meter]{
+		rawData.Position[0][i] = types.Vec2[types.Meter, types.Meter]{
 			X: types.Meter(f.f1(float64(i))),
 			Y: types.Meter(f.f1(float64(i))),
 		}

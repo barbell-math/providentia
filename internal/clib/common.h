@@ -17,5 +17,11 @@ struct TimestampedVal {
 	}
 };
 
+struct Vec2 {
+	static float mag(double_t x, double_t y) {
+		return sqrtf(x*x+y*y);
+	}
+};
+
 
 #endif

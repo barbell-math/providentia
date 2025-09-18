@@ -28,18 +28,8 @@ func (p *Physics) Batch() *sbjobqueue.Batch {
 }
 
 func (p *Physics) Run(ctxt context.Context) error {
-	physData := dal.CreatePhysicsDataParams{
-		Time:         make([][]types.Second, len(p.BarPath)),
-		Position:     make([][]types.Vec2[types.Meter], len(p.BarPath)),
-		Velocity:     make([][]types.Vec2[types.MeterPerSec], len(p.BarPath)),
-		Acceleration: make([][]types.Vec2[types.MeterPerSec2], len(p.BarPath)),
-		Jerk:         make([][]types.Vec2[types.MeterPerSec3], len(p.BarPath)),
-		Force:        make([][]types.Vec2[types.Newton], len(p.BarPath)),
-		Impulse:      make([][]types.Vec2[types.NewtonSec], len(p.BarPath)),
-		Work:         make([][]types.Joule, len(p.BarPath)),
-		Power:        make([][]types.Watt, len(p.BarPath)),
-		RepSplits:    make([][]types.Split, len(p.BarPath)),
-	}
+	var physData dal.CreatePhysicsDataParams
+	barpathphysdata.InitPhysicsData(&physData, len(p.BarPath))
 
 	for i, set := range p.BarPath {
 		select {
@@ -54,8 +44,9 @@ func (p *Physics) Run(ctxt context.Context) error {
 			if err := barpathphysdata.Calc(p.S, p.Tl, &physData, i); err != nil {
 				return sberr.AppendError(types.PhysicsJobQueueErr, err)
 			}
-		} else if _, ok := set.VideoData(); ok {
-			// TODO - dont forget to set path in the physics data!!
+		} else if rawData, ok := set.VideoData(); ok {
+			physData.Path[i] = rawData
+			// TODO - run video model
 		}
 	}
 

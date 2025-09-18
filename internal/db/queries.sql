@@ -153,7 +153,21 @@ SELECT
 	providentia.physics_data.impulse,
 	providentia.physics_data.work,
 	providentia.physics_data.power,
-	providentia.physics_data.rep_splits
+	providentia.physics_data.rep_splits,
+	providentia.physics_data.min_vel,
+	providentia.physics_data.max_vel,
+	providentia.physics_data.min_acc,
+	providentia.physics_data.max_acc,
+	providentia.physics_data.min_force,
+	providentia.physics_data.max_force,
+	providentia.physics_data.min_impulse,
+	providentia.physics_data.max_impulse,
+	providentia.physics_data.avg_work,
+	providentia.physics_data.min_work,
+	providentia.physics_data.max_work,
+	providentia.physics_data.avg_power,
+	providentia.physics_data.min_power,
+	providentia.physics_data.max_power
 FROM providentia.training_log
 JOIN providentia.exercise
 	ON providentia.training_log.exercise_id=providentia.exercise.id
@@ -188,7 +202,21 @@ SELECT
 	providentia.physics_data.impulse,
 	providentia.physics_data.work,
 	providentia.physics_data.power,
-	providentia.physics_data.rep_splits
+	providentia.physics_data.rep_splits,
+	providentia.physics_data.min_vel,
+	providentia.physics_data.max_vel,
+	providentia.physics_data.min_acc,
+	providentia.physics_data.max_acc,
+	providentia.physics_data.min_force,
+	providentia.physics_data.max_force,
+	providentia.physics_data.min_impulse,
+	providentia.physics_data.max_impulse,
+	providentia.physics_data.avg_work,
+	providentia.physics_data.min_work,
+	providentia.physics_data.max_work,
+	providentia.physics_data.avg_power,
+	providentia.physics_data.min_power,
+	providentia.physics_data.max_power
 FROM providentia.training_log
 JOIN providentia.exercise
 	ON providentia.training_log.exercise_id=providentia.exercise.id
@@ -234,9 +262,16 @@ INSERT INTO providentia.physics_data(
 	path,
 	time, position, velocity, acceleration, jerk,
 	force, impulse, work, power,
-	rep_splits
+	rep_splits,
+	min_vel, max_vel,
+	min_acc, max_acc,
+	min_force, max_force,
+	min_impulse, max_impulse,
+	avg_work, min_work, max_work,
+	avg_power, min_power, max_power
 ) VALUES (
-	$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+	$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
+	$18, $19, $20, $21, $22, $23, $24, $25
 ) RETURNING id;
 
 -- name: GetTotalNumPhysicsEntriesForClient :one

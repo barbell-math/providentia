@@ -42,22 +42,22 @@ sql:
               type: "[][]types.Second"
           - column: providentia.physics_data.position
             go_type:
-              type: "[][]types.Vec2[types.Meter]"
+              type: "[][]types.Vec2[types.Meter, types.Meter]"
           - column: providentia.physics_data.velocity
             go_type:
-              type: "[][]types.Vec2[types.MeterPerSec]"
+              type: "[][]types.Vec2[types.MeterPerSec, types.MeterPerSec]"
           - column: providentia.physics_data.acceleration
             go_type:
-              type: "[][]types.Vec2[types.MeterPerSec2]"
+              type: "[][]types.Vec2[types.MeterPerSec2, types.MeterPerSec2]"
           - column: providentia.physics_data.jerk
             go_type:
-              type: "[][]types.Vec2[types.MeterPerSec3]"
+              type: "[][]types.Vec2[types.MeterPerSec3, types.MeterPerSec3]"
           - column: providentia.physics_data.force
             go_type:
-              type: "[][]types.Vec2[types.Newton]"
+              type: "[][]types.Vec2[types.Newton, types.Newton]"
           - column: providentia.physics_data.impulse
             go_type:
-              type: "[][]types.Vec2[types.NewtonSec]"
+              type: "[][]types.Vec2[types.NewtonSec, types.NewtonSec]"
           - column: providentia.physics_data.work
             go_type:
               type: "[][]types.Joule"
@@ -67,6 +67,48 @@ sql:
           - column: providentia.physics_data.rep_splits
             go_type:
               type: "[][]types.Split"
+          - column: providentia.physics_data.min_vel
+            go_type:
+              type: "[][]types.PointInTime[types.Second, types.MeterPerSec]"
+          - column: providentia.physics_data.max_vel
+            go_type:
+              type: "[][]types.PointInTime[types.Second, types.MeterPerSec]"
+          - column: providentia.physics_data.min_acc
+            go_type:
+              type: "[][]types.PointInTime[types.Second, types.MeterPerSec2]"
+          - column: providentia.physics_data.max_acc
+            go_type:
+              type: "[][]types.PointInTime[types.Second, types.MeterPerSec2]"
+          - column: providentia.physics_data.min_force
+            go_type:
+              type: "[][]types.PointInTime[types.Second, types.Newton]"
+          - column: providentia.physics_data.max_force
+            go_type:
+              type: "[][]types.PointInTime[types.Second, types.Newton]"
+          - column: providentia.physics_data.min_impulse
+            go_type:
+              type: "[][]types.PointInTime[types.Second, types.NewtonSec]"
+          - column: providentia.physics_data.max_impulse
+            go_type:
+              type: "[][]types.PointInTime[types.Second, types.NewtonSec]"
+          - column: providentia.physics_data.avg_work
+            go_type:
+              type: "[][]types.Joule"
+          - column: providentia.physics_data.min_work
+            go_type:
+              type: "[][]types.PointInTime[types.Second, types.Joule]"
+          - column: providentia.physics_data.max_work
+            go_type:
+              type: "[][]types.PointInTime[types.Second, types.Joule]"
+          - column: providentia.physics_data.avg_power
+            go_type:
+              type: "[][]types.Watt"
+          - column: providentia.physics_data.min_power
+            go_type:
+              type: "[][]types.PointInTime[types.Second, types.Watt]"
+          - column: providentia.physics_data.max_power
+            go_type:
+              type: "[][]types.PointInTime[types.Second, types.Watt]"
 
 overrides:
  go:

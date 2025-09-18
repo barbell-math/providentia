@@ -176,24 +176,45 @@ INSERT INTO providentia.physics_data(
 	path,
 	time, position, velocity, acceleration, jerk,
 	force, impulse, work, power,
-	rep_splits
+	rep_splits,
+	min_vel, max_vel,
+	min_acc, max_acc,
+	min_force, max_force,
+	min_impulse, max_impulse,
+	avg_work, min_work, max_work,
+	avg_power, min_power, max_power
 ) VALUES (
-	$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+	$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
+	$18, $19, $20, $21, $22, $23, $24, $25
 ) RETURNING id
 `
 
 type CreatePhysicsDataParams struct {
-	Path         []string                           `json:"path"`
-	Time         [][]types.Second                   `json:"time"`
-	Position     [][]types.Vec2[types.Meter]        `json:"position"`
-	Velocity     [][]types.Vec2[types.MeterPerSec]  `json:"velocity"`
-	Acceleration [][]types.Vec2[types.MeterPerSec2] `json:"acceleration"`
-	Jerk         [][]types.Vec2[types.MeterPerSec3] `json:"jerk"`
-	Force        [][]types.Vec2[types.Newton]       `json:"force"`
-	Impulse      [][]types.Vec2[types.NewtonSec]    `json:"impulse"`
-	Work         [][]types.Joule                    `json:"work"`
-	Power        [][]types.Watt                     `json:"power"`
-	RepSplits    [][]types.Split                    `json:"rep_splits"`
+	Path         []string                                                `json:"path"`
+	Time         [][]types.Second                                        `json:"time"`
+	Position     [][]types.Vec2[types.Meter, types.Meter]                `json:"position"`
+	Velocity     [][]types.Vec2[types.MeterPerSec, types.MeterPerSec]    `json:"velocity"`
+	Acceleration [][]types.Vec2[types.MeterPerSec2, types.MeterPerSec2]  `json:"acceleration"`
+	Jerk         [][]types.Vec2[types.MeterPerSec3, types.MeterPerSec3]  `json:"jerk"`
+	Force        [][]types.Vec2[types.Newton, types.Newton]              `json:"force"`
+	Impulse      [][]types.Vec2[types.NewtonSec, types.NewtonSec]        `json:"impulse"`
+	Work         [][]types.Joule                                         `json:"work"`
+	Power        [][]types.Watt                                          `json:"power"`
+	RepSplits    [][]types.Split                                         `json:"rep_splits"`
+	MinVel       [][]types.PointInTime[types.Second, types.MeterPerSec]  `json:"min_vel"`
+	MaxVel       [][]types.PointInTime[types.Second, types.MeterPerSec]  `json:"max_vel"`
+	MinAcc       [][]types.PointInTime[types.Second, types.MeterPerSec2] `json:"min_acc"`
+	MaxAcc       [][]types.PointInTime[types.Second, types.MeterPerSec2] `json:"max_acc"`
+	MinForce     [][]types.PointInTime[types.Second, types.Newton]       `json:"min_force"`
+	MaxForce     [][]types.PointInTime[types.Second, types.Newton]       `json:"max_force"`
+	MinImpulse   [][]types.PointInTime[types.Second, types.NewtonSec]    `json:"min_impulse"`
+	MaxImpulse   [][]types.PointInTime[types.Second, types.NewtonSec]    `json:"max_impulse"`
+	AvgWork      [][]types.Joule                                         `json:"avg_work"`
+	MinWork      [][]types.PointInTime[types.Second, types.Joule]        `json:"min_work"`
+	MaxWork      [][]types.PointInTime[types.Second, types.Joule]        `json:"max_work"`
+	AvgPower     [][]types.Watt                                          `json:"avg_power"`
+	MinPower     [][]types.PointInTime[types.Second, types.Watt]         `json:"min_power"`
+	MaxPower     [][]types.PointInTime[types.Second, types.Watt]         `json:"max_power"`
 }
 
 func (q *Queries) CreatePhysicsData(ctx context.Context, arg CreatePhysicsDataParams) (int64, error) {
@@ -209,6 +230,20 @@ func (q *Queries) CreatePhysicsData(ctx context.Context, arg CreatePhysicsDataPa
 		arg.Work,
 		arg.Power,
 		arg.RepSplits,
+		arg.MinVel,
+		arg.MaxVel,
+		arg.MinAcc,
+		arg.MaxAcc,
+		arg.MinForce,
+		arg.MaxForce,
+		arg.MinImpulse,
+		arg.MaxImpulse,
+		arg.AvgWork,
+		arg.MinWork,
+		arg.MaxWork,
+		arg.AvgPower,
+		arg.MinPower,
+		arg.MaxPower,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -388,7 +423,21 @@ SELECT
 	providentia.physics_data.impulse,
 	providentia.physics_data.work,
 	providentia.physics_data.power,
-	providentia.physics_data.rep_splits
+	providentia.physics_data.rep_splits,
+	providentia.physics_data.min_vel,
+	providentia.physics_data.max_vel,
+	providentia.physics_data.min_acc,
+	providentia.physics_data.max_acc,
+	providentia.physics_data.min_force,
+	providentia.physics_data.max_force,
+	providentia.physics_data.min_impulse,
+	providentia.physics_data.max_impulse,
+	providentia.physics_data.avg_work,
+	providentia.physics_data.min_work,
+	providentia.physics_data.max_work,
+	providentia.physics_data.avg_power,
+	providentia.physics_data.min_power,
+	providentia.physics_data.max_power
 FROM providentia.training_log
 JOIN providentia.exercise
 	ON providentia.training_log.exercise_id=providentia.exercise.id
@@ -410,24 +459,38 @@ type GetAllWorkoutDataParams struct {
 }
 
 type GetAllWorkoutDataRow struct {
-	Name         string                             `json:"name"`
-	Weight       types.Kilogram                     `json:"weight"`
-	Sets         float64                            `json:"sets"`
-	Reps         int32                              `json:"reps"`
-	Effort       types.RPE                          `json:"effort"`
-	Volume       types.Kilogram                     `json:"volume"`
-	Exertion     types.RPE                          `json:"exertion"`
-	TotalReps    float64                            `json:"total_reps"`
-	Time         [][]types.Second                   `json:"time"`
-	Position     [][]types.Vec2[types.Meter]        `json:"position"`
-	Velocity     [][]types.Vec2[types.MeterPerSec]  `json:"velocity"`
-	Acceleration [][]types.Vec2[types.MeterPerSec2] `json:"acceleration"`
-	Jerk         [][]types.Vec2[types.MeterPerSec3] `json:"jerk"`
-	Force        [][]types.Vec2[types.Newton]       `json:"force"`
-	Impulse      [][]types.Vec2[types.NewtonSec]    `json:"impulse"`
-	Work         [][]types.Joule                    `json:"work"`
-	Power        [][]types.Watt                     `json:"power"`
-	RepSplits    [][]types.Split                    `json:"rep_splits"`
+	Name         string                                                  `json:"name"`
+	Weight       types.Kilogram                                          `json:"weight"`
+	Sets         float64                                                 `json:"sets"`
+	Reps         int32                                                   `json:"reps"`
+	Effort       types.RPE                                               `json:"effort"`
+	Volume       types.Kilogram                                          `json:"volume"`
+	Exertion     types.RPE                                               `json:"exertion"`
+	TotalReps    float64                                                 `json:"total_reps"`
+	Time         [][]types.Second                                        `json:"time"`
+	Position     [][]types.Vec2[types.Meter, types.Meter]                `json:"position"`
+	Velocity     [][]types.Vec2[types.MeterPerSec, types.MeterPerSec]    `json:"velocity"`
+	Acceleration [][]types.Vec2[types.MeterPerSec2, types.MeterPerSec2]  `json:"acceleration"`
+	Jerk         [][]types.Vec2[types.MeterPerSec3, types.MeterPerSec3]  `json:"jerk"`
+	Force        [][]types.Vec2[types.Newton, types.Newton]              `json:"force"`
+	Impulse      [][]types.Vec2[types.NewtonSec, types.NewtonSec]        `json:"impulse"`
+	Work         [][]types.Joule                                         `json:"work"`
+	Power        [][]types.Watt                                          `json:"power"`
+	RepSplits    [][]types.Split                                         `json:"rep_splits"`
+	MinVel       [][]types.PointInTime[types.Second, types.MeterPerSec]  `json:"min_vel"`
+	MaxVel       [][]types.PointInTime[types.Second, types.MeterPerSec]  `json:"max_vel"`
+	MinAcc       [][]types.PointInTime[types.Second, types.MeterPerSec2] `json:"min_acc"`
+	MaxAcc       [][]types.PointInTime[types.Second, types.MeterPerSec2] `json:"max_acc"`
+	MinForce     [][]types.PointInTime[types.Second, types.Newton]       `json:"min_force"`
+	MaxForce     [][]types.PointInTime[types.Second, types.Newton]       `json:"max_force"`
+	MinImpulse   [][]types.PointInTime[types.Second, types.NewtonSec]    `json:"min_impulse"`
+	MaxImpulse   [][]types.PointInTime[types.Second, types.NewtonSec]    `json:"max_impulse"`
+	AvgWork      [][]types.Joule                                         `json:"avg_work"`
+	MinWork      [][]types.PointInTime[types.Second, types.Joule]        `json:"min_work"`
+	MaxWork      [][]types.PointInTime[types.Second, types.Joule]        `json:"max_work"`
+	AvgPower     [][]types.Watt                                          `json:"avg_power"`
+	MinPower     [][]types.PointInTime[types.Second, types.Watt]         `json:"min_power"`
+	MaxPower     [][]types.PointInTime[types.Second, types.Watt]         `json:"max_power"`
 }
 
 func (q *Queries) GetAllWorkoutData(ctx context.Context, arg GetAllWorkoutDataParams) ([]GetAllWorkoutDataRow, error) {
@@ -458,6 +521,20 @@ func (q *Queries) GetAllWorkoutData(ctx context.Context, arg GetAllWorkoutDataPa
 			&i.Work,
 			&i.Power,
 			&i.RepSplits,
+			&i.MinVel,
+			&i.MaxVel,
+			&i.MinAcc,
+			&i.MaxAcc,
+			&i.MinForce,
+			&i.MaxForce,
+			&i.MinImpulse,
+			&i.MaxImpulse,
+			&i.AvgWork,
+			&i.MinWork,
+			&i.MaxWork,
+			&i.AvgPower,
+			&i.MinPower,
+			&i.MaxPower,
 		); err != nil {
 			return nil, err
 		}
@@ -490,7 +567,21 @@ SELECT
 	providentia.physics_data.impulse,
 	providentia.physics_data.work,
 	providentia.physics_data.power,
-	providentia.physics_data.rep_splits
+	providentia.physics_data.rep_splits,
+	providentia.physics_data.min_vel,
+	providentia.physics_data.max_vel,
+	providentia.physics_data.min_acc,
+	providentia.physics_data.max_acc,
+	providentia.physics_data.min_force,
+	providentia.physics_data.max_force,
+	providentia.physics_data.min_impulse,
+	providentia.physics_data.max_impulse,
+	providentia.physics_data.avg_work,
+	providentia.physics_data.min_work,
+	providentia.physics_data.max_work,
+	providentia.physics_data.avg_power,
+	providentia.physics_data.min_power,
+	providentia.physics_data.max_power
 FROM providentia.training_log
 JOIN providentia.exercise
 	ON providentia.training_log.exercise_id=providentia.exercise.id
@@ -514,26 +605,40 @@ type GetAllWorkoutDataBetweenDatesParams struct {
 }
 
 type GetAllWorkoutDataBetweenDatesRow struct {
-	Name             string                             `json:"name"`
-	Weight           types.Kilogram                     `json:"weight"`
-	Sets             float64                            `json:"sets"`
-	Reps             int32                              `json:"reps"`
-	Effort           types.RPE                          `json:"effort"`
-	Volume           types.Kilogram                     `json:"volume"`
-	Exertion         types.RPE                          `json:"exertion"`
-	TotalReps        float64                            `json:"total_reps"`
-	DatePerformed    pgtype.Date                        `json:"date_performed"`
-	InterSessionCntr int16                              `json:"inter_session_cntr"`
-	Time             [][]types.Second                   `json:"time"`
-	Position         [][]types.Vec2[types.Meter]        `json:"position"`
-	Velocity         [][]types.Vec2[types.MeterPerSec]  `json:"velocity"`
-	Acceleration     [][]types.Vec2[types.MeterPerSec2] `json:"acceleration"`
-	Jerk             [][]types.Vec2[types.MeterPerSec3] `json:"jerk"`
-	Force            [][]types.Vec2[types.Newton]       `json:"force"`
-	Impulse          [][]types.Vec2[types.NewtonSec]    `json:"impulse"`
-	Work             [][]types.Joule                    `json:"work"`
-	Power            [][]types.Watt                     `json:"power"`
-	RepSplits        [][]types.Split                    `json:"rep_splits"`
+	Name             string                                                  `json:"name"`
+	Weight           types.Kilogram                                          `json:"weight"`
+	Sets             float64                                                 `json:"sets"`
+	Reps             int32                                                   `json:"reps"`
+	Effort           types.RPE                                               `json:"effort"`
+	Volume           types.Kilogram                                          `json:"volume"`
+	Exertion         types.RPE                                               `json:"exertion"`
+	TotalReps        float64                                                 `json:"total_reps"`
+	DatePerformed    pgtype.Date                                             `json:"date_performed"`
+	InterSessionCntr int16                                                   `json:"inter_session_cntr"`
+	Time             [][]types.Second                                        `json:"time"`
+	Position         [][]types.Vec2[types.Meter, types.Meter]                `json:"position"`
+	Velocity         [][]types.Vec2[types.MeterPerSec, types.MeterPerSec]    `json:"velocity"`
+	Acceleration     [][]types.Vec2[types.MeterPerSec2, types.MeterPerSec2]  `json:"acceleration"`
+	Jerk             [][]types.Vec2[types.MeterPerSec3, types.MeterPerSec3]  `json:"jerk"`
+	Force            [][]types.Vec2[types.Newton, types.Newton]              `json:"force"`
+	Impulse          [][]types.Vec2[types.NewtonSec, types.NewtonSec]        `json:"impulse"`
+	Work             [][]types.Joule                                         `json:"work"`
+	Power            [][]types.Watt                                          `json:"power"`
+	RepSplits        [][]types.Split                                         `json:"rep_splits"`
+	MinVel           [][]types.PointInTime[types.Second, types.MeterPerSec]  `json:"min_vel"`
+	MaxVel           [][]types.PointInTime[types.Second, types.MeterPerSec]  `json:"max_vel"`
+	MinAcc           [][]types.PointInTime[types.Second, types.MeterPerSec2] `json:"min_acc"`
+	MaxAcc           [][]types.PointInTime[types.Second, types.MeterPerSec2] `json:"max_acc"`
+	MinForce         [][]types.PointInTime[types.Second, types.Newton]       `json:"min_force"`
+	MaxForce         [][]types.PointInTime[types.Second, types.Newton]       `json:"max_force"`
+	MinImpulse       [][]types.PointInTime[types.Second, types.NewtonSec]    `json:"min_impulse"`
+	MaxImpulse       [][]types.PointInTime[types.Second, types.NewtonSec]    `json:"max_impulse"`
+	AvgWork          [][]types.Joule                                         `json:"avg_work"`
+	MinWork          [][]types.PointInTime[types.Second, types.Joule]        `json:"min_work"`
+	MaxWork          [][]types.PointInTime[types.Second, types.Joule]        `json:"max_work"`
+	AvgPower         [][]types.Watt                                          `json:"avg_power"`
+	MinPower         [][]types.PointInTime[types.Second, types.Watt]         `json:"min_power"`
+	MaxPower         [][]types.PointInTime[types.Second, types.Watt]         `json:"max_power"`
 }
 
 func (q *Queries) GetAllWorkoutDataBetweenDates(ctx context.Context, arg GetAllWorkoutDataBetweenDatesParams) ([]GetAllWorkoutDataBetweenDatesRow, error) {
@@ -566,6 +671,20 @@ func (q *Queries) GetAllWorkoutDataBetweenDates(ctx context.Context, arg GetAllW
 			&i.Work,
 			&i.Power,
 			&i.RepSplits,
+			&i.MinVel,
+			&i.MaxVel,
+			&i.MinAcc,
+			&i.MaxAcc,
+			&i.MinForce,
+			&i.MaxForce,
+			&i.MinImpulse,
+			&i.MaxImpulse,
+			&i.AvgWork,
+			&i.MinWork,
+			&i.MaxWork,
+			&i.AvgPower,
+			&i.MinPower,
+			&i.MaxPower,
 		); err != nil {
 			return nil, err
 		}

@@ -23,6 +23,11 @@ extern "C" {
 		InvalidApproximationErrErr = 3
 	};
 
+	typedef struct accPointInTime{
+		double_t Time;
+		double_t Value;
+	} accPointInTime_t;
+
 	typedef struct accVec2{
 		double_t X;
 		double_t Y;
@@ -50,10 +55,30 @@ extern "C" {
 		double_t Y;
 	} impulseVec2_t;
 
+	typedef struct jerkPointInTime{
+		double_t Time;
+		double_t Value;
+	} jerkPointInTime_t;
+
 	typedef struct jerkVec2{
 		double_t X;
 		double_t Y;
 	} jerkVec2_t;
+
+	typedef struct joulePointInTime{
+		double_t Time;
+		double_t Value;
+	} joulePointInTime_t;
+
+	typedef struct newtonPointInTime{
+		double_t Time;
+		double_t Value;
+	} newtonPointInTime_t;
+
+	typedef struct newtonSecPointInTime{
+		double_t Time;
+		double_t Value;
+	} newtonSecPointInTime_t;
 
 	typedef struct posVec2{
 		double_t X;
@@ -65,10 +90,20 @@ extern "C" {
 		int64_t EndIdx;
 	} split_t;
 
+	typedef struct velPointInTime{
+		double_t Time;
+		double_t Value;
+	} velPointInTime_t;
+
 	typedef struct velVec2{
 		double_t X;
 		double_t Y;
 	} velVec2_t;
+
+	typedef struct wattPointInTime{
+		double_t Time;
+		double_t Value;
+	} wattPointInTime_t;
 
 	typedef struct barPathData{
 		double_t mass;
@@ -84,6 +119,20 @@ extern "C" {
 		double_t* work;
 		int32_t reps;
 		split_t* repSplit;
+		velPointInTime_t* minVel;
+		velPointInTime_t* maxVel;
+		accPointInTime_t* minAcc;
+		accPointInTime_t* maxAcc;
+		newtonPointInTime_t* minForce;
+		newtonPointInTime_t* maxForce;
+		newtonSecPointInTime_t* minImpulse;
+		newtonSecPointInTime_t* maxImpulse;
+		double_t* avgWork;
+		joulePointInTime_t* minWork;
+		joulePointInTime_t* maxWork;
+		double_t* avgPower;
+		wattPointInTime_t* minPower;
+		wattPointInTime_t* maxPower;
 	} barPathData_t;
 
 #ifdef __cplusplus

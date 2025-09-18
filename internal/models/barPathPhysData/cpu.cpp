@@ -310,6 +310,118 @@ enum BarPathCalcErrCode_t calcRepSplits(
 	return NoErr;
 }
 
+enum BarPathCalcErrCode_t calcRepStats(
+	barPathData_t* data,
+	barPathCalcConf_t* opts
+) {
+	for (int i=0; i<data->reps; i++) {
+		data->minVel[i].Value=std::numeric_limits<double_t>::infinity();
+		data->maxVel[i].Value=-std::numeric_limits<double_t>::infinity();
+		data->minAcc[i].Value=std::numeric_limits<double_t>::infinity();
+		data->maxAcc[i].Value=-std::numeric_limits<double_t>::infinity();
+		data->minForce[i].Value=std::numeric_limits<double_t>::infinity();
+		data->maxForce[i].Value=-std::numeric_limits<double_t>::infinity();
+		data->minImpulse[i].Value=std::numeric_limits<double_t>::infinity();
+		data->maxImpulse[i].Value=-std::numeric_limits<double_t>::infinity();
+		data->avgWork[i]=0;
+		data->minWork[i].Value=std::numeric_limits<double_t>::infinity();
+		data->maxWork[i].Value=-std::numeric_limits<double_t>::infinity();
+		data->avgPower[i]=-1;
+		data->minPower[i].Value=std::numeric_limits<double_t>::infinity();
+		data->maxPower[i].Value=-std::numeric_limits<double_t>::infinity();
+		int avgCntr=0;
+
+		for (
+			int j=data->repSplit[i].StartIdx;
+			j<data->repSplit[j].EndIdx && j<data->timeLen;
+			j++
+		) {
+			float velMag=Vec2::mag(data->vel[j].X, data->vel[j].Y);
+			if (data->minVel[i].Value>velMag) {
+				data->minVel[i]=velPointInTime_t{
+					.Time=data->time[j], .Value=velMag,
+				};
+			}
+			if (data->maxVel[i].Value<velMag) {
+				data->maxVel[i]=velPointInTime_t{
+					.Time=data->time[j], .Value=velMag,
+				};
+			}
+			
+			float accMag=Vec2::mag(data->acc[j].X, data->acc[j].Y);
+			if (data->minAcc[i].Value>accMag) {
+				data->minAcc[i]=accPointInTime_t{
+					.Time=data->time[j], .Value=accMag,
+				};
+			}
+			if (data->maxAcc[i].Value<accMag) {
+				data->maxAcc[i]=accPointInTime_t{
+					.Time=data->time[j], .Value=accMag,
+				};
+			}
+			
+			float forceMag=Vec2::mag(data->force[j].X, data->force[j].Y);
+			if (data->minForce[i].Value>forceMag) {
+				data->minForce[i]=newtonPointInTime_t{
+					.Time=data->time[j], .Value=forceMag,
+				};
+			}
+			if (data->maxForce[i].Value<forceMag) {
+				data->maxForce[i]=newtonPointInTime_t{
+					.Time=data->time[j], .Value=forceMag,
+				};
+			}
+
+			float impulseMag=Vec2::mag(data->impulse[j].X, data->impulse[j].Y);
+			if (data->minImpulse[i].Value>impulseMag) {
+				data->minImpulse[i]=newtonSecPointInTime_t{
+					.Time=data->time[j], .Value=impulseMag,
+				};
+			}
+			if (data->maxImpulse[i].Value<impulseMag) {
+				data->maxImpulse[i]=newtonSecPointInTime_t{
+					.Time=data->time[j], .Value=impulseMag,
+				};
+			}
+
+			data->avgPower[i]+=data->power[j];
+			if (data->minPower[i].Value>data->power[j]) {
+				data->minPower[i]=wattPointInTime_t{
+					.Time=data->time[j], .Value=data->power[j],
+				};
+			}
+			if (data->maxPower[i].Value<data->power[j]) {
+				data->maxPower[i]=wattPointInTime_t{
+					.Time=data->time[j], .Value=data->power[j],
+				};
+			}
+
+			data->avgWork[i]+=data->work[j];
+			if (data->minWork[i].Value>data->work[j]) {
+				data->minWork[i]=joulePointInTime_t{
+					.Time=data->time[j], .Value=data->work[j],
+				};
+			}
+			if (data->maxWork[i].Value<data->work[j]) {
+				data->maxWork[i]=joulePointInTime_t{
+					.Time=data->time[j], .Value=data->work[j],
+				};
+			}
+
+			avgCntr++;
+		}
+
+		if (avgCntr>0) {
+			data->avgPower[i]/=avgCntr;
+			data->avgWork[i]/=avgCntr;
+		} else {
+			data->avgPower[i]=0;
+			data->avgWork[i]=0;
+		}
+	}
+	return NoErr;
+}
+
 extern "C" enum BarPathCalcErrCode_t calcBarPathPhysData(
 	barPathData_t* data,
 	barPathCalcConf_t* opts
@@ -337,6 +449,11 @@ extern "C" enum BarPathCalcErrCode_t calcBarPathPhysData(
 	err = calcRepSplits(data, opts);
 	if (err!=NoErr) {
 		return  err;
+	}
+
+	err = calcRepStats(data, opts);
+	if (err!=NoErr) {
+		return err;
 	}
 
 	return NoErr;
