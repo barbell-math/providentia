@@ -333,7 +333,7 @@ enum BarPathCalcErrCode_t calcRepStats(
 
 		for (
 			int j=data->repSplit[i].StartIdx;
-			j<data->repSplit[j].EndIdx && j<data->timeLen;
+			j<data->repSplit[i].EndIdx && j<data->timeLen;
 			j++
 		) {
 			float velMag=Vec2::mag(data->vel[j].X, data->vel[j].Y);

@@ -16,7 +16,7 @@ import (
 type args struct {
 	t           *testing.T
 	rawDataFile string
-	outFile     string
+	outFileName string
 	expCenters  [][]types.Split
 	state       types.State
 	baseData    dal.BulkCreateTrainingLogsParams
@@ -113,15 +113,15 @@ func loadAndTestCsv(a *args) {
 		sbtest.SlicesMatch(a.t, a.expCenters[i], inputData.RepSplits[i])
 	}
 
-	if a.outFile == "" {
+	if a.outFileName == "" {
 		return
 	}
 
-	outF, err := os.Create(a.outFile)
+	timeSeriesFile, err := os.Create(a.outFileName + ".timeSeries.csv")
 	sbtest.Nil(a.t, err)
-	defer outF.Close()
-	csvWriter := csv.NewWriter(outF)
-	csvWriter.Write([]string{
+	defer timeSeriesFile.Close()
+	timeSeriesWriter := csv.NewWriter(timeSeriesFile)
+	timeSeriesWriter.Write([]string{
 		"Time",
 		"PosX",
 		"PosY",
@@ -143,7 +143,7 @@ func loadAndTestCsv(a *args) {
 		"CalcPower",
 	})
 	for i := range samples {
-		csvWriter.Write([]string{
+		timeSeriesWriter.Write([]string{
 			fmt.Sprintf("%f", inputData.Time[0][i]),
 			fmt.Sprintf("%f", inputData.Position[0][i].X),
 			fmt.Sprintf("%f", inputData.Position[0][i].Y),
@@ -165,13 +165,85 @@ func loadAndTestCsv(a *args) {
 			fmt.Sprintf("%f", inputData.Power[0][i]),
 		})
 	}
+	timeSeriesWriter.Flush()
+
+	repSeriesFile, err := os.Create(a.outFileName + ".repSeries.csv")
+	sbtest.Nil(a.t, err)
+	defer repSeriesFile.Close()
+	repSeriesWriter := csv.NewWriter(repSeriesFile)
+	repSeriesWriter.Write([]string{
+		"Rep",
+		"MinVelTime",
+		"MinVel",
+		"MaxVelTime",
+		"MaxVel",
+		"MinAccTime",
+		"MinAcc",
+		"MaxAccTime",
+		"MaxAcc",
+		"MinForceTime",
+		"MinForce",
+		"MaxForceTime",
+		"MaxForce",
+		"MinImpulseTime",
+		"MinImpulse",
+		"MaxImpulseTime",
+		"MaxImpulse",
+		"AvgWork",
+		"MinWorkTime",
+		"MinWork",
+		"MaxWorkTime",
+		"MaxWork",
+		"AvgPower",
+		"MinPowerTime",
+		"MinPower",
+		"MaxPowerTime",
+		"MaxPower",
+	})
+	for i := range a.baseData.Reps {
+		repSeriesWriter.Write([]string{
+			fmt.Sprintf("%d", i),
+			fmt.Sprintf("%f", inputData.MinVel[0][i].Time),
+			fmt.Sprintf("%f", inputData.MinVel[0][i].Value),
+			fmt.Sprintf("%f", inputData.MaxVel[0][i].Time),
+			fmt.Sprintf("%f", inputData.MaxVel[0][i].Value),
+
+			fmt.Sprintf("%f", inputData.MinAcc[0][i].Time),
+			fmt.Sprintf("%f", inputData.MinAcc[0][i].Value),
+			fmt.Sprintf("%f", inputData.MaxAcc[0][i].Time),
+			fmt.Sprintf("%f", inputData.MaxAcc[0][i].Value),
+
+			fmt.Sprintf("%f", inputData.MinForce[0][i].Time),
+			fmt.Sprintf("%f", inputData.MinForce[0][i].Value),
+			fmt.Sprintf("%f", inputData.MaxForce[0][i].Time),
+			fmt.Sprintf("%f", inputData.MaxForce[0][i].Value),
+
+			fmt.Sprintf("%f", inputData.MinImpulse[0][i].Time),
+			fmt.Sprintf("%f", inputData.MinImpulse[0][i].Value),
+			fmt.Sprintf("%f", inputData.MaxImpulse[0][i].Time),
+			fmt.Sprintf("%f", inputData.MaxImpulse[0][i].Value),
+
+			fmt.Sprintf("%f", inputData.AvgWork[0][i]),
+			fmt.Sprintf("%f", inputData.MinWork[0][i].Time),
+			fmt.Sprintf("%f", inputData.MinWork[0][i].Value),
+			fmt.Sprintf("%f", inputData.MaxWork[0][i].Time),
+			fmt.Sprintf("%f", inputData.MaxWork[0][i].Value),
+
+			fmt.Sprintf("%f", inputData.AvgPower[0][i]),
+			fmt.Sprintf("%f", inputData.MinPower[0][i].Time),
+			fmt.Sprintf("%f", inputData.MinPower[0][i].Value),
+			fmt.Sprintf("%f", inputData.MaxPower[0][i].Time),
+			fmt.Sprintf("%f", inputData.MaxPower[0][i].Value),
+		})
+	}
+	repSeriesWriter.Flush()
 }
 
 func TestSquatDataSecondOrder(t *testing.T) {
 	loadAndTestCsv(&args{
 		t:           t,
 		rawDataFile: "./testData/15_08_2025_squat.csv",
-		outFile:     "./testData/15_08_2025_squat.secondOrder.csv",
+		outFileName: "./testData/15_08_2025_squat.secondOrder",
 		expCenters: [][]types.Split{
 			[]types.Split{
 				{StartIdx: 311, EndIdx: 379},
@@ -209,7 +281,7 @@ func TestSquatDataFourthOrder(t *testing.T) {
 	loadAndTestCsv(&args{
 		t:           t,
 		rawDataFile: "./testData/15_08_2025_squat.csv",
-		outFile:     "./testData/15_08_2025_squat.fourthOrder.csv",
+		outFileName: "./testData/15_08_2025_squat.fourthOrder",
 		expCenters: [][]types.Split{
 			[]types.Split{
 				{StartIdx: 311, EndIdx: 379},
