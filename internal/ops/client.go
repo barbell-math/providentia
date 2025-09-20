@@ -2,10 +2,7 @@ package ops
 
 import (
 	"context"
-	"encoding/csv"
-	"io"
 	"net/mail"
-	"os"
 	"unsafe"
 
 	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
