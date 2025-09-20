@@ -4,8 +4,8 @@ code.barbellmath.net/barbell-math/smoothbrain-bs v0.0.0-20250831070729-5632f2448
 code.barbellmath.net/barbell-math/smoothbrain-bs v0.0.0-20250831070729-5632f2448d7f/go.mod h1:BFg3zJ/aCHtI131FpH/MKlVUnUMD2r590qPKr0afa2U=
 code.barbellmath.net/barbell-math/smoothbrain-cgoGlue v0.0.0-20250901064600-3ef6fc548d82 h1:5ZdJY7jbDkw7k+2Bh6eg1rW7RrcwrRfsRO6X8qztUrQ=
 code.barbellmath.net/barbell-math/smoothbrain-cgoGlue v0.0.0-20250901064600-3ef6fc548d82/go.mod h1:bp9woMieEp6b1s5HjoeoYcWnGXg1enhdMHUXBqi66N4=
-code.barbellmath.net/barbell-math/smoothbrain-csv v0.0.0-20250920232422-4182e178642e h1:Q68su58S6G51j39WnNAV0UwFTU4fYr7i1F0YzA6rF6c=
-code.barbellmath.net/barbell-math/smoothbrain-csv v0.0.0-20250920232422-4182e178642e/go.mod h1:/hACwg5XY6mQqJCpqq9KKALmyP7menEIFP7PQpGrono=
+code.barbellmath.net/barbell-math/smoothbrain-csv v0.0.0-20250920234616-3c6725aaf140 h1:EZvWCXkbiCzFO2M5ata62v+60Zlb/+FIXmuQiG/WrZ8=
+code.barbellmath.net/barbell-math/smoothbrain-csv v0.0.0-20250920234616-3c6725aaf140/go.mod h1:/hACwg5XY6mQqJCpqq9KKALmyP7menEIFP7PQpGrono=
 code.barbellmath.net/barbell-math/smoothbrain-errs v0.0.0-20250831071217-fe38b750a828 h1:y7KTbSLQHfFx3UBZ+iXQTn9QrYcQJNIaka9WoHe+B8g=
 code.barbellmath.net/barbell-math/smoothbrain-errs v0.0.0-20250831071217-fe38b750a828/go.mod h1:/RPzJHhXkH6M3EbHehsWMVFykadZcHmJDTJdedmPSqo=
 code.barbellmath.net/barbell-math/smoothbrain-jobQueue v0.0.0-20250831071525-40f7c4d71378 h1:bkaC8k9pHr4nSd6VexK2DQG6VtFyuiYZ/ICI83gxhJg=
