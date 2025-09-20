@@ -59,6 +59,9 @@ func ReadExercisesByName(
 	ctxt context.Context,
 	names ...string,
 ) (res []types.Exercise, opErr error) {
+	if len(names) == 0 {
+		return
+	}
 	opErr = runOp(ctxt, opCalls{
 		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
 			res, err = ops.ReadExercisesByName(ctxt, state, queries, names...)

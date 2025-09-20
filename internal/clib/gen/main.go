@@ -12,7 +12,7 @@ func main() {
 	g := sbcgoglue.New(sbcgoglue.Opts{
 		ExitOnErr: true,
 		Rename: map[string]string{
-			reflect.TypeFor[types.BarPathCalcConf]().Name():                               "barPathCalcConf",
+			reflect.TypeFor[types.BarPathCalcHyperparams]().Name():                        "barPathCalcHyperparams",
 			reflect.TypeFor[types.Vec2[types.Meter, types.Meter]]().Name():                "posVec2",
 			reflect.TypeFor[types.Vec2[types.MeterPerSec, types.MeterPerSec]]().Name():    "velVec2",
 			reflect.TypeFor[types.Vec2[types.MeterPerSec2, types.MeterPerSec2]]().Name():  "accVec2",
@@ -57,6 +57,6 @@ func main() {
 
 	sbcgoglue.RegisterStruct[types.Split](g)
 	sbcgoglue.RegisterStruct[barpathphysdata.Data](g)
-	sbcgoglue.RegisterStruct[types.BarPathCalcConf](g)
+	sbcgoglue.RegisterStruct[types.BarPathCalcHyperparams](g)
 	g.WriteTo("./glue.h")
 }

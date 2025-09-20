@@ -1,56 +1,99 @@
 package migrations
 
 import (
+	"encoding/json"
+	"fmt"
+
 	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 )
 
+func mustMarshalJson(a any) []byte {
+	rv, err := json.Marshal(a)
+	if err != nil {
+		panic(fmt.Sprintf("mustMarshalJson Err: %s", err))
+	}
+	return rv
+}
+
 var (
 	ModelSetupData = []dal.BulkCreateModelsWithIDParams{
 		{
-			ID:          int32(types.SimplifiedNegativeSpace),
-			Name:        "SimplifiedNegativeSpaceModel",
-			Description: "A simplified version of the fill negative space model that can use linear regression.",
+			ID:          types.BarPathCalc,
+			Name:        types.BarPathCalc.String(),
+			Description: "Controls for the algorithims that calculate physics data from bar path time series position data.",
+		},
+		{
+			ID:          types.BarPathTracker,
+			Name:        types.BarPathTracker.String(),
+			Description: "Controls for the algorithims that generate bar path time series position data from a video.",
+		},
+	}
+
+	HyperparamsSetupData = []dal.BulkCreateHyperparamsParams{
+		{
+			ModelID: types.BarPathCalc,
+			Version: 0,
+			Params: mustMarshalJson(types.BarPathCalcHyperparams{
+				MinNumSamples:   100,
+				TimeDeltaEps:    1e-6,
+				ApproxErr:       types.FourthOrder,
+				NearZeroFilter:  0.1,
+				SmootherWeight1: 0.5,
+				SmootherWeight2: 0.5,
+				SmootherWeight3: 1,
+				SmootherWeight4: 0.5,
+				SmootherWeight5: 0.5,
+			}),
+		},
+		{
+			ModelID: types.BarPathTracker,
+			Version: 0,
+			Params: mustMarshalJson(types.BarPathTrackerHyperparams{
+				MinLength:   5,
+				MinFileSize: 5e7, // 50MB
+				MaxFileSize: 5e8, // 500MB
+			}),
 		},
 	}
 
 	ExerciseFocusSetupData = []dal.BulkCreateExerciseFocusWithIDParams{
 		{
-			ID:    int32(types.UnknownExerciseFocus),
+			ID:    types.UnknownExerciseFocus,
 			Focus: types.UnknownExerciseFocus.String(),
 		},
 		{
-			ID:    int32(types.Squat),
+			ID:    types.Squat,
 			Focus: types.Squat.String(),
 		},
 		{
-			ID:    int32(types.Bench),
+			ID:    types.Bench,
 			Focus: types.Bench.String(),
 		},
 		{
-			ID:    int32(types.Deadlift),
+			ID:    types.Deadlift,
 			Focus: types.Deadlift.String(),
 		},
 	}
 
 	ExerciseKindSetupData = []dal.BulkCreateExerciseKindWithIDParams{
 		{
-			ID:          int32(types.MainCompound),
+			ID:          types.MainCompound,
 			Kind:        types.MainCompound.String(),
 			Description: "The squat, bench, and deadlift.",
 		},
 		{
-			ID:          int32(types.MainCompoundAccessory),
+			ID:          types.MainCompoundAccessory,
 			Kind:        types.MainCompoundAccessory.String(),
 			Description: "Variations of the squat, bench, and deadlift.",
 		},
 		{
-			ID:          int32(types.CompoundAccessory),
+			ID:          types.CompoundAccessory,
 			Kind:        types.CompoundAccessory.String(),
 			Description: "Multi-joint accessories that are not part of the main compound accessory group.",
 		},
 		{
-			ID:          int32(types.Accessory),
+			ID:          types.Accessory,
 			Kind:        types.Accessory.String(),
 			Description: "Single joint lifts and core work.",
 		},

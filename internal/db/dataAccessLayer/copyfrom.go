@@ -188,13 +188,13 @@ func (q *Queries) BulkCreateExercises(ctx context.Context, arg []BulkCreateExerc
 	return q.db.CopyFrom(ctx, []string{"providentia", "exercise"}, []string{"name", "kind_id", "focus_id"}, &iteratorForBulkCreateExercises{rows: arg})
 }
 
-// iteratorForBulkCreateModelStates implements pgx.CopyFromSource.
-type iteratorForBulkCreateModelStates struct {
-	rows                 []BulkCreateModelStatesParams
+// iteratorForBulkCreateHyperparams implements pgx.CopyFromSource.
+type iteratorForBulkCreateHyperparams struct {
+	rows                 []BulkCreateHyperparamsParams
 	skippedFirstNextCall bool
 }
 
-func (r *iteratorForBulkCreateModelStates) Next() bool {
+func (r *iteratorForBulkCreateHyperparams) Next() bool {
 	if len(r.rows) == 0 {
 		return false
 	}
@@ -206,34 +206,58 @@ func (r *iteratorForBulkCreateModelStates) Next() bool {
 	return len(r.rows) > 0
 }
 
-func (r iteratorForBulkCreateModelStates) Values() ([]interface{}, error) {
+func (r iteratorForBulkCreateHyperparams) Values() ([]interface{}, error) {
 	return []interface{}{
-		r.rows[0].ClientID,
-		r.rows[0].TrainingLogID,
 		r.rows[0].ModelID,
-		r.rows[0].V1,
-		r.rows[0].V2,
-		r.rows[0].V3,
-		r.rows[0].V4,
-		r.rows[0].V5,
-		r.rows[0].V6,
-		r.rows[0].V7,
-		r.rows[0].V8,
-		r.rows[0].V9,
-		r.rows[0].V10,
-		r.rows[0].TimeFrame,
-		r.rows[0].Mse,
-		r.rows[0].PredWeight,
+		r.rows[0].Version,
+		r.rows[0].Params,
 	}, nil
 }
 
-func (r iteratorForBulkCreateModelStates) Err() error {
+func (r iteratorForBulkCreateHyperparams) Err() error {
 	return nil
 }
 
-// --- OLD ----------------------------------------------------------------------
-func (q *Queries) BulkCreateModelStates(ctx context.Context, arg []BulkCreateModelStatesParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"providentia", "model_state"}, []string{"client_id", "training_log_id", "model_id", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "time_frame", "mse", "pred_weight"}, &iteratorForBulkCreateModelStates{rows: arg})
+func (q *Queries) BulkCreateHyperparams(ctx context.Context, arg []BulkCreateHyperparamsParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"providentia", "hyperparams"}, []string{"model_id", "version", "params"}, &iteratorForBulkCreateHyperparams{rows: arg})
+}
+
+// iteratorForBulkCreateHyperparamsWithID implements pgx.CopyFromSource.
+type iteratorForBulkCreateHyperparamsWithID struct {
+	rows                 []BulkCreateHyperparamsWithIDParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForBulkCreateHyperparamsWithID) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForBulkCreateHyperparamsWithID) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].ID,
+		r.rows[0].ModelID,
+		r.rows[0].Version,
+		r.rows[0].Params,
+	}, nil
+}
+
+func (r iteratorForBulkCreateHyperparamsWithID) Err() error {
+	return nil
+}
+
+// This query is used for initilization by the migrations. The
+// UpdateModelSerialCount query will need to be run after this to update
+// the serial counter.
+func (q *Queries) BulkCreateHyperparamsWithID(ctx context.Context, arg []BulkCreateHyperparamsWithIDParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"providentia", "hyperparams"}, []string{"id", "model_id", "version", "params"}, &iteratorForBulkCreateHyperparamsWithID{rows: arg})
 }
 
 // iteratorForBulkCreateModelsWithID implements pgx.CopyFromSource.

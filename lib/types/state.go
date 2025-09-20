@@ -21,25 +21,13 @@ type (
 		PhysicsJobQueue *sbjobqueue.JobQueue[PhysicsJob]
 		VideoJobQueue   *sbjobqueue.JobQueue[VideoJob]
 
-		Global         GlobalConf
-		BarPathCalc    BarPathCalcConf
-		BarPathTracker BarPathTrackerConf
+		Global GlobalConf
 	}
 )
 
 var (
 	InvalidGlobalErr    = errors.New("Invalid global conf")
 	InvalidBatchSizeErr = errors.New("Invalid batch size")
-
-	InvalidBarPathCalcErr    = errors.New("Invalid bar path calc conf")
-	InvalidMinNumSamplesErr  = errors.New("Invalid min num samples")
-	InvalidTimeDeltaEpsErr   = errors.New("Invalid time delta eps")
-	InvalidNearZeroFilterErr = errors.New("Invalid near zero filter")
-
-	InvalidBarPathTrackerErr = errors.New("Invalid bar path tracker conf")
-	InvalidMinLengthErr      = errors.New("Invalid min length")
-	InvalidMinFileSizeErr    = errors.New("Invalid min file size")
-	InvalidMaxFileSizeErr    = errors.New("Invalid max file size")
 
 	InvalidLoggerErr          = errors.New("Invalid logger")
 	InvalidDBErr              = errors.New("Invalid database connection pool")

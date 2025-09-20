@@ -27,26 +27,27 @@ func CreateClients(
 		for i := start; i < end; i++ {
 			iterCd := clients[i]
 			if iterCd.FirstName == "" {
-				opErr = sberr.Wrap(
-					types.InvalidClientErr, "First name must not be empty",
+				opErr = sberr.AppendError(
+					types.InvalidClientErr, types.MissingFirstNameErr,
 				)
 				return
 			}
 			if iterCd.LastName == "" {
-				opErr = sberr.Wrap(
-					types.InvalidClientErr, "Last name must not be empty",
+				opErr = sberr.AppendError(
+					types.InvalidClientErr, types.MissingLastNameErr,
 				)
 				return
 			}
 			if iterCd.Email == "" {
-				opErr = sberr.Wrap(
-					types.InvalidClientErr, "Email must not be empty",
+				opErr = sberr.AppendError(
+					types.InvalidClientErr, types.MissingEmailErr,
 				)
 				return
 			}
 			if _, err := mail.ParseAddress(iterCd.Email); err != nil {
 				opErr = sberr.Wrap(
-					types.InvalidClientErr, "Invalid email: %s", err,
+					sberr.AppendError(types.InvalidClientErr, err),
+					"Invalid email: %s", iterCd.Email,
 				)
 				return
 			}
@@ -178,8 +179,7 @@ func DeleteClients(
 	queries *dal.SyncQueries,
 	emails ...string,
 ) (opErr error) {
-	// TODO - delete all referenced training log data, video data, model data
-	// Is this properly handled by cascade??
+	// Deleting all referenced/referencing data is handled by cascade rules
 
 	var count int64
 	count, opErr = dal.Query1x2(dal.Q.DeleteClientsByEmail, queries, ctxt, emails)

@@ -33,7 +33,8 @@ extern "C" {
 		double_t Y;
 	} accVec2_t;
 
-	typedef struct barPathCalcConf{
+	typedef struct barPathCalcHyperparams{
+		int32_t Version;
 		uint64_t MinNumSamples;
 		double_t TimeDeltaEps;
 		enum ApproximationError_t ApproxErr;
@@ -43,7 +44,7 @@ extern "C" {
 		double_t SmootherWeight3;
 		double_t SmootherWeight4;
 		double_t SmootherWeight5;
-	} barPathCalcConf_t;
+	} barPathCalcHyperparams_t;
 
 	typedef struct forceVec2{
 		double_t X;

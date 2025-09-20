@@ -13,9 +13,6 @@ Name = "runningTest"
 [ Global ]
 BatchSize = 5
 
-[ BarPathCalc ]
-MinNumSamples = 5
-
 # To simplify testing
 # [ PhysicsJobQueue ]
 # QueueLen = 1

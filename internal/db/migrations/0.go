@@ -85,5 +85,22 @@ func PostOp0(ctxt context.Context, tx pgx.Tx) error {
 		)
 	}
 
+	cnt, err = q.BulkCreateHyperparams(ctxt, HyperparamsSetupData)
+	if err != nil {
+		return err
+	} else if cnt != int64(len(HyperparamsSetupData)) {
+		return sberr.Wrap(
+			SetupMissingDataErr,
+			"Setting up the providentia.hyperparams table: Expected %d rows to be created, got %d",
+			len(HyperparamsSetupData), cnt,
+		)
+	}
+	if err := q.UpdateHyperparamsSerialCount(ctxt); err != nil {
+		return sberr.Wrap(
+			SerialUpdateCmdErr,
+			"Setting up the providentia.hyperparams table",
+		)
+	}
+
 	return nil
 }

@@ -21,6 +21,8 @@ func CreateWorkouts(
 	ctxt context.Context,
 	state *types.State,
 	queries *dal.SyncQueries,
+	barPathCalcParams *types.BarPathCalcHyperparams,
+	barTrackerCalcParams *types.BarPathTrackerHyperparams,
 	data ...types.RawWorkout,
 ) (opErr error) {
 	batch, _ := sbjobqueue.BatchWithContext(ctxt)
@@ -28,16 +30,11 @@ func CreateWorkouts(
 	exerciseCache := dal.NewExerciseIdCache(state.Global.PerRequestIdCacheSize)
 	bufWriter := dal.NewBufferedWriter(
 		state.Global.BatchSize,
-		func(
-			ctxt context.Context,
-			arg []dal.BulkCreateTrainingLogsParams,
-		) (count int64, err error) {
+		dal.Q.BulkCreateTrainingLogs,
+		func() (err error) {
 			if err := batch.Wait(); err != nil {
-				return 0, err
+				return err
 			}
-			count, err = dal.Query1x2(
-				dal.Q.BulkCreateTrainingLogs, queries, ctxt, arg,
-			)
 			return
 		},
 	)
@@ -49,7 +46,9 @@ func CreateWorkouts(
 		default:
 		}
 
-		if opErr = validateWorkout(state, &iterW); opErr != nil {
+		if opErr = validateWorkout(
+			&iterW, barPathCalcParams, barTrackerCalcParams,
+		); opErr != nil {
 			opErr = sberr.AppendError(types.InvalidWorkoutErr, opErr)
 			return
 		}
@@ -86,34 +85,38 @@ func CreateWorkouts(
 				return
 			}
 
-			if opErr = bufWriter.Write(ctxt, dal.BulkCreateTrainingLogsParams{
-				ClientID:         iterClientId,
-				ExerciseID:       iterExerciseId,
-				DatePerformed:    dal.TimeToPGDate(iterW.DatePerformed),
-				InterSessionCntr: int16(iterW.Session),
-				InterWorkoutCntr: int16(i + 1),
-				Weight:           iterE.Weight,
-				Sets:             iterE.Sets,
-				Reps:             iterE.Reps,
-				Effort:           iterE.Effort,
-			}); opErr != nil {
+			if opErr = bufWriter.Write(
+				ctxt, queries,
+				dal.BulkCreateTrainingLogsParams{
+					ClientID:         iterClientId,
+					ExerciseID:       iterExerciseId,
+					DatePerformed:    dal.TimeToPGDate(iterW.DatePerformed),
+					InterSessionCntr: int16(iterW.Session),
+					InterWorkoutCntr: int16(i + 1),
+					Weight:           iterE.Weight,
+					Sets:             iterE.Sets,
+					Reps:             iterE.Reps,
+					Effort:           iterE.Effort,
+				},
+			); opErr != nil {
 				opErr = sberr.AppendError(types.CouldNotAddWorkoutErr, opErr)
 				return
 			}
 
 			if len(iterE.BarPath) > 0 {
 				state.PhysicsJobQueue.Schedule(&jobs.Physics{
-					BarPath: iterE.BarPath,
-					Tl:      bufWriter.Last(),
-					B:       batch,
-					S:       state,
-					Q:       queries,
+					BarPath:              iterE.BarPath,
+					Tl:                   bufWriter.Last(),
+					B:                    batch,
+					Q:                    queries,
+					BarPathCalcParams:    barPathCalcParams,
+					BarTrackerCalcParams: barTrackerCalcParams,
 				})
 			}
 		}
 	}
 
-	if opErr = bufWriter.Flush(ctxt); opErr != nil {
+	if opErr = bufWriter.Flush(ctxt, queries); opErr != nil {
 		opErr = sberr.AppendError(types.CouldNotAddWorkoutErr, opErr)
 		return
 	}
@@ -126,15 +129,22 @@ func CreateWorkouts(
 	return
 }
 
-func validateWorkout(state *types.State, w *types.RawWorkout) (opErr error) {
+func validateWorkout(
+	w *types.RawWorkout,
+	barPathCalcParams *types.BarPathCalcHyperparams,
+	barTrackerCalcParams *types.BarPathTrackerHyperparams,
+) (opErr error) {
 	curExercise := -1
 	curSet := -1
-	wrapErr := func(msg string, args ...any) error {
-		msgStart := fmt.Sprintf("Exercise %d: ", curExercise)
+	wrapErr := func(err error, msg string, args ...any) error {
+		msgStart := fmt.Sprintf("Exercise %d ", curExercise)
 		if curSet >= 0 {
-			msgStart = fmt.Sprintf("%sSet %d: ", msgStart, curSet)
+			msgStart = fmt.Sprintf("%s, Set %d ", msgStart, curSet)
 		}
-		return sberr.Wrap(types.MalformedWorkoutExerciseErr, msgStart+msg, args...)
+		return sberr.AppendError(
+			sberr.Wrap(types.MalformedWorkoutExerciseErr, msgStart),
+			sberr.Wrap(err, msg, args...),
+		)
 	}
 
 	if w.Session <= 0 {
@@ -157,7 +167,8 @@ func validateWorkout(state *types.State, w *types.RawWorkout) (opErr error) {
 		ceilSets := int(math.Ceil(iterE.Sets))
 		if len(iterE.BarPath) != ceilSets {
 			opErr = wrapErr(
-				"the bar paths list must either be empty or the same length as the ceiling of the number of sets (%f -> %d), Got: %d",
+				types.InvalidBarPathsLenErr,
+				"Number of sets %f -> %d, Length: %d",
 				iterE.Sets, ceilSets, len(iterE.BarPath),
 			)
 			return
@@ -172,13 +183,11 @@ func validateWorkout(state *types.State, w *types.RawWorkout) (opErr error) {
 				// physics job queue.
 				var fs fs.FileInfo
 				if fs, opErr = os.Stat(videoPath); opErr != nil {
-					return sberr.AppendError(
-						types.MalformedWorkoutExerciseErr, opErr,
-					)
+					return wrapErr(opErr, "")
 				} else if fs.IsDir() {
 					opErr = wrapErr(
-						"expected a video file, got dir: %s",
-						videoPath,
+						types.VideoPathDirNotFileErr,
+						"Path: %s", videoPath,
 					)
 					return
 				}
@@ -192,16 +201,18 @@ func validateWorkout(state *types.State, w *types.RawWorkout) (opErr error) {
 				// "fail fast" here rather than in a separate go routine in the
 				// physics job queue.
 				if lenTimeData != lenPosData {
-					opErr = wrapErr(fmt.Sprintf(
-						"the length of the time data (%d) and position data (%d) must match",
+					opErr = wrapErr(
+						types.TimePositionDataMismatchErr,
+						"len time data: %d, len pos data: %d",
 						lenTimeData, lenPosData,
-					))
+					)
 					return
 				}
-				if lenTimeData < int(state.BarPathCalc.MinNumSamples) {
+				if lenTimeData < int(barPathCalcParams.MinNumSamples) {
 					opErr = wrapErr(
-						"the minimum number of samples (%d) was not provided, got %d samples",
-						state.BarPathCalc.MinNumSamples, lenTimeData,
+						types.TimeDataLenErr,
+						"minimum num samples: %d, got: %d",
+						barPathCalcParams.MinNumSamples, lenTimeData,
 					)
 					return
 				}

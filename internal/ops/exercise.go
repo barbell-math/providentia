@@ -26,24 +26,22 @@ func CreateExercises(
 		for i := start; i < end; i++ {
 			iterEd := exercises[i]
 			if iterEd.Name == "" {
-				opErr = sberr.Wrap(
-					types.InvalidExerciseErr, "Name must not be empty",
+				opErr = sberr.AppendError(
+					types.InvalidExerciseErr, types.MissingExerciseNameErr,
 				)
 				return
 			}
 			if !types.ExerciseFocus(iterEd.FocusID).IsValid() {
-				opErr = sberr.Wrap(
+				opErr = sberr.AppendError(
 					types.InvalidExerciseErr,
-					"Invalid Focus ID, must be one of :%s",
-					exerciseFocusHelp(),
+					types.ErrInvalidExerciseFocus,
 				)
 				return
 			}
 			if !types.ExerciseKind(iterEd.KindID).IsValid() {
-				opErr = sberr.Wrap(
+				opErr = sberr.AppendError(
 					types.InvalidExerciseErr,
-					"Invalid Kind ID, must be one of :%s",
-					exerciseKindHelp(),
+					types.ErrInvalidExerciseKind,
 				)
 				return
 			}
@@ -171,8 +169,7 @@ func DeleteExercises(
 	queries *dal.SyncQueries,
 	names ...string,
 ) (opErr error) {
-	// TODO - delete all referenced training log data, video data, model data
-	// Is this properly handled by cascade??
+	// Deleting all referenced/referencing data is handled by cascade rules
 
 	var count int64
 	count, opErr = dal.Query1x2(dal.Q.DeleteExercisesByName, queries, ctxt, names)

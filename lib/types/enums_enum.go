@@ -323,17 +323,20 @@ func (x *ExerciseKind) AppendText(b []byte) ([]byte, error) {
 const (
 	// UnknownModel is a ModelID of type UnknownModel.
 	UnknownModel ModelID = iota
-	// SimplifiedNegativeSpace is a ModelID of type SimplifiedNegativeSpace.
-	SimplifiedNegativeSpace
+	// BarPathTracker is a ModelID of type BarPathTracker.
+	BarPathTracker
+	// BarPathCalc is a ModelID of type BarPathCalc.
+	BarPathCalc
 )
 
 var ErrInvalidModelID = fmt.Errorf("not a valid ModelID, try [%s]", strings.Join(_ModelIDNames, ", "))
 
-const _ModelIDName = "UnknownModelSimplifiedNegativeSpace"
+const _ModelIDName = "UnknownModelBarPathTrackerBarPathCalc"
 
 var _ModelIDNames = []string{
 	_ModelIDName[0:12],
-	_ModelIDName[12:35],
+	_ModelIDName[12:26],
+	_ModelIDName[26:37],
 }
 
 // ModelIDNames returns a list of possible string values of ModelID.
@@ -347,13 +350,15 @@ func ModelIDNames() []string {
 func ModelIDValues() []ModelID {
 	return []ModelID{
 		UnknownModel,
-		SimplifiedNegativeSpace,
+		BarPathTracker,
+		BarPathCalc,
 	}
 }
 
 var _ModelIDMap = map[ModelID]string{
-	UnknownModel:            _ModelIDName[0:12],
-	SimplifiedNegativeSpace: _ModelIDName[12:35],
+	UnknownModel:   _ModelIDName[0:12],
+	BarPathTracker: _ModelIDName[12:26],
+	BarPathCalc:    _ModelIDName[26:37],
 }
 
 // String implements the Stringer interface.
@@ -374,8 +379,10 @@ func (x ModelID) IsValid() bool {
 var _ModelIDValue = map[string]ModelID{
 	_ModelIDName[0:12]:                   UnknownModel,
 	strings.ToLower(_ModelIDName[0:12]):  UnknownModel,
-	_ModelIDName[12:35]:                  SimplifiedNegativeSpace,
-	strings.ToLower(_ModelIDName[12:35]): SimplifiedNegativeSpace,
+	_ModelIDName[12:26]:                  BarPathTracker,
+	strings.ToLower(_ModelIDName[12:26]): BarPathTracker,
+	_ModelIDName[26:37]:                  BarPathCalc,
+	strings.ToLower(_ModelIDName[26:37]): BarPathCalc,
 }
 
 // ParseModelID attempts to convert a string to a ModelID.

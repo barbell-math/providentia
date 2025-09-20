@@ -16,7 +16,8 @@ type (
 
 	// ENUM(
 	//	UnknownModel,
-	//	SimplifiedNegativeSpace,
+	//	BarPathTracker,
+	//	BarPathCalc,
 	// )
 	ModelID int32
 

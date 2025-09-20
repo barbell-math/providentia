@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -9,7 +10,7 @@ import (
 	sbtest "code.barbellmath.net/barbell-math/smoothbrain-test"
 )
 
-func TestRawWorkout(t *testing.T) {
+func TestWorkout(t *testing.T) {
 	t.Run("failingNoWrites", workoutFailingNoWrites)
 	t.Run("duplicateWorkout", workoutDuplicateWorkout)
 	t.Run("addGetNoPhysicsData", workoutAddGetNoPhysicsData)
@@ -62,11 +63,16 @@ func workoutFailingNoWrites(t *testing.T) {
 
 func workoutInvalidSession(ctxt context.Context) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := CreateWorkouts(ctxt, types.RawWorkout{
-			WorkoutID: types.WorkoutID{
-				ClientEmail: "email@email.com", Session: 0,
+		err := CreateWorkouts(
+			ctxt,
+			&types.BarPathCalcHyperparams{ApproxErr: types.SecondOrder},
+			&types.BarPathTrackerHyperparams{},
+			types.RawWorkout{
+				WorkoutID: types.WorkoutID{
+					ClientEmail: "email@email.com", Session: 0,
+				},
 			},
-		})
+		)
 		sbtest.ContainsError(t, types.InvalidWorkoutErr, err)
 		sbtest.ContainsError(t, types.InvalidSessionErr, err)
 	}
@@ -74,12 +80,17 @@ func workoutInvalidSession(ctxt context.Context) func(t *testing.T) {
 
 func workoutInvalidClient(ctxt context.Context) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := CreateWorkouts(ctxt, types.RawWorkout{
-			WorkoutID: types.WorkoutID{
-				ClientEmail: "bad@email.com",
-				Session:     1,
+		err := CreateWorkouts(
+			ctxt,
+			&types.BarPathCalcHyperparams{ApproxErr: types.SecondOrder},
+			&types.BarPathTrackerHyperparams{},
+			types.RawWorkout{
+				WorkoutID: types.WorkoutID{
+					ClientEmail: "bad@email.com",
+					Session:     1,
+				},
 			},
-		})
+		)
 		sbtest.ContainsError(t, types.InvalidWorkoutErr, err, "Unknown Email")
 		sbtest.ContainsError(t, types.CouldNotFindRequestedClientErr, err)
 	}
@@ -87,18 +98,22 @@ func workoutInvalidClient(ctxt context.Context) func(t *testing.T) {
 
 func workoutUnknownExercise(ctxt context.Context) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := CreateWorkouts(ctxt, types.RawWorkout{
-			WorkoutID: types.WorkoutID{
-				ClientEmail: "email@email.com",
-				Session:     1,
-			},
-			Exercises: []types.RawExerciseData{
-				{
-					Sets: 2,
-					Name: "badExercise",
+		err := CreateWorkouts(ctxt,
+			&types.BarPathCalcHyperparams{ApproxErr: types.SecondOrder},
+			&types.BarPathTrackerHyperparams{},
+			types.RawWorkout{
+				WorkoutID: types.WorkoutID{
+					ClientEmail: "email@email.com",
+					Session:     1,
+				},
+				Exercises: []types.RawExerciseData{
+					{
+						Sets: 2,
+						Name: "badExercise",
+					},
 				},
 			},
-		})
+		)
 		sbtest.ContainsError(t, types.InvalidWorkoutErr, err, "Unknown Exercise")
 		sbtest.ContainsError(t, types.MalformedWorkoutExerciseErr, err)
 	}
@@ -106,109 +121,120 @@ func workoutUnknownExercise(ctxt context.Context) func(t *testing.T) {
 
 func workoutSetTimeAndPosDiffLen(ctxt context.Context) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := CreateWorkouts(ctxt, types.RawWorkout{
-			WorkoutID: types.WorkoutID{
-				ClientEmail: "email@email.com",
-				Session:     1,
-			},
-			Exercises: []types.RawExerciseData{
-				{
-					Sets: 1,
-					Reps: 1,
-					Name: "Squat",
-					BarPath: []types.BarPathVariant{
-						types.BarPathTimeSeriesData(
-							types.RawTimeSeriesData{
-								TimeData: []types.Second{0, 1, 2},
-								PositionData: []types.Vec2[types.Meter, types.Meter]{
-									types.Vec2[types.Meter, types.Meter]{X: 0, Y: 0},
-									types.Vec2[types.Meter, types.Meter]{X: 1, Y: 1},
-									types.Vec2[types.Meter, types.Meter]{X: 2, Y: 2},
-									types.Vec2[types.Meter, types.Meter]{X: 3, Y: 3},
+		err := CreateWorkouts(
+			ctxt,
+			&types.BarPathCalcHyperparams{ApproxErr: types.SecondOrder},
+			&types.BarPathTrackerHyperparams{},
+			types.RawWorkout{
+				WorkoutID: types.WorkoutID{
+					ClientEmail: "email@email.com",
+					Session:     1,
+				},
+				Exercises: []types.RawExerciseData{
+					{
+						Sets: 1,
+						Reps: 1,
+						Name: "Squat",
+						BarPath: []types.BarPathVariant{
+							types.BarPathTimeSeriesData(
+								types.RawTimeSeriesData{
+									TimeData: []types.Second{0, 1, 2},
+									PositionData: []types.Vec2[types.Meter, types.Meter]{
+										types.Vec2[types.Meter, types.Meter]{X: 0, Y: 0},
+										types.Vec2[types.Meter, types.Meter]{X: 1, Y: 1},
+										types.Vec2[types.Meter, types.Meter]{X: 2, Y: 2},
+										types.Vec2[types.Meter, types.Meter]{X: 3, Y: 3},
+									},
 								},
-							},
-						),
+							),
+						},
 					},
 				},
 			},
-		})
-		sbtest.ContainsError(
-			t, types.InvalidWorkoutErr, err,
-			"the length of the time data",
 		)
+		sbtest.ContainsError(t, types.InvalidWorkoutErr, err)
 		sbtest.ContainsError(t, types.MalformedWorkoutExerciseErr, err)
+		sbtest.ContainsError(t, types.TimePositionDataMismatchErr, err)
 	}
 }
 
 func workoutSetNotEnoughSamples(ctxt context.Context) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := CreateWorkouts(ctxt, types.RawWorkout{
-			WorkoutID: types.WorkoutID{
-				ClientEmail: "email@email.com",
-				Session:     1,
+		err := CreateWorkouts(
+			ctxt,
+			&types.BarPathCalcHyperparams{
+				ApproxErr:     types.SecondOrder,
+				MinNumSamples: 5,
 			},
-			Exercises: []types.RawExerciseData{
-				{
-					Sets: 1,
-					Reps: 1,
-					Name: "Squat",
-					BarPath: []types.BarPathVariant{
-						types.BarPathTimeSeriesData(
-							types.RawTimeSeriesData{
-								TimeData: []types.Second{0, 1, 2, 3},
-								PositionData: []types.Vec2[types.Meter, types.Meter]{
-									types.Vec2[types.Meter, types.Meter]{X: 0, Y: 0},
-									types.Vec2[types.Meter, types.Meter]{X: 1, Y: 1},
-									types.Vec2[types.Meter, types.Meter]{X: 2, Y: 2},
-									types.Vec2[types.Meter, types.Meter]{X: 3, Y: 3},
+			&types.BarPathTrackerHyperparams{},
+			types.RawWorkout{
+				WorkoutID: types.WorkoutID{
+					ClientEmail: "email@email.com",
+					Session:     1,
+				},
+				Exercises: []types.RawExerciseData{
+					{
+						Sets: 1,
+						Reps: 1,
+						Name: "Squat",
+						BarPath: []types.BarPathVariant{
+							types.BarPathTimeSeriesData(
+								types.RawTimeSeriesData{
+									TimeData: []types.Second{0, 1, 2, 3},
+									PositionData: []types.Vec2[types.Meter, types.Meter]{
+										types.Vec2[types.Meter, types.Meter]{X: 0, Y: 0},
+										types.Vec2[types.Meter, types.Meter]{X: 1, Y: 1},
+										types.Vec2[types.Meter, types.Meter]{X: 2, Y: 2},
+										types.Vec2[types.Meter, types.Meter]{X: 3, Y: 3},
+									},
 								},
-							},
-						),
+							),
+						},
 					},
 				},
 			},
-		})
-		sbtest.ContainsError(
-			t, types.InvalidWorkoutErr, err,
-			"the minimum number of samples",
 		)
+		sbtest.ContainsError(t, types.InvalidWorkoutErr, err)
 		sbtest.ContainsError(t, types.MalformedWorkoutExerciseErr, err)
+		sbtest.ContainsError(t, types.TimeDataLenErr, err)
 	}
 }
 
 func workoutSetBackwardsTime(ctxt context.Context) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := CreateWorkouts(ctxt, types.RawWorkout{
-			WorkoutID: types.WorkoutID{
-				ClientEmail: "email@email.com",
-				Session:     1,
-			},
-			Exercises: []types.RawExerciseData{
-				{
-					Sets: 1,
-					Reps: 1,
-					Name: "Squat",
-					BarPath: []types.BarPathVariant{
-						types.BarPathTimeSeriesData(
-							types.RawTimeSeriesData{
-								TimeData: []types.Second{0, 2, 1, 3, 4},
-								PositionData: []types.Vec2[types.Meter, types.Meter]{
-									types.Vec2[types.Meter, types.Meter]{X: 0, Y: 0},
-									types.Vec2[types.Meter, types.Meter]{X: 1, Y: 1},
-									types.Vec2[types.Meter, types.Meter]{X: 2, Y: 2},
-									types.Vec2[types.Meter, types.Meter]{X: 3, Y: 3},
-									types.Vec2[types.Meter, types.Meter]{X: 4, Y: 4},
+		err := CreateWorkouts(
+			ctxt,
+			&types.BarPathCalcHyperparams{ApproxErr: types.SecondOrder},
+			&types.BarPathTrackerHyperparams{},
+			types.RawWorkout{
+				WorkoutID: types.WorkoutID{
+					ClientEmail: "email@email.com",
+					Session:     1,
+				},
+				Exercises: []types.RawExerciseData{
+					{
+						Sets: 1,
+						Reps: 1,
+						Name: "Squat",
+						BarPath: []types.BarPathVariant{
+							types.BarPathTimeSeriesData(
+								types.RawTimeSeriesData{
+									TimeData: []types.Second{0, 2, 1, 3, 4},
+									PositionData: []types.Vec2[types.Meter, types.Meter]{
+										types.Vec2[types.Meter, types.Meter]{X: 0, Y: 0},
+										types.Vec2[types.Meter, types.Meter]{X: 1, Y: 1},
+										types.Vec2[types.Meter, types.Meter]{X: 2, Y: 2},
+										types.Vec2[types.Meter, types.Meter]{X: 3, Y: 3},
+										types.Vec2[types.Meter, types.Meter]{X: 4, Y: 4},
+									},
 								},
-							},
-						),
+							),
+						},
 					},
 				},
 			},
-		})
-		sbtest.ContainsError(
-			t, types.CouldNotAddWorkoutErr, err,
-			"Time samples must be increasing",
 		)
+		sbtest.ContainsError(t, types.CouldNotAddWorkoutErr, err)
 		sbtest.ContainsError(t, types.PhysicsJobQueueErr, err)
 		sbtest.ContainsError(t, types.TimeSeriesDecreaseErr, err)
 	}
@@ -216,37 +242,39 @@ func workoutSetBackwardsTime(ctxt context.Context) func(t *testing.T) {
 
 func workoutSetDiffTimeDelta(ctxt context.Context) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := CreateWorkouts(ctxt, types.RawWorkout{
-			WorkoutID: types.WorkoutID{
-				ClientEmail: "email@email.com",
-				Session:     1,
-			},
-			Exercises: []types.RawExerciseData{
-				{
-					Sets: 1,
-					Reps: 1,
-					Name: "Squat",
-					BarPath: []types.BarPathVariant{
-						types.BarPathTimeSeriesData(
-							types.RawTimeSeriesData{
-								TimeData: []types.Second{0, 1, 1, 3, 4},
-								PositionData: []types.Vec2[types.Meter, types.Meter]{
-									types.Vec2[types.Meter, types.Meter]{X: 0, Y: 0},
-									types.Vec2[types.Meter, types.Meter]{X: 1, Y: 1},
-									types.Vec2[types.Meter, types.Meter]{X: 2, Y: 2},
-									types.Vec2[types.Meter, types.Meter]{X: 3, Y: 3},
-									types.Vec2[types.Meter, types.Meter]{X: 4, Y: 4},
+		err := CreateWorkouts(
+			ctxt,
+			&types.BarPathCalcHyperparams{ApproxErr: types.SecondOrder},
+			&types.BarPathTrackerHyperparams{},
+			types.RawWorkout{
+				WorkoutID: types.WorkoutID{
+					ClientEmail: "email@email.com",
+					Session:     1,
+				},
+				Exercises: []types.RawExerciseData{
+					{
+						Sets: 1,
+						Reps: 1,
+						Name: "Squat",
+						BarPath: []types.BarPathVariant{
+							types.BarPathTimeSeriesData(
+								types.RawTimeSeriesData{
+									TimeData: []types.Second{0, 1, 1, 3, 4},
+									PositionData: []types.Vec2[types.Meter, types.Meter]{
+										types.Vec2[types.Meter, types.Meter]{X: 0, Y: 0},
+										types.Vec2[types.Meter, types.Meter]{X: 1, Y: 1},
+										types.Vec2[types.Meter, types.Meter]{X: 2, Y: 2},
+										types.Vec2[types.Meter, types.Meter]{X: 3, Y: 3},
+										types.Vec2[types.Meter, types.Meter]{X: 4, Y: 4},
+									},
 								},
-							},
-						),
+							),
+						},
 					},
 				},
 			},
-		})
-		sbtest.ContainsError(
-			t, types.CouldNotAddWorkoutErr, err,
-			"Adjacent time samples must all have the same delta",
 		)
+		sbtest.ContainsError(t, types.CouldNotAddWorkoutErr, err)
 		sbtest.ContainsError(t, types.PhysicsJobQueueErr, err)
 		sbtest.ContainsError(t, types.TimeSeriesNotMonotonicErr, err)
 	}
@@ -254,100 +282,109 @@ func workoutSetDiffTimeDelta(ctxt context.Context) func(t *testing.T) {
 
 func workoutSetDirInsteadOfVideoFile(ctxt context.Context) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := CreateWorkouts(ctxt, types.RawWorkout{
-			WorkoutID: types.WorkoutID{
-				ClientEmail: "email@email.com",
-				Session:     1,
-			},
-			Exercises: []types.RawExerciseData{
-				{
-					Sets:    1,
-					Reps:    1,
-					Name:    "Squat",
-					BarPath: []types.BarPathVariant{types.BarPathVideo(".")},
+		err := CreateWorkouts(
+			ctxt,
+			&types.BarPathCalcHyperparams{ApproxErr: types.SecondOrder},
+			&types.BarPathTrackerHyperparams{},
+			types.RawWorkout{
+				WorkoutID: types.WorkoutID{
+					ClientEmail: "email@email.com",
+					Session:     1,
+				},
+				Exercises: []types.RawExerciseData{
+					{
+						Sets:    1,
+						Reps:    1,
+						Name:    "Squat",
+						BarPath: []types.BarPathVariant{types.BarPathVideo(".")},
+					},
 				},
 			},
-		})
-		sbtest.ContainsError(
-			t, types.InvalidWorkoutErr, err,
-			"expected a video file, got dir",
 		)
+		sbtest.ContainsError(t, types.InvalidWorkoutErr, err)
 		sbtest.ContainsError(t, types.MalformedWorkoutExerciseErr, err)
+		sbtest.ContainsError(t, types.VideoPathDirNotFileErr, err)
 	}
 }
 
 func workoutSetInvalidVideoFile(ctxt context.Context) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := CreateWorkouts(ctxt, types.RawWorkout{
-			WorkoutID: types.WorkoutID{
-				ClientEmail: "email@email.com",
-				Session:     1,
-			},
-			Exercises: []types.RawExerciseData{
-				{
-					Sets: 1,
-					Reps: 1,
-					Name: "Squat",
-					BarPath: []types.BarPathVariant{
-						types.BarPathVideo("./non-existant-dir"),
+		err := CreateWorkouts(
+			ctxt,
+			&types.BarPathCalcHyperparams{ApproxErr: types.SecondOrder},
+			&types.BarPathTrackerHyperparams{},
+			types.RawWorkout{
+				WorkoutID: types.WorkoutID{
+					ClientEmail: "email@email.com",
+					Session:     1,
+				},
+				Exercises: []types.RawExerciseData{
+					{
+						Sets: 1,
+						Reps: 1,
+						Name: "Squat",
+						BarPath: []types.BarPathVariant{
+							types.BarPathVideo("./non-existant-dir"),
+						},
 					},
 				},
 			},
-		})
-		sbtest.ContainsError(
-			t, types.InvalidWorkoutErr, err,
-			"no such file or directory",
 		)
+		sbtest.ContainsError(t, types.InvalidWorkoutErr, err)
 		sbtest.ContainsError(t, types.MalformedWorkoutExerciseErr, err)
+		sbtest.ContainsError(t, os.ErrNotExist, err)
 	}
 }
 
 func workoutSetNotEnoughBarPathEntries(ctxt context.Context) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := CreateWorkouts(ctxt, types.RawWorkout{
-			WorkoutID: types.WorkoutID{
-				ClientEmail: "email@email.com",
-				Session:     1,
-			},
-			Exercises: []types.RawExerciseData{
-				{
-					Name: "Squat",
-					Sets: 3,
-					Reps: 1,
-					BarPath: []types.BarPathVariant{
-						types.BarPathTimeSeriesData(
-							types.RawTimeSeriesData{
-								TimeData: []types.Second{0, 1, 2, 3, 4},
-								PositionData: []types.Vec2[types.Meter, types.Meter]{
-									types.Vec2[types.Meter, types.Meter]{X: 0, Y: 0},
-									types.Vec2[types.Meter, types.Meter]{X: 1, Y: 1},
-									types.Vec2[types.Meter, types.Meter]{X: 2, Y: 2},
-									types.Vec2[types.Meter, types.Meter]{X: 3, Y: 3},
-									types.Vec2[types.Meter, types.Meter]{X: 4, Y: 4},
+		err := CreateWorkouts(
+			ctxt,
+			&types.BarPathCalcHyperparams{ApproxErr: types.SecondOrder},
+			&types.BarPathTrackerHyperparams{},
+			types.RawWorkout{
+				WorkoutID: types.WorkoutID{
+					ClientEmail: "email@email.com",
+					Session:     1,
+				},
+				Exercises: []types.RawExerciseData{
+					{
+						Name: "Squat",
+						Sets: 3,
+						Reps: 1,
+						BarPath: []types.BarPathVariant{
+							types.BarPathTimeSeriesData(
+								types.RawTimeSeriesData{
+									TimeData: []types.Second{0, 1, 2, 3, 4},
+									PositionData: []types.Vec2[types.Meter, types.Meter]{
+										types.Vec2[types.Meter, types.Meter]{X: 0, Y: 0},
+										types.Vec2[types.Meter, types.Meter]{X: 1, Y: 1},
+										types.Vec2[types.Meter, types.Meter]{X: 2, Y: 2},
+										types.Vec2[types.Meter, types.Meter]{X: 3, Y: 3},
+										types.Vec2[types.Meter, types.Meter]{X: 4, Y: 4},
+									},
 								},
-							},
-						),
-						types.BarPathTimeSeriesData(
-							types.RawTimeSeriesData{
-								TimeData: []types.Second{0, 1, 2, 3, 4},
-								PositionData: []types.Vec2[types.Meter, types.Meter]{
-									types.Vec2[types.Meter, types.Meter]{X: 0, Y: 0},
-									types.Vec2[types.Meter, types.Meter]{X: 1, Y: 1},
-									types.Vec2[types.Meter, types.Meter]{X: 2, Y: 2},
-									types.Vec2[types.Meter, types.Meter]{X: 3, Y: 3},
-									types.Vec2[types.Meter, types.Meter]{X: 4, Y: 4},
+							),
+							types.BarPathTimeSeriesData(
+								types.RawTimeSeriesData{
+									TimeData: []types.Second{0, 1, 2, 3, 4},
+									PositionData: []types.Vec2[types.Meter, types.Meter]{
+										types.Vec2[types.Meter, types.Meter]{X: 0, Y: 0},
+										types.Vec2[types.Meter, types.Meter]{X: 1, Y: 1},
+										types.Vec2[types.Meter, types.Meter]{X: 2, Y: 2},
+										types.Vec2[types.Meter, types.Meter]{X: 3, Y: 3},
+										types.Vec2[types.Meter, types.Meter]{X: 4, Y: 4},
+									},
 								},
-							},
-						),
+							),
+						},
 					},
 				},
 			},
-		})
-		sbtest.ContainsError(
-			t, types.InvalidWorkoutErr, err,
-			"the bar paths list must either be empty or the same length as the ceiling of the number of sets",
 		)
+		sbtest.ContainsError(t, types.InvalidWorkoutErr, err)
 		sbtest.ContainsError(t, types.MalformedWorkoutExerciseErr, err)
+		sbtest.ContainsError(t, types.InvalidBarPathsLenErr, err)
 	}
 }
 
@@ -355,50 +392,53 @@ func workoutSetFractionalSetsAndExercisesLen(
 	ctxt context.Context,
 ) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := CreateWorkouts(ctxt, types.RawWorkout{
-			WorkoutID: types.WorkoutID{
-				ClientEmail: "email@email.com",
-				Session:     1,
-			},
-			Exercises: []types.RawExerciseData{
-				{
-					Name: "Squat",
-					Sets: 2.5,
-					Reps: 1,
-					BarPath: []types.BarPathVariant{
-						types.BarPathTimeSeriesData(
-							types.RawTimeSeriesData{
-								TimeData: []types.Second{0, 1, 2, 3, 4},
-								PositionData: []types.Vec2[types.Meter, types.Meter]{
-									types.Vec2[types.Meter, types.Meter]{X: 0, Y: 0},
-									types.Vec2[types.Meter, types.Meter]{X: 1, Y: 1},
-									types.Vec2[types.Meter, types.Meter]{X: 2, Y: 2},
-									types.Vec2[types.Meter, types.Meter]{X: 3, Y: 3},
-									types.Vec2[types.Meter, types.Meter]{X: 4, Y: 4},
+		err := CreateWorkouts(
+			ctxt,
+			&types.BarPathCalcHyperparams{ApproxErr: types.SecondOrder},
+			&types.BarPathTrackerHyperparams{},
+			types.RawWorkout{
+				WorkoutID: types.WorkoutID{
+					ClientEmail: "email@email.com",
+					Session:     1,
+				},
+				Exercises: []types.RawExerciseData{
+					{
+						Name: "Squat",
+						Sets: 2.5,
+						Reps: 1,
+						BarPath: []types.BarPathVariant{
+							types.BarPathTimeSeriesData(
+								types.RawTimeSeriesData{
+									TimeData: []types.Second{0, 1, 2, 3, 4},
+									PositionData: []types.Vec2[types.Meter, types.Meter]{
+										types.Vec2[types.Meter, types.Meter]{X: 0, Y: 0},
+										types.Vec2[types.Meter, types.Meter]{X: 1, Y: 1},
+										types.Vec2[types.Meter, types.Meter]{X: 2, Y: 2},
+										types.Vec2[types.Meter, types.Meter]{X: 3, Y: 3},
+										types.Vec2[types.Meter, types.Meter]{X: 4, Y: 4},
+									},
 								},
-							},
-						),
-						types.BarPathTimeSeriesData(
-							types.RawTimeSeriesData{
-								TimeData: []types.Second{0, 1, 2, 3, 4},
-								PositionData: []types.Vec2[types.Meter, types.Meter]{
-									types.Vec2[types.Meter, types.Meter]{X: 0, Y: 0},
-									types.Vec2[types.Meter, types.Meter]{X: 1, Y: 1},
-									types.Vec2[types.Meter, types.Meter]{X: 2, Y: 2},
-									types.Vec2[types.Meter, types.Meter]{X: 3, Y: 3},
-									types.Vec2[types.Meter, types.Meter]{X: 4, Y: 4},
+							),
+							types.BarPathTimeSeriesData(
+								types.RawTimeSeriesData{
+									TimeData: []types.Second{0, 1, 2, 3, 4},
+									PositionData: []types.Vec2[types.Meter, types.Meter]{
+										types.Vec2[types.Meter, types.Meter]{X: 0, Y: 0},
+										types.Vec2[types.Meter, types.Meter]{X: 1, Y: 1},
+										types.Vec2[types.Meter, types.Meter]{X: 2, Y: 2},
+										types.Vec2[types.Meter, types.Meter]{X: 3, Y: 3},
+										types.Vec2[types.Meter, types.Meter]{X: 4, Y: 4},
+									},
 								},
-							},
-						),
+							),
+						},
 					},
 				},
 			},
-		})
-		sbtest.ContainsError(
-			t, types.InvalidWorkoutErr, err,
-			"the bar paths list must either be empty or the same length as the ceiling of the number of sets",
 		)
+		sbtest.ContainsError(t, types.InvalidWorkoutErr, err)
 		sbtest.ContainsError(t, types.MalformedWorkoutExerciseErr, err)
+		sbtest.ContainsError(t, types.InvalidBarPathsLenErr, err)
 	}
 }
 
@@ -443,7 +483,12 @@ func workoutDuplicateWorkout(t *testing.T) {
 		},
 	}
 
-	err = CreateWorkouts(ctxt, workouts[:]...)
+	err = CreateWorkouts(
+		ctxt,
+		&types.BarPathCalcHyperparams{ApproxErr: types.SecondOrder},
+		&types.BarPathTrackerHyperparams{},
+		workouts[:]...,
+	)
 	sbtest.Nil(t, err)
 	numExercises, err := ReadClientTotalNumTrainingLogEntries(ctxt, "email@email.com")
 	sbtest.Nil(t, err)
@@ -458,7 +503,12 @@ func workoutDuplicateWorkout(t *testing.T) {
 	res, err := ReadWorkoutsByID(ctxt, workouts[0].WorkoutID)
 	rawWorkoutEqSavedWorkout(t, workouts[:], res)
 
-	err = CreateWorkouts(ctxt, workouts[:]...)
+	err = CreateWorkouts(
+		ctxt,
+		&types.BarPathCalcHyperparams{ApproxErr: types.SecondOrder},
+		&types.BarPathTrackerHyperparams{},
+		workouts[:]...,
+	)
 	sbtest.ContainsError(
 		t, types.CouldNotAddWorkoutErr, err,
 		"duplicate key value violates unique constraint",
@@ -524,7 +574,12 @@ func workoutAddGetNoPhysicsData(t *testing.T) {
 		},
 	}
 
-	err = CreateWorkouts(ctxt, workouts[:]...)
+	err = CreateWorkouts(
+		ctxt,
+		&types.BarPathCalcHyperparams{ApproxErr: types.SecondOrder},
+		&types.BarPathTrackerHyperparams{},
+		workouts[:]...,
+	)
 	sbtest.Nil(t, err)
 	numExercises, err := ReadClientTotalNumTrainingLogEntries(ctxt, "email@email.com")
 	sbtest.Nil(t, err)
@@ -665,7 +720,12 @@ func workoutAddGetTimeSeriesPhysicsData(t *testing.T) {
 		},
 	}
 
-	err = CreateWorkouts(ctxt, workouts[:]...)
+	err = CreateWorkouts(
+		ctxt,
+		&types.BarPathCalcHyperparams{ApproxErr: types.SecondOrder},
+		&types.BarPathTrackerHyperparams{},
+		workouts[:]...,
+	)
 	sbtest.Nil(t, err)
 	numExercises, err := ReadClientTotalNumTrainingLogEntries(ctxt, "email@email.com")
 	sbtest.Nil(t, err)
@@ -775,7 +835,12 @@ func workoutAddGetDateRange(t *testing.T) {
 		},
 	}
 
-	err = CreateWorkouts(ctxt, workouts[:]...)
+	err = CreateWorkouts(
+		ctxt,
+		&types.BarPathCalcHyperparams{ApproxErr: types.SecondOrder},
+		&types.BarPathTrackerHyperparams{},
+		workouts[:]...,
+	)
 	sbtest.Nil(t, err)
 	numExercises, err := ReadClientTotalNumTrainingLogEntries(ctxt, "email@email.com")
 	sbtest.Nil(t, err)
@@ -970,7 +1035,12 @@ func workoutAddDeleteGet(t *testing.T) {
 		},
 	}
 
-	err = CreateWorkouts(ctxt, workouts[:]...)
+	err = CreateWorkouts(
+		ctxt,
+		&types.BarPathCalcHyperparams{ApproxErr: types.SecondOrder},
+		&types.BarPathTrackerHyperparams{},
+		workouts[:]...,
+	)
 	sbtest.Nil(t, err)
 	numExercises, err := ReadClientTotalNumTrainingLogEntries(ctxt, "email@email.com")
 	sbtest.Nil(t, err)
@@ -1116,7 +1186,12 @@ func workoutAddDeleteGetDateRange(t *testing.T) {
 		},
 	}
 
-	err = CreateWorkouts(ctxt, workouts[:]...)
+	err = CreateWorkouts(
+		ctxt,
+		&types.BarPathCalcHyperparams{ApproxErr: types.SecondOrder},
+		&types.BarPathTrackerHyperparams{},
+		workouts[:]...,
+	)
 	sbtest.Nil(t, err)
 	numExercises, err := ReadClientTotalNumTrainingLogEntries(ctxt, "email@email.com")
 	sbtest.Nil(t, err)

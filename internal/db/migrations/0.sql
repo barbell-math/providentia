@@ -17,11 +17,20 @@ CREATE TABLE IF NOT EXISTS providentia.model (
 	description TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS providentia.hyperparams (
+	id SERIAL4 NOT NULL PRIMARY KEY,
+	model_id INT4 NOT NULL REFERENCES providentia.model(id) ON DELETE CASCADE,
+	version INT4 NOT NULL,
+	params JSONB NOT NULL,
+
+	UNIQUE (model_id, version)
+);
+
 CREATE TABLE IF NOT EXISTS providentia.exercise (
 	id SERIAL4 NOT NULL PRIMARY KEY,
 	name TEXT NOT NULL UNIQUE,
-	kind_id INT4 NOT NULL REFERENCES providentia.exercise_kind(id),
-	focus_id INT4 NOT NULL REFERENCES providentia.exercise_focus(id)
+	kind_id INT4 NOT NULL REFERENCES providentia.exercise_kind(id) ON DELETE CASCADE,
+	focus_id INT4 NOT NULL REFERENCES providentia.exercise_focus(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS providentia.client (
@@ -34,6 +43,8 @@ CREATE TABLE IF NOT EXISTS providentia.client (
 CREATE TABLE IF NOT EXISTS providentia.physics_data (
 	id SERIAL8 NOT NULL PRIMARY KEY,
 	path TEXT[] UNIQUE,
+	bar_path_calc_id INT4 NOT NULL REFERENCES providentia.hyperparams(id) ON DELETE CASCADE,
+	bar_path_track_id INT4 REFERENCES providentia.hyperparams(id) ON DELETE CASCADE,
 
 	time FLOAT8[][] NOT NULL,
 	position POINT[][] NOT NULL,
@@ -95,7 +106,7 @@ CREATE TABLE IF NOT EXISTS providentia.model_state (
 	id SERIAL8 NOT NULL PRIMARY KEY,
 	client_id INT8 NOT NULL REFERENCES providentia.client(id) ON DELETE CASCADE,
 	training_log_id INT8 NOT NULL REFERENCES providentia.training_log(id) ON DELETE CASCADE,
-	model_id INT4 NOT NULL REFERENCES providentia.model(id) ON DELETE CASCADE,
+	hyperparams_id INT4 NOT NULL REFERENCES providentia.hyperparams(id) ON DELETE CASCADE,
 
 	v1 FLOAT8 NOT NULL CHECK (v1>=0),
 	v2 FLOAT8 NOT NULL CHECK (v2>=0),
@@ -112,7 +123,7 @@ CREATE TABLE IF NOT EXISTS providentia.model_state (
 	mse FLOAT8 NOT NULL CHECK (mse>=0),
 	pred_weight FLOAT8 NOT NULL CHECK (pred_weight>=0),
 
-	UNIQUE (training_log_id, model_id)
+	UNIQUE (training_log_id, hyperparams_id)
 );
 
 CREATE FUNCTION reverse_cascade_training_log_physics_data()
@@ -123,12 +134,12 @@ BEGIN
 	DELETE FROM providentia.physics_data
 	WHERE OLD.physics_id = providentia.physics_data.id;
 	
+	-- TODO - wtf am I returning here??
 	RETURN NEW;
 END;
 $$;
 
 CREATE TRIGGER reverse_cascade_training_log_physics_data
-  AFTER DELETE
-  ON providentia.training_log
+  AFTER DELETE ON providentia.training_log
   FOR EACH ROW
   EXECUTE PROCEDURE reverse_cascade_training_log_physics_data();

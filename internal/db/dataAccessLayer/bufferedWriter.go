@@ -14,35 +14,44 @@ var (
 
 type (
 	bulkCreateTypes interface {
-		BulkCreateClientsParams | BulkCreateTrainingLogsParams
+		BulkCreateClientsParams |
+			BulkCreateTrainingLogsParams |
+			BulkCreateHyperparamsParams
 	}
 
 	BufferedWriter[T bulkCreateTypes] struct {
 		data     []T
 		maxElems uint
 		curIdx   int
-		writeOp  func(ctxt context.Context, arg []T) (int64, error)
+		writeOp  func(q *Queries, ctxt context.Context, arg []T) (int64, error)
+		preOp    func() error
 	}
 )
 
 func NewBufferedWriter[T bulkCreateTypes](
 	size uint,
-	writeOp func(ctxt context.Context, arg []T) (int64, error),
+	writeOp func(q *Queries, ctxt context.Context, arg []T) (int64, error),
+	preOp func() error,
 ) BufferedWriter[T] {
 	return BufferedWriter[T]{
 		data:     make([]T, size),
 		maxElems: size,
 		curIdx:   -1,
+		preOp:    preOp,
 		writeOp:  writeOp,
 	}
 }
 
-func (b *BufferedWriter[T]) Write(ctxt context.Context, data ...T) error {
+func (b *BufferedWriter[T]) Write(
+	ctxt context.Context,
+	queries *SyncQueries,
+	data ...T,
+) error {
 	for _, d := range data {
 		if uint(b.curIdx+1) < b.maxElems {
 			b.data[b.curIdx+1] = d
 			b.curIdx++
-		} else if err := b.Flush(ctxt); err != nil {
+		} else if err := b.Flush(ctxt, queries); err != nil {
 			return err
 		}
 	}
@@ -66,12 +75,19 @@ func (b *BufferedWriter[T]) Last() *T {
 	return nil
 }
 
-func (b *BufferedWriter[T]) Flush(ctxt context.Context) error {
+func (b *BufferedWriter[T]) Flush(
+	ctxt context.Context,
+	queries *SyncQueries,
+) error {
 	if b.curIdx == -1 {
 		return nil
 	}
 
-	numRows, err := b.writeOp(ctxt, b.data[0:b.curIdx+1])
+	if err := b.preOp(); err != nil {
+		return err
+	}
+
+	numRows, err := Query1x2(b.writeOp, queries, ctxt, b.data[0:b.curIdx+1])
 	if err != nil {
 		return err
 	} else if numRows != int64(b.curIdx)+1 {

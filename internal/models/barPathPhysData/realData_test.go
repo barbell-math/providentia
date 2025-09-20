@@ -18,7 +18,7 @@ type args struct {
 	rawDataFile string
 	outFileName string
 	expCenters  [][]types.Split
-	state       types.State
+	params      types.BarPathCalcHyperparams
 	baseData    dal.BulkCreateTrainingLogsParams
 }
 
@@ -105,7 +105,7 @@ func loadAndTestCsv(a *args) {
 			Y: types.Meter(rawYPos) / 100,
 		}
 	}
-	err = Calc(&a.state, &a.baseData, &inputData, 0)
+	err = Calc(&a.baseData, &inputData, &a.params, 0)
 	sbtest.Nil(a.t, err)
 
 	sbtest.Eq(a.t, len(a.expCenters), len(inputData.RepSplits))
@@ -256,18 +256,16 @@ func TestSquatDataSecondOrder(t *testing.T) {
 				{StartIdx: 1170, EndIdx: 1237},
 			},
 		},
-		state: types.State{
-			BarPathCalc: types.BarPathCalcConf{
-				ApproxErr:       types.SecondOrder,
-				NearZeroFilter:  0.1,
-				SmootherWeight1: 0.5,
-				SmootherWeight2: 0.5,
-				SmootherWeight3: 1,
-				SmootherWeight4: 0.5,
-				SmootherWeight5: 0.5,
-				MinNumSamples:   10,
-				TimeDeltaEps:    1e-2,
-			},
+		params: types.BarPathCalcHyperparams{
+			ApproxErr:       types.SecondOrder,
+			NearZeroFilter:  0.1,
+			SmootherWeight1: 0.5,
+			SmootherWeight2: 0.5,
+			SmootherWeight3: 1,
+			SmootherWeight4: 0.5,
+			SmootherWeight5: 0.5,
+			MinNumSamples:   10,
+			TimeDeltaEps:    1e-2,
 		},
 		baseData: dal.BulkCreateTrainingLogsParams{
 			Weight: 1,
@@ -294,18 +292,16 @@ func TestSquatDataFourthOrder(t *testing.T) {
 				{StartIdx: 1170, EndIdx: 1237},
 			},
 		},
-		state: types.State{
-			BarPathCalc: types.BarPathCalcConf{
-				ApproxErr:       types.FourthOrder,
-				NearZeroFilter:  0.1,
-				SmootherWeight1: 0.5,
-				SmootherWeight2: 0.5,
-				SmootherWeight3: 1,
-				SmootherWeight4: 0.5,
-				SmootherWeight5: 0.5,
-				MinNumSamples:   10,
-				TimeDeltaEps:    1e-2,
-			},
+		params: types.BarPathCalcHyperparams{
+			ApproxErr:       types.FourthOrder,
+			NearZeroFilter:  0.1,
+			SmootherWeight1: 0.5,
+			SmootherWeight2: 0.5,
+			SmootherWeight3: 1,
+			SmootherWeight4: 0.5,
+			SmootherWeight5: 0.5,
+			MinNumSamples:   10,
+			TimeDeltaEps:    1e-2,
 		},
 		baseData: dal.BulkCreateTrainingLogsParams{
 			Weight: 1,

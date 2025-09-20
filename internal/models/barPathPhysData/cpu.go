@@ -64,11 +64,13 @@ var (
 	InvalidRawDataLenErr = errors.New("Invalid raw data length")
 )
 
-func InitPhysicsData(
+func InitBarPathCalcPhysicsData(
 	rawData *dal.CreatePhysicsDataParams,
+	barPathCalcParams *types.BarPathCalcHyperparams,
 	numSets int,
 ) {
 	*rawData = dal.CreatePhysicsDataParams{
+		Version:      barPathCalcParams.Version,
 		Time:         make([][]types.Second, numSets),
 		Position:     make([][]types.Vec2[types.Meter, types.Meter], numSets),
 		Velocity:     make([][]types.Vec2[types.MeterPerSec, types.MeterPerSec], numSets),
@@ -97,9 +99,9 @@ func InitPhysicsData(
 }
 
 func Calc(
-	state *types.State,
 	tl *dal.BulkCreateTrainingLogsParams,
 	rawData *dal.CreatePhysicsDataParams,
+	barPathCalcParams *types.BarPathCalcHyperparams,
 	idx int,
 ) error {
 	ceilSets := math.Ceil(tl.Sets)
@@ -134,11 +136,11 @@ func Calc(
 	}
 
 	expLen := len(rawData.Time[idx])
-	if expLen < int(state.BarPathCalc.MinNumSamples) {
+	if expLen < int(barPathCalcParams.MinNumSamples) {
 		return sberr.Wrap(
 			InvalidRawDataLenErr,
 			"the minimum number of samples (%d) was not provided, got %d samples",
-			state.BarPathCalc.MinNumSamples, expLen,
+			barPathCalcParams.MinNumSamples, expLen,
 		)
 	}
 	if len(rawData.Position[idx]) != expLen {
@@ -240,7 +242,7 @@ func Calc(
 
 	err := C.calcBarPathPhysData(
 		(*C.barPathData_t)(unsafe.Pointer(&baseData)),
-		(*C.barPathCalcConf_t)(unsafe.Pointer(&state.BarPathCalc)),
+		(*C.barPathCalcHyperparams_t)(unsafe.Pointer(barPathCalcParams)),
 	)
 
 	pinner.Unpin()
@@ -255,7 +257,7 @@ func Calc(
 		return sberr.Wrap(
 			types.TimeSeriesNotMonotonicErr,
 			"Adjacent time samples must all have the same delta (within %f variance)",
-			state.BarPathCalc.TimeDeltaEps,
+			barPathCalcParams.TimeDeltaEps,
 		)
 	case InvalidApproximationErrErr:
 		return types.ErrInvalidApproximationError

@@ -19,14 +19,14 @@ type BulkCreateClientsParams struct {
 }
 
 type BulkCreateExerciseFocusWithIDParams struct {
-	ID    int32  `json:"id"`
-	Focus string `json:"focus"`
+	ID    types.ExerciseFocus `json:"id"`
+	Focus string              `json:"focus"`
 }
 
 type BulkCreateExerciseKindWithIDParams struct {
-	ID          int32  `json:"id"`
-	Kind        string `json:"kind"`
-	Description string `json:"description"`
+	ID          types.ExerciseKind `json:"id"`
+	Kind        string             `json:"kind"`
+	Description string             `json:"description"`
 }
 
 type BulkCreateExerciseWithIDParams struct {
@@ -42,29 +42,23 @@ type BulkCreateExercisesParams struct {
 	FocusID types.ExerciseFocus `json:"focus_id"`
 }
 
-type BulkCreateModelStatesParams struct {
-	ClientID      int64   `json:"client_id"`
-	TrainingLogID int64   `json:"training_log_id"`
-	ModelID       int32   `json:"model_id"`
-	V1            float64 `json:"v1"`
-	V2            float64 `json:"v2"`
-	V3            float64 `json:"v3"`
-	V4            float64 `json:"v4"`
-	V5            float64 `json:"v5"`
-	V6            float64 `json:"v6"`
-	V7            float64 `json:"v7"`
-	V8            float64 `json:"v8"`
-	V9            float64 `json:"v9"`
-	V10           float64 `json:"v10"`
-	TimeFrame     int64   `json:"time_frame"`
-	Mse           float64 `json:"mse"`
-	PredWeight    float64 `json:"pred_weight"`
+type BulkCreateHyperparamsParams struct {
+	ModelID types.ModelID `json:"model_id"`
+	Version int32         `json:"version"`
+	Params  []byte        `json:"params"`
+}
+
+type BulkCreateHyperparamsWithIDParams struct {
+	ID      int32         `json:"id"`
+	ModelID types.ModelID `json:"model_id"`
+	Version int32         `json:"version"`
+	Params  []byte        `json:"params"`
 }
 
 type BulkCreateModelsWithIDParams struct {
-	ID          int32  `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	ID          types.ModelID `json:"id"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
 }
 
 type BulkCreateTrainingLogsParams struct {
@@ -81,7 +75,7 @@ type BulkCreateTrainingLogsParams struct {
 }
 
 const clientExists = `-- name: ClientExists :one
-SELECT EXISTS( SELECT 1 FROM providentia.client WHERE email = $1)
+SELECT EXISTS(SELECT 1 FROM providentia.client WHERE email = $1)
 `
 
 func (q *Queries) ClientExists(ctx context.Context, email string) (bool, error) {
@@ -91,89 +85,10 @@ func (q *Queries) ClientExists(ctx context.Context, email string) (bool, error) 
 	return exists, err
 }
 
-const clientLastWorkoutDate = `-- name: ClientLastWorkoutDate :one
-SELECT date_performed FROM providentia.training_log
-WHERE client_id=$1
-ORDER BY date_performed DESC LIMIT 1
-`
-
-func (q *Queries) ClientLastWorkoutDate(ctx context.Context, clientID int64) (pgtype.Date, error) {
-	row := q.db.QueryRow(ctx, clientLastWorkoutDate, clientID)
-	var date_performed pgtype.Date
-	err := row.Scan(&date_performed)
-	return date_performed, err
-}
-
-const clientTrainingLogDataDateRangeAscending = `-- name: ClientTrainingLogDataDateRangeAscending :many
-SELECT
-	providentia.training_log.id,
-	providentia.training_log.exercise_id,
-	($2::date-providentia.training_log.date_performed) AS days_since,
-	providentia.training_log.weight,
-	providentia.training_log.sets,
-	providentia.training_log.reps,
-	providentia.training_log.effort,
-	providentia.training_log.inter_session_cntr,
-	providentia.training_log.inter_workout_cntr
-FROM providentia.training_log
-WHERE providentia.training_log.client_id=$1
-	AND providentia.training_log.date_performed<$2
-ORDER BY
-	-- These cannot be labeled with providentia.training_log because you will
-	-- get a ` + "`" + `column reference "" not found` + "`" + ` error.
-	date_performed ASC, id ASC
-`
-
-type ClientTrainingLogDataDateRangeAscendingParams struct {
-	ClientID      int64       `json:"client_id"`
-	DatePerformed pgtype.Date `json:"date_performed"`
-}
-
-type ClientTrainingLogDataDateRangeAscendingRow struct {
-	ID               int64          `json:"id"`
-	ExerciseID       int32          `json:"exercise_id"`
-	DaysSince        int32          `json:"days_since"`
-	Weight           types.Kilogram `json:"weight"`
-	Sets             float64        `json:"sets"`
-	Reps             int32          `json:"reps"`
-	Effort           types.RPE      `json:"effort"`
-	InterSessionCntr int16          `json:"inter_session_cntr"`
-	InterWorkoutCntr int16          `json:"inter_workout_cntr"`
-}
-
-func (q *Queries) ClientTrainingLogDataDateRangeAscending(ctx context.Context, arg ClientTrainingLogDataDateRangeAscendingParams) ([]ClientTrainingLogDataDateRangeAscendingRow, error) {
-	rows, err := q.db.Query(ctx, clientTrainingLogDataDateRangeAscending, arg.ClientID, arg.DatePerformed)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ClientTrainingLogDataDateRangeAscendingRow
-	for rows.Next() {
-		var i ClientTrainingLogDataDateRangeAscendingRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.ExerciseID,
-			&i.DaysSince,
-			&i.Weight,
-			&i.Sets,
-			&i.Reps,
-			&i.Effort,
-			&i.InterSessionCntr,
-			&i.InterWorkoutCntr,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const createPhysicsData = `-- name: CreatePhysicsData :one
 INSERT INTO providentia.physics_data(
 	path,
+	bar_path_calc_id, bar_path_track_id,
 	time, position, velocity, acceleration, jerk,
 	force, impulse, work, power,
 	rep_splits,
@@ -184,13 +99,30 @@ INSERT INTO providentia.physics_data(
 	avg_work, min_work, max_work,
 	avg_power, min_power, max_power
 ) VALUES (
-	$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
-	$18, $19, $20, $21, $22, $23, $24, $25
+	$1,
+	(
+		SELECT providentia.model.id FROM providentia.hyperparams
+		JOIN providentia.model
+			ON providentia.model.id = providentia.hyperparams.model_id
+		WHERE providentia.model.name='BarPathCalc'
+			AND providentia.hyperparams.version=$2
+	),
+	(
+		SELECT providentia.model.id FROM providentia.hyperparams
+		JOIN providentia.model
+			ON providentia.model.id = providentia.hyperparams.model_id
+		WHERE providentia.model.name='BarPathTracker'
+			AND providentia.hyperparams.version=$3
+	),
+	$4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
+	$20, $21, $22, $23, $24, $25, $26, $27
 ) RETURNING id
 `
 
 type CreatePhysicsDataParams struct {
 	Path         []string                                                `json:"path"`
+	Version      int32                                                   `json:"version"`
+	Version_2    int32                                                   `json:"version_2"`
 	Time         [][]types.Second                                        `json:"time"`
 	Position     [][]types.Vec2[types.Meter, types.Meter]                `json:"position"`
 	Velocity     [][]types.Vec2[types.MeterPerSec, types.MeterPerSec]    `json:"velocity"`
@@ -220,6 +152,8 @@ type CreatePhysicsDataParams struct {
 func (q *Queries) CreatePhysicsData(ctx context.Context, arg CreatePhysicsDataParams) (int64, error) {
 	row := q.db.QueryRow(ctx, createPhysicsData,
 		arg.Path,
+		arg.Version,
+		arg.Version_2,
 		arg.Time,
 		arg.Position,
 		arg.Velocity,
@@ -253,7 +187,7 @@ func (q *Queries) CreatePhysicsData(ctx context.Context, arg CreatePhysicsDataPa
 const deleteClientsByEmail = `-- name: DeleteClientsByEmail :one
 WITH deleted_clients AS (
     DELETE FROM providentia.client
-    WHERE email = ANY($1::text[])
+    WHERE email = ANY($1::TEXT[])
     RETURNING id
 ) SELECT COUNT(*) FROM deleted_clients
 `
@@ -268,13 +202,33 @@ func (q *Queries) DeleteClientsByEmail(ctx context.Context, dollar_1 []string) (
 const deleteExercisesByName = `-- name: DeleteExercisesByName :one
 WITH deleted_exercises AS (
 	DELETE FROM providentia.exercise
-	WHERE name = ANY($1::text[])
+	WHERE name = ANY($1::TEXT[])
 	RETURNING id
 ) SELECT COUNT(*) FROM deleted_exercises
 `
 
 func (q *Queries) DeleteExercisesByName(ctx context.Context, dollar_1 []string) (int64, error) {
 	row := q.db.QueryRow(ctx, deleteExercisesByName, dollar_1)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const deleteHyperparamsByVersionFor = `-- name: DeleteHyperparamsByVersionFor :one
+WITH deleted_hyperparams AS (
+	DELETE FROM providentia.hyperparams
+	WHERE model_id=$1 AND version = ANY($2::INT4[])
+	RETURNING id
+) SELECT COUNT(*) FROM deleted_hyperparams
+`
+
+type DeleteHyperparamsByVersionForParams struct {
+	ModelID  types.ModelID `json:"model_id"`
+	Versions []int32       `json:"versions"`
+}
+
+func (q *Queries) DeleteHyperparamsByVersionFor(ctx context.Context, arg DeleteHyperparamsByVersionForParams) (int64, error) {
+	row := q.db.QueryRow(ctx, deleteHyperparamsByVersionFor, arg.ModelID, arg.Versions)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -329,79 +283,6 @@ func (q *Queries) DeleteWorkoutsBetweenDates(ctx context.Context, arg DeleteWork
 	var count int64
 	err := row.Scan(&count)
 	return count, err
-}
-
-const getAllClientsTrainingLogData = `-- name: GetAllClientsTrainingLogData :many
-SELECT
-	providentia.client.email,
-	providentia.exercise.name,
-	providentia.training_log.date_performed,
-	providentia.training_log.inter_session_cntr,
-	providentia.training_log.weight,
-	providentia.training_log.sets,
-	providentia.training_log.reps,
-	providentia.training_log.effort,
-	providentia.training_log.volume,
-	providentia.training_log.exertion,
-	providentia.training_log.total_reps
-FROM providentia.training_log
-JOIN providentia.exercise
-	ON providentia.training_log.exercise_id=providentia.exercise.id
-JOIN providentia.client
-	ON providentia.training_log.client_id=providentia.client.id
-ORDER BY
-	-- These cannot be labeled with providentia.training_log because you will
-	-- get a ` + "`" + `column reference "" not found` + "`" + ` error.
-	client.id DESC,
-	training_log.date_performed DESC,
-	training_log.id DESC
-LIMIT $1
-`
-
-type GetAllClientsTrainingLogDataRow struct {
-	Email            string         `json:"email"`
-	Name             string         `json:"name"`
-	DatePerformed    pgtype.Date    `json:"date_performed"`
-	InterSessionCntr int16          `json:"inter_session_cntr"`
-	Weight           types.Kilogram `json:"weight"`
-	Sets             float64        `json:"sets"`
-	Reps             int32          `json:"reps"`
-	Effort           types.RPE      `json:"effort"`
-	Volume           types.Kilogram `json:"volume"`
-	Exertion         types.RPE      `json:"exertion"`
-	TotalReps        float64        `json:"total_reps"`
-}
-
-func (q *Queries) GetAllClientsTrainingLogData(ctx context.Context, limit int32) ([]GetAllClientsTrainingLogDataRow, error) {
-	rows, err := q.db.Query(ctx, getAllClientsTrainingLogData, limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetAllClientsTrainingLogDataRow
-	for rows.Next() {
-		var i GetAllClientsTrainingLogDataRow
-		if err := rows.Scan(
-			&i.Email,
-			&i.Name,
-			&i.DatePerformed,
-			&i.InterSessionCntr,
-			&i.Weight,
-			&i.Sets,
-			&i.Reps,
-			&i.Effort,
-			&i.Volume,
-			&i.Exertion,
-			&i.TotalReps,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const getAllWorkoutData = `-- name: GetAllWorkoutData :many
@@ -707,74 +588,9 @@ func (q *Queries) GetClientIdByEmail(ctx context.Context, email string) (int64, 
 	return id, err
 }
 
-const getClientTrainingLogData = `-- name: GetClientTrainingLogData :many
-SELECT
-	providentia.exercise.name,
-	providentia.training_log.date_performed,
-	providentia.training_log.inter_session_cntr,
-	providentia.training_log.weight,
-	providentia.training_log.sets,
-	providentia.training_log.reps,
-	providentia.training_log.effort
-FROM providentia.training_log
-JOIN providentia.exercise
-	ON providentia.training_log.exercise_id=providentia.exercise.id
-JOIN providentia.client
-	ON providentia.training_log.client_id=providentia.client.id
-WHERE providentia.client.email=$1
-ORDER BY
-	-- These cannot be labeled with providentia.training_log because you will
-	-- get a ` + "`" + `column reference "" not found` + "`" + ` error.
-	training_log.date_performed DESC, training_log.id DESC
-LIMIT $2
-`
-
-type GetClientTrainingLogDataParams struct {
-	Email string `json:"email"`
-	Limit int32  `json:"limit"`
-}
-
-type GetClientTrainingLogDataRow struct {
-	Name             string         `json:"name"`
-	DatePerformed    pgtype.Date    `json:"date_performed"`
-	InterSessionCntr int16          `json:"inter_session_cntr"`
-	Weight           types.Kilogram `json:"weight"`
-	Sets             float64        `json:"sets"`
-	Reps             int32          `json:"reps"`
-	Effort           types.RPE      `json:"effort"`
-}
-
-func (q *Queries) GetClientTrainingLogData(ctx context.Context, arg GetClientTrainingLogDataParams) ([]GetClientTrainingLogDataRow, error) {
-	rows, err := q.db.Query(ctx, getClientTrainingLogData, arg.Email, arg.Limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetClientTrainingLogDataRow
-	for rows.Next() {
-		var i GetClientTrainingLogDataRow
-		if err := rows.Scan(
-			&i.Name,
-			&i.DatePerformed,
-			&i.InterSessionCntr,
-			&i.Weight,
-			&i.Sets,
-			&i.Reps,
-			&i.Effort,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getClientsByEmail = `-- name: GetClientsByEmail :many
 SELECT first_name, last_name, email
-FROM providentia.client WHERE email = ANY($1::text[])
+FROM providentia.client WHERE email = ANY($1::TEXT[])
 `
 
 type GetClientsByEmailRow struct {
@@ -803,32 +619,6 @@ func (q *Queries) GetClientsByEmail(ctx context.Context, dollar_1 []string) ([]G
 	return items, nil
 }
 
-const getExerciseIDs = `-- name: GetExerciseIDs :one
-SELECT
-	providentia.exercise.id AS exercise_id,
-	providentia.exercise_kind.id AS kind_id,
-	providentia.exercise_focus.id AS focus_id
-FROM providentia.exercise
-JOIN providentia.exercise_kind
-	ON providentia.exercise.kind_id=providentia.exercise_kind.id
-JOIN providentia.exercise_focus
-	ON providentia.exercise.focus_id=providentia.exercise_focus.id
-WHERE name=$1
-`
-
-type GetExerciseIDsRow struct {
-	ExerciseID int32 `json:"exercise_id"`
-	KindID     int32 `json:"kind_id"`
-	FocusID    int32 `json:"focus_id"`
-}
-
-func (q *Queries) GetExerciseIDs(ctx context.Context, name string) (GetExerciseIDsRow, error) {
-	row := q.db.QueryRow(ctx, getExerciseIDs, name)
-	var i GetExerciseIDsRow
-	err := row.Scan(&i.ExerciseID, &i.KindID, &i.FocusID)
-	return i, err
-}
-
 const getExerciseIdByName = `-- name: GetExerciseIdByName :one
 SELECT id FROM providentia.exercise WHERE name = $1
 `
@@ -842,7 +632,7 @@ func (q *Queries) GetExerciseIdByName(ctx context.Context, name string) (int32, 
 
 const getExercisesByName = `-- name: GetExercisesByName :many
 SELECT name, kind_id, focus_id
-FROM providentia.exercise WHERE name = ANY($1::text[])
+FROM providentia.exercise WHERE name = ANY($1::TEXT[])
 `
 
 type GetExercisesByNameRow struct {
@@ -871,6 +661,41 @@ func (q *Queries) GetExercisesByName(ctx context.Context, dollar_1 []string) ([]
 	return items, nil
 }
 
+const getHyperparamsByVersionFor = `-- name: GetHyperparamsByVersionFor :many
+SELECT version, params FROM providentia.hyperparams
+WHERE model_id=$1 AND version = ANY($2::INT4[])
+`
+
+type GetHyperparamsByVersionForParams struct {
+	ModelID  types.ModelID `json:"model_id"`
+	Versions []int32       `json:"versions"`
+}
+
+type GetHyperparamsByVersionForRow struct {
+	Version int32  `json:"version"`
+	Params  []byte `json:"params"`
+}
+
+func (q *Queries) GetHyperparamsByVersionFor(ctx context.Context, arg GetHyperparamsByVersionForParams) ([]GetHyperparamsByVersionForRow, error) {
+	rows, err := q.db.Query(ctx, getHyperparamsByVersionFor, arg.ModelID, arg.Versions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetHyperparamsByVersionForRow
+	for rows.Next() {
+		var i GetHyperparamsByVersionForRow
+		if err := rows.Scan(&i.Version, &i.Params); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getNumClients = `-- name: GetNumClients :one
 SELECT COUNT(*) FROM providentia.client
 `
@@ -888,6 +713,29 @@ SELECT COUNT(*) FROM providentia.exercise
 
 func (q *Queries) GetNumExercises(ctx context.Context) (int64, error) {
 	row := q.db.QueryRow(ctx, getNumExercises)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const getNumHyperparams = `-- name: GetNumHyperparams :one
+SELECT COUNT(*) FROM providentia.hyperparams
+`
+
+func (q *Queries) GetNumHyperparams(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, getNumHyperparams)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const getNumHyperparamsFor = `-- name: GetNumHyperparamsFor :one
+SELECT COUNT(*) FROM providentia.hyperparams
+WHERE providentia.hyperparams.model_id=$1
+`
+
+func (q *Queries) GetNumHyperparamsFor(ctx context.Context, modelID types.ModelID) (int64, error) {
+	row := q.db.QueryRow(ctx, getNumHyperparamsFor, modelID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -1010,10 +858,22 @@ func (q *Queries) UpdateExerciseSerialCount(ctx context.Context) error {
 	return err
 }
 
+const updateHyperparamsSerialCount = `-- name: UpdateHyperparamsSerialCount :exec
+SELECT SETVAL(
+	pg_get_serial_sequence('providentia.hyperparams', 'id'),
+	(SELECT MAX(id) FROM providentia.hyperparams) + 1
+)
+`
+
+func (q *Queries) UpdateHyperparamsSerialCount(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, updateHyperparamsSerialCount)
+	return err
+}
+
 const updateModelSerialCount = `-- name: UpdateModelSerialCount :exec
 SELECT SETVAL(
-	pg_get_serial_sequence('providentia.exercise', 'id'),
-	(SELECT MAX(id) FROM providentia.exercise) + 1
+	pg_get_serial_sequence('providentia.model', 'id'),
+	(SELECT MAX(id) FROM providentia.model) + 1
 )
 `
 

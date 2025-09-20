@@ -37,10 +37,10 @@ SELECT id FROM providentia.client WHERE email = $1;
 
 -- name: GetClientsByEmail :many
 SELECT first_name, last_name, email
-FROM providentia.client WHERE email = ANY($1::text[]);
+FROM providentia.client WHERE email = ANY($1::TEXT[]);
 
 -- name: ClientExists :one
-SELECT EXISTS( SELECT 1 FROM providentia.client WHERE email = $1);
+SELECT EXISTS(SELECT 1 FROM providentia.client WHERE email = $1);
 
 -- name: UpdateClientByEmail :exec
 UPDATE providentia.client SET first_name=$1, last_name=$2
@@ -49,7 +49,7 @@ WHERE providentia.client.email=$3;
 -- name: DeleteClientsByEmail :one
 WITH deleted_clients AS (
     DELETE FROM providentia.client
-    WHERE email = ANY($1::text[])
+    WHERE email = ANY($1::TEXT[])
     RETURNING id
 ) SELECT COUNT(*) FROM deleted_clients;
 
@@ -80,7 +80,7 @@ SELECT id FROM providentia.exercise WHERE name = $1;
 
 -- name: GetExercisesByName :many
 SELECT name, kind_id, focus_id
-FROM providentia.exercise WHERE name = ANY($1::text[]);
+FROM providentia.exercise WHERE name = ANY($1::TEXT[]);
 
 -- name: UpdateExerciseByName :exec
 UPDATE providentia.exercise SET kind_id=$2, focus_id=$3
@@ -89,7 +89,7 @@ WHERE providentia.exercise.name=$1;
 -- name: DeleteExercisesByName :one
 WITH deleted_exercises AS (
 	DELETE FROM providentia.exercise
-	WHERE name = ANY($1::text[])
+	WHERE name = ANY($1::TEXT[])
 	RETURNING id
 ) SELECT COUNT(*) FROM deleted_exercises;
 
@@ -103,9 +103,48 @@ INSERT INTO providentia.model (id, name, description) VALUES ($1, $2, $3);
 
 -- name: UpdateModelSerialCount :exec
 SELECT SETVAL(
-	pg_get_serial_sequence('providentia.exercise', 'id'),
-	(SELECT MAX(id) FROM providentia.exercise) + 1
+	pg_get_serial_sequence('providentia.model', 'id'),
+	(SELECT MAX(id) FROM providentia.model) + 1
 );
+
+
+
+-- name: BulkCreateHyperparamsWithID :copyfrom
+-- This query is used for initilization by the migrations. The
+-- UpdateModelSerialCount query will need to be run after this to update
+-- the serial counter.
+INSERT INTO providentia.hyperparams (
+	id, model_id, version, params
+) VALUES ($1, $2, $3, $4); 
+
+-- name: UpdateHyperparamsSerialCount :exec
+SELECT SETVAL(
+	pg_get_serial_sequence('providentia.hyperparams', 'id'),
+	(SELECT MAX(id) FROM providentia.hyperparams) + 1
+);
+
+-- name: BulkCreateHyperparams :copyfrom
+INSERT INTO providentia.hyperparams (
+	model_id, version, params
+) VALUES ($1, $2, $3);
+
+-- name: GetNumHyperparams :one
+SELECT COUNT(*) FROM providentia.hyperparams;
+
+-- name: GetNumHyperparamsFor :one
+SELECT COUNT(*) FROM providentia.hyperparams
+WHERE providentia.hyperparams.model_id=$1;
+
+-- name: GetHyperparamsByVersionFor :many
+SELECT version, params FROM providentia.hyperparams
+WHERE model_id=$1 AND version = ANY(@versions::INT4[]);
+
+-- name: DeleteHyperparamsByVersionFor :one
+WITH deleted_hyperparams AS (
+	DELETE FROM providentia.hyperparams
+	WHERE model_id=$1 AND version = ANY(@versions::INT4[])
+	RETURNING id
+) SELECT COUNT(*) FROM deleted_hyperparams;
 
 
 
@@ -260,6 +299,7 @@ WITH deleted_exercises AS (
 -- name: CreatePhysicsData :one
 INSERT INTO providentia.physics_data(
 	path,
+	bar_path_calc_id, bar_path_track_id,
 	time, position, velocity, acceleration, jerk,
 	force, impulse, work, power,
 	rep_splits,
@@ -270,8 +310,23 @@ INSERT INTO providentia.physics_data(
 	avg_work, min_work, max_work,
 	avg_power, min_power, max_power
 ) VALUES (
-	$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
-	$18, $19, $20, $21, $22, $23, $24, $25
+	$1,
+	(
+		SELECT providentia.model.id FROM providentia.hyperparams
+		JOIN providentia.model
+			ON providentia.model.id = providentia.hyperparams.model_id
+		WHERE providentia.model.name='BarPathCalc'
+			AND providentia.hyperparams.version=$2
+	),
+	(
+		SELECT providentia.model.id FROM providentia.hyperparams
+		JOIN providentia.model
+			ON providentia.model.id = providentia.hyperparams.model_id
+		WHERE providentia.model.name='BarPathTracker'
+			AND providentia.hyperparams.version=$3
+	),
+	$4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
+	$20, $21, $22, $23, $24, $25, $26, $27
 ) RETURNING id;
 
 -- name: GetTotalNumPhysicsEntriesForClient :one
@@ -282,100 +337,3 @@ JOIN providentia.client
 	ON providentia.training_log.client_id = providentia.client.id
 WHERE
 	providentia.client.email = $1;
-
-
------ OLD ----------------------------------------------------------------------
--- name: BulkCreateModelStates :copyfrom
-INSERT INTO providentia.model_state(
-	client_id, training_log_id, model_id,
-	v1, v2, v3, v4, v5, v6, v7, v8, v9, v10,
-	time_frame, mse, pred_weight
-) values (
-	$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
-);
-
-
-
-
--- name: GetAllClientsTrainingLogData :many
-SELECT
-	providentia.client.email,
-	providentia.exercise.name,
-	providentia.training_log.date_performed,
-	providentia.training_log.inter_session_cntr,
-	providentia.training_log.weight,
-	providentia.training_log.sets,
-	providentia.training_log.reps,
-	providentia.training_log.effort,
-	providentia.training_log.volume,
-	providentia.training_log.exertion,
-	providentia.training_log.total_reps
-FROM providentia.training_log
-JOIN providentia.exercise
-	ON providentia.training_log.exercise_id=providentia.exercise.id
-JOIN providentia.client
-	ON providentia.training_log.client_id=providentia.client.id
-ORDER BY
-	-- These cannot be labeled with providentia.training_log because you will
-	-- get a `column reference "" not found` error.
-	client.id DESC,
-	training_log.date_performed DESC,
-	training_log.id DESC
-LIMIT $1;
-
--- name: GetClientTrainingLogData :many
-SELECT
-	providentia.exercise.name,
-	providentia.training_log.date_performed,
-	providentia.training_log.inter_session_cntr,
-	providentia.training_log.weight,
-	providentia.training_log.sets,
-	providentia.training_log.reps,
-	providentia.training_log.effort
-FROM providentia.training_log
-JOIN providentia.exercise
-	ON providentia.training_log.exercise_id=providentia.exercise.id
-JOIN providentia.client
-	ON providentia.training_log.client_id=providentia.client.id
-WHERE providentia.client.email=$1
-ORDER BY
-	-- These cannot be labeled with providentia.training_log because you will
-	-- get a `column reference "" not found` error.
-	training_log.date_performed DESC, training_log.id DESC
-LIMIT $2;
-
--- name: GetExerciseIDs :one
-SELECT
-	providentia.exercise.id AS exercise_id,
-	providentia.exercise_kind.id AS kind_id,
-	providentia.exercise_focus.id AS focus_id
-FROM providentia.exercise
-JOIN providentia.exercise_kind
-	ON providentia.exercise.kind_id=providentia.exercise_kind.id
-JOIN providentia.exercise_focus
-	ON providentia.exercise.focus_id=providentia.exercise_focus.id
-WHERE name=$1;
-
--- name: ClientLastWorkoutDate :one
-SELECT date_performed FROM providentia.training_log
-WHERE client_id=$1
-ORDER BY date_performed DESC LIMIT 1;
-
--- name: ClientTrainingLogDataDateRangeAscending :many
-SELECT
-	providentia.training_log.id,
-	providentia.training_log.exercise_id,
-	(sqlc.arg(date_performed)::date-providentia.training_log.date_performed) AS days_since,
-	providentia.training_log.weight,
-	providentia.training_log.sets,
-	providentia.training_log.reps,
-	providentia.training_log.effort,
-	providentia.training_log.inter_session_cntr,
-	providentia.training_log.inter_workout_cntr
-FROM providentia.training_log
-WHERE providentia.training_log.client_id=$1
-	AND providentia.training_log.date_performed<sqlc.arg(date_performed)
-ORDER BY
-	-- These cannot be labeled with providentia.training_log because you will
-	-- get a `column reference "" not found` error.
-	date_performed ASC, id ASC;

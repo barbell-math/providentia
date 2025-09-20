@@ -39,6 +39,7 @@ func exerciseMissingName(ctxt context.Context) func(t *testing.T) {
 			FocusID: types.Bench,
 		})
 		sbtest.ContainsError(t, types.InvalidExerciseErr, err)
+		sbtest.ContainsError(t, types.MissingExerciseNameErr, err)
 	}
 }
 
@@ -50,6 +51,7 @@ func exerciseInvalidFocusID(ctxt context.Context) func(t *testing.T) {
 			FocusID: types.ExerciseFocus(math.MaxInt32),
 		})
 		sbtest.ContainsError(t, types.InvalidExerciseErr, err)
+		sbtest.ContainsError(t, types.ErrInvalidExerciseFocus, err)
 	}
 }
 
@@ -61,6 +63,7 @@ func exerciseInvalidKindID(ctxt context.Context) func(t *testing.T) {
 			FocusID: types.Bench,
 		})
 		sbtest.ContainsError(t, types.InvalidExerciseErr, err)
+		sbtest.ContainsError(t, types.ErrInvalidExerciseKind, err)
 	}
 }
 

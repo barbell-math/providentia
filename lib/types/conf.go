@@ -13,24 +13,6 @@ type (
 		// SimplifiedNegativeSpaceModel simplifiednegativespace.Opts
 	}
 
-	BarPathCalcConf struct {
-		MinNumSamples   uint64
-		TimeDeltaEps    Second
-		ApproxErr       ApproximationError
-		NearZeroFilter  float64
-		SmootherWeight1 float64
-		SmootherWeight2 float64
-		SmootherWeight3 float64
-		SmootherWeight4 float64
-		SmootherWeight5 float64
-	}
-
-	BarPathTrackerConf struct {
-		MinLength   Second
-		MinFileSize uint64
-		MaxFileSize uint64
-	}
-
 	// Holds all configuration data for the library. Used to define the state of
 	// the library and provides associated utility functions for cmd line
 	// argument parsing such as [logic.ConfParser] and [logic.ConfDefaults].
@@ -38,9 +20,7 @@ type (
 		Logging sbargp.LoggingConf
 		DB      sbargp.DBConf
 
-		Global         GlobalConf
-		BarPathCalc    BarPathCalcConf
-		BarPathTracker BarPathTrackerConf
+		Global GlobalConf
 
 		// Configuraiton that is used when setting up the physics job queue. The
 		// physics job queue is responsible for taking position time series data

@@ -33,22 +33,6 @@ func ConfDefaults() *types.Conf {
 			BatchSize:             1e3,
 			PerRequestIdCacheSize: 1e2,
 		},
-		BarPathCalc: types.BarPathCalcConf{
-			MinNumSamples:   100,
-			TimeDeltaEps:    1e-6,
-			ApproxErr:       types.FourthOrder,
-			NearZeroFilter:  0.1,
-			SmootherWeight1: 0.5,
-			SmootherWeight2: 0.5,
-			SmootherWeight3: 1,
-			SmootherWeight4: 0.5,
-			SmootherWeight5: 0.5,
-		},
-		BarPathTracker: types.BarPathTrackerConf{
-			MinLength:   5,
-			MinFileSize: 5e7, // 50MB
-			MaxFileSize: 5e8, // 500MB
-		},
 		PhysicsJobQueue: sbjobqueue.Opts{
 			QueueLen:       10,
 			MaxNumWorkers:  uint32(runtime.NumCPU()),
@@ -199,110 +183,6 @@ func ConfParser(
 			10,
 		),
 	)
-
-	fs.Func(
-		startStr("BarPathCalc", "MinNumSamples"),
-		"The minimum number of samples that should be present in physics data",
-		sbargp.Uint(
-			&val.BarPathCalc.MinNumSamples,
-			_default.BarPathCalc.MinNumSamples,
-			10,
-		),
-	)
-	fs.Func(
-		startStr("BarPathCalc", "TimeDeltaEps"),
-		"The maximum acceptable variance between time sample deltas",
-		sbargp.Float(
-			&val.BarPathCalc.TimeDeltaEps,
-			_default.BarPathCalc.TimeDeltaEps,
-		),
-	)
-	fs.Func(
-		startStr("BarPathCalc", "ApproxErr"),
-		fmt.Sprintf(
-			"The accuracy of the approximation error. One of: %v",
-			types.ApproximationErrorNames(),
-		),
-		sbargp.FromTextUnmarshaler(
-			&val.BarPathCalc.ApproxErr,
-			_default.BarPathCalc.ApproxErr,
-		),
-	)
-	fs.Func(
-		startStr("BarPathCalc", "NearZeroFilter"),
-		"How close to 0 the vertical bar position can be for it to be considered 0",
-		sbargp.Float(
-			&val.BarPathCalc.NearZeroFilter,
-			_default.BarPathCalc.NearZeroFilter,
-		),
-	)
-	fs.Func(
-		startStr("BarPathCalc", "SmootherWeight1"),
-		"The weight of the second-left value in the weighted average smoother function",
-		sbargp.Float(
-			&val.BarPathCalc.SmootherWeight1,
-			_default.BarPathCalc.SmootherWeight1,
-		),
-	)
-	fs.Func(
-		startStr("BarPathCalc", "SmootherWeight2"),
-		"The weight of the first-left value in the weighted average smoother function",
-		sbargp.Float(
-			&val.BarPathCalc.SmootherWeight2,
-			_default.BarPathCalc.SmootherWeight2,
-		),
-	)
-	fs.Func(
-		startStr("BarPathCalc", "SmootherWeight3"),
-		"The weight of the central value in the weighted average smoother function",
-		sbargp.Float(
-			&val.BarPathCalc.SmootherWeight3,
-			_default.BarPathCalc.SmootherWeight3,
-		),
-	)
-	fs.Func(
-		startStr("BarPathCalc", "SmootherWeight4"),
-		"The weight of the first-right value in the weighted average smoother function",
-		sbargp.Float(
-			&val.BarPathCalc.SmootherWeight4,
-			_default.BarPathCalc.SmootherWeight4,
-		),
-	)
-	fs.Func(
-		startStr("BarPathCalc", "SmootherWeight5"),
-		"The weight of the second-right value in the weighted average smoother function",
-		sbargp.Float(
-			&val.BarPathCalc.SmootherWeight5,
-			_default.BarPathCalc.SmootherWeight5,
-		),
-	)
-
-	fs.Func(
-		startStr("BarPathTracker", "MinLength"),
-		"The minimum length of a video provided for bar path analysis in seconds",
-		sbargp.Float(
-			&val.BarPathTracker.MinLength,
-			_default.BarPathTracker.MinLength,
-		),
-	)
-	fs.Func(
-		startStr("BarPathTracker", "MinFileSize"),
-		"The minimum file size of a video provided for bar path analysis in bytes",
-		sbargp.Uint(
-			&val.BarPathTracker.MinFileSize,
-			_default.BarPathTracker.MinFileSize,
-			10,
-		),
-	)
-	fs.Func(
-		startStr("BarPathTracker", "MaxFileSize"),
-		"The maximum file size of a video provided for bar path analysis in bytes",
-		sbargp.Uint(
-			&val.BarPathTracker.MaxFileSize,
-			_default.BarPathTracker.MaxFileSize,
-			10,
-		),
-	)
 }
 
 // Takes the supplied [types.Conf] struct and translates it into a [types.State]
@@ -318,8 +198,6 @@ func ConfToState(
 	state = &s
 
 	state.Global = c.Global
-	state.BarPathCalc = c.BarPathCalc
-	state.BarPathTracker = c.BarPathTracker
 
 	if state.PhysicsJobQueue, err = sbjobqueue.NewJobQueue[types.PhysicsJob](
 		&c.PhysicsJobQueue,

@@ -9,7 +9,7 @@ extern "C" {
 
 	enum BarPathCalcErrCode_t calcBarPathPhysData(
 		barPathData_t* data,
-		barPathCalcConf_t* opts
+		barPathCalcHyperparams_t* opts
 	);
 
 #ifdef __cplusplus

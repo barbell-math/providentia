@@ -13,11 +13,12 @@ import (
 
 type (
 	Physics struct {
-		BarPath []types.BarPathVariant
-		Tl      *dal.BulkCreateTrainingLogsParams
-		B       *sbjobqueue.Batch
-		S       *types.State
-		Q       *dal.SyncQueries
+		BarPath              []types.BarPathVariant
+		Tl                   *dal.BulkCreateTrainingLogsParams
+		B                    *sbjobqueue.Batch
+		Q                    *dal.SyncQueries
+		BarPathCalcParams    *types.BarPathCalcHyperparams
+		BarTrackerCalcParams *types.BarPathTrackerHyperparams
 	}
 )
 
@@ -29,7 +30,10 @@ func (p *Physics) Batch() *sbjobqueue.Batch {
 
 func (p *Physics) Run(ctxt context.Context) error {
 	var physData dal.CreatePhysicsDataParams
-	barpathphysdata.InitPhysicsData(&physData, len(p.BarPath))
+	barpathphysdata.InitBarPathCalcPhysicsData(
+		&physData, p.BarPathCalcParams, len(p.BarPath),
+	)
+	// TODO - barpathtracker.InitBarPathTrackerData(&physData, p.BarTrackerCalcParams)
 
 	for i, set := range p.BarPath {
 		select {
@@ -41,7 +45,9 @@ func (p *Physics) Run(ctxt context.Context) error {
 		if rawData, ok := set.TimeSeriesData(); ok {
 			physData.Time[i] = rawData.TimeData
 			physData.Position[i] = rawData.PositionData
-			if err := barpathphysdata.Calc(p.S, p.Tl, &physData, i); err != nil {
+			if err := barpathphysdata.Calc(
+				p.Tl, &physData, p.BarPathCalcParams, i,
+			); err != nil {
 				return sberr.AppendError(types.PhysicsJobQueueErr, err)
 			}
 		} else if rawData, ok := set.VideoData(); ok {

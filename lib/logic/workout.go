@@ -51,6 +51,8 @@ import (
 // If any error occurs no changes will be made to the database.
 func CreateWorkouts(
 	ctxt context.Context,
+	barPathCalcParams *types.BarPathCalcHyperparams,
+	barTrackerCalcParams *types.BarPathTrackerHyperparams,
 	workouts ...types.RawWorkout,
 ) (opErr error) {
 	if len(workouts) == 0 {
@@ -58,7 +60,11 @@ func CreateWorkouts(
 	}
 	return runOp(ctxt, opCalls{
 		op: func(state *types.State, queries *dal.SyncQueries) error {
-			return ops.CreateWorkouts(ctxt, state, queries, workouts...)
+			return ops.CreateWorkouts(
+				ctxt, state, queries,
+				barPathCalcParams, barTrackerCalcParams,
+				workouts...,
+			)
 		},
 	})
 }

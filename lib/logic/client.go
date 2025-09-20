@@ -59,6 +59,9 @@ func ReadClientsByEmail(
 	ctxt context.Context,
 	emails ...string,
 ) (res []types.Client, opErr error) {
+	if len(emails) == 0 {
+		return
+	}
 	opErr = runOp(ctxt, opCalls{
 		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
 			res, err = ops.ReadClientsByEmail(ctxt, state, queries, emails...)

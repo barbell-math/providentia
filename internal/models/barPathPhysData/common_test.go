@@ -111,76 +111,68 @@ func getBasicRawData() dal.CreatePhysicsDataParams {
 func TestTimeSeriesNotIncreasingErr(t *testing.T) {
 	rawData := getBasicRawData()
 	rawData.Time[0] = []types.Second{0, 1, 2, 3, 2, 5, 6}
-	state := types.State{
-		BarPathCalc: types.BarPathCalcConf{
-			ApproxErr:     types.FourthOrder,
-			MinNumSamples: 5,
-			TimeDeltaEps:  1e-6,
-		},
+	params := types.BarPathCalcHyperparams{
+		ApproxErr:     types.FourthOrder,
+		MinNumSamples: 5,
+		TimeDeltaEps:  1e-6,
 	}
 	baseData := dal.BulkCreateTrainingLogsParams{
 		Weight: 1,
 		Reps:   1,
 		Sets:   1,
 	}
-	err := Calc(&state, &baseData, &rawData, 0)
+	err := Calc(&baseData, &rawData, &params, 0)
 	sbtest.ContainsError(t, types.TimeSeriesDecreaseErr, err)
 }
 
 func TestTimeSeriesNotMonotonicErr(t *testing.T) {
 	rawData := getBasicRawData()
 	rawData.Time[0] = []types.Second{0, 1, 2, 4, 4, 5, 6}
-	state := types.State{
-		BarPathCalc: types.BarPathCalcConf{
-			ApproxErr:     types.FourthOrder,
-			MinNumSamples: 5,
-			TimeDeltaEps:  1e-6,
-		},
+	params := types.BarPathCalcHyperparams{
+		ApproxErr:     types.FourthOrder,
+		MinNumSamples: 5,
+		TimeDeltaEps:  1e-6,
 	}
 	baseData := dal.BulkCreateTrainingLogsParams{
 		Weight: 1,
 		Reps:   1,
 		Sets:   1,
 	}
-	err := Calc(&state, &baseData, &rawData, 0)
+	err := Calc(&baseData, &rawData, &params, 0)
 	sbtest.ContainsError(t, types.TimeSeriesNotMonotonicErr, err)
 }
 
 func TestInvalidApproxErrErr(t *testing.T) {
 	rawData := getBasicRawData()
-	state := types.State{
-		BarPathCalc: types.BarPathCalcConf{
-			ApproxErr:     types.ApproximationError(500),
-			MinNumSamples: 5,
-			TimeDeltaEps:  1e-6,
-		},
+	params := types.BarPathCalcHyperparams{
+		ApproxErr:     types.ApproximationError(500),
+		MinNumSamples: 5,
+		TimeDeltaEps:  1e-6,
 	}
 	baseData := dal.BulkCreateTrainingLogsParams{
 		Weight: 1,
 		Reps:   1,
 		Sets:   1,
 	}
-	err := Calc(&state, &baseData, &rawData, 0)
+	err := Calc(&baseData, &rawData, &params, 0)
 	sbtest.ContainsError(t, types.ErrInvalidApproximationError, err)
 }
 
 func TestFractionalSets(t *testing.T) {
 	rawData := getBasicRawData()
-	state := types.State{
-		BarPathCalc: types.BarPathCalcConf{
-			ApproxErr:     types.SecondOrder,
-			MinNumSamples: 5,
-			TimeDeltaEps:  1e-6,
-		},
+	params := types.BarPathCalcHyperparams{
+		ApproxErr:     types.SecondOrder,
+		MinNumSamples: 5,
+		TimeDeltaEps:  1e-6,
 	}
 	baseData := dal.BulkCreateTrainingLogsParams{
 		Weight: 1,
 		Reps:   2,
 		Sets:   1.5,
 	}
-	err := Calc(&state, &baseData, &rawData, 0)
+	err := Calc(&baseData, &rawData, &params, 0)
 	sbtest.Nil(t, err)
-	err = Calc(&state, &baseData, &rawData, 1)
+	err = Calc(&baseData, &rawData, &params, 1)
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, len(rawData.RepSplits), 2)
 	sbtest.Eq(t, len(rawData.RepSplits[0]), 2)
@@ -191,9 +183,9 @@ func TestFractionalSets(t *testing.T) {
 		Reps:   1,
 		Sets:   1.5,
 	}
-	err = Calc(&state, &baseData, &rawData, 0)
+	err = Calc(&baseData, &rawData, &params, 0)
 	sbtest.Nil(t, err)
-	err = Calc(&state, &baseData, &rawData, 1)
+	err = Calc(&baseData, &rawData, &params, 1)
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, len(rawData.RepSplits), 2)
 	sbtest.Eq(t, len(rawData.RepSplits[0]), 1)
@@ -211,7 +203,7 @@ func testForAccuracy(
 	t *testing.T,
 	samples int,
 	f funcVals,
-	state *types.State,
+	params *types.BarPathCalcHyperparams,
 	baseData *dal.BulkCreateTrainingLogsParams,
 ) {
 	rawData := dal.CreatePhysicsDataParams{
@@ -283,11 +275,11 @@ func testForAccuracy(
 			Y: types.Meter(f.f1(float64(i))),
 		}
 	}
-	err := Calc(state, baseData, &rawData, 0)
+	err := Calc(baseData, &rawData, params, 0)
 	sbtest.Nil(t, err)
 
 	edgeGap := 2
-	if state.BarPathCalc.ApproxErr == types.FourthOrder {
+	if params.ApproxErr == types.FourthOrder {
 		edgeGap = 3
 	}
 	for i := edgeGap; i < samples-edgeGap; i++ {
@@ -383,12 +375,10 @@ func TestQuadPolynomialSecondOrderAccuracy(t *testing.T) {
 			d2: func(x float64) float64 { return 2 },
 			d3: func(x float64) float64 { return 0 },
 		},
-		&types.State{
-			BarPathCalc: types.BarPathCalcConf{
-				ApproxErr:     types.SecondOrder,
-				MinNumSamples: 10,
-				TimeDeltaEps:  1e-6,
-			},
+		&types.BarPathCalcHyperparams{
+			ApproxErr:     types.SecondOrder,
+			MinNumSamples: 10,
+			TimeDeltaEps:  1e-6,
 		},
 		&dal.BulkCreateTrainingLogsParams{
 			Weight: 1,
@@ -410,12 +400,10 @@ func TestQuadPolynomialFourthOrderAccuracy(t *testing.T) {
 			d2: func(x float64) float64 { return 12 * math.Pow(x, 2) },
 			d3: func(x float64) float64 { return 24 * math.Pow(x, 1) },
 		},
-		&types.State{
-			BarPathCalc: types.BarPathCalcConf{
-				ApproxErr:     types.FourthOrder,
-				MinNumSamples: 10,
-				TimeDeltaEps:  1e-6,
-			},
+		&types.BarPathCalcHyperparams{
+			ApproxErr:     types.FourthOrder,
+			MinNumSamples: 10,
+			TimeDeltaEps:  1e-6,
 		},
 		&dal.BulkCreateTrainingLogsParams{
 			Weight: 1,

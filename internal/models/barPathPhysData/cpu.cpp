@@ -9,7 +9,7 @@
 
 enum BarPathCalcErrCode_t validateSuppliedData(
 	barPathData_t* data,
-	barPathCalcConf_t* opts
+	barPathCalcHyperparams_t* opts
 ) {
 	double_t h=data->time[1]-data->time[0];
 
@@ -30,7 +30,7 @@ enum BarPathCalcErrCode_t validateSuppliedData(
 // http://code.barbellmath.net/barbell-math/providentia/wiki/Numerical-Difference-Methods
 enum BarPathCalcErrCode_t calcDerivatives(
 	barPathData_t* data,
-	barPathCalcConf_t* opts
+	barPathCalcHyperparams_t* opts
 ) {
 	double_t h=data->time[1]-data->time[0];
 
@@ -158,7 +158,7 @@ enum BarPathCalcErrCode_t calcDerivatives(
 
 enum BarPathCalcErrCode_t runSmoother(
 	barPathData_t* data,
-	barPathCalcConf_t* opts
+	barPathCalcHyperparams_t* opts
 ) {
 	float_t wTot=(
 		opts->SmootherWeight1+
@@ -222,7 +222,7 @@ enum BarPathCalcErrCode_t runSmoother(
 // http://code.barbellmath.net/barbell-math/providentia/wiki/Bar-Path-Calcs
 enum BarPathCalcErrCode_t calcHigherOrderData(
 	barPathData_t* data,
-	barPathCalcConf_t* opts
+	barPathCalcHyperparams_t* opts
 ) {
 	for (int i=0; i<data->timeLen; i++) {
 		data->force[i].X=data->mass*data->acc[i].X;
@@ -242,7 +242,7 @@ enum BarPathCalcErrCode_t calcHigherOrderData(
 
 enum BarPathCalcErrCode_t calcRepSplits(
 	barPathData_t* data,
-	barPathCalcConf_t* opts
+	barPathCalcHyperparams_t* opts
 ) {
 	int centersAdded=0;
 	std::vector<TimestampedVal> repCenters(data->reps);
@@ -312,7 +312,7 @@ enum BarPathCalcErrCode_t calcRepSplits(
 
 enum BarPathCalcErrCode_t calcRepStats(
 	barPathData_t* data,
-	barPathCalcConf_t* opts
+	barPathCalcHyperparams_t* opts
 ) {
 	for (int i=0; i<data->reps; i++) {
 		data->minVel[i].Value=std::numeric_limits<double_t>::infinity();
@@ -424,7 +424,7 @@ enum BarPathCalcErrCode_t calcRepStats(
 
 extern "C" enum BarPathCalcErrCode_t calcBarPathPhysData(
 	barPathData_t* data,
-	barPathCalcConf_t* opts
+	barPathCalcHyperparams_t* opts
 ) {
 	BarPathCalcErrCode_t err = validateSuppliedData(data, opts);
 	if (err!=NoErr) {

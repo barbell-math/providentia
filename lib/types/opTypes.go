@@ -6,6 +6,31 @@ import (
 )
 
 type (
+	Hyperparams interface {
+		BarPathCalcHyperparams |
+			BarPathTrackerHyperparams
+	}
+
+	BarPathCalcHyperparams struct {
+		Version         int32
+		MinNumSamples   uint64
+		TimeDeltaEps    Second
+		ApproxErr       ApproximationError
+		NearZeroFilter  float64
+		SmootherWeight1 float64
+		SmootherWeight2 float64
+		SmootherWeight3 float64
+		SmootherWeight4 float64
+		SmootherWeight5 float64
+	}
+
+	BarPathTrackerHyperparams struct {
+		Version     int32
+		MinLength   Second
+		MinFileSize uint64
+		MaxFileSize uint64
+	}
+
 	// Represents a client from the database
 	Client struct {
 		FirstName string // The first name of the client
@@ -96,6 +121,9 @@ var (
 
 	InvalidClientErr                 = errors.New("Invalid client")
 	CouldNotAddClientsErr            = errors.New("Could not add the requested clients")
+	MissingFirstNameErr              = errors.New("First name must not be empty")
+	MissingLastNameErr               = errors.New("Last name must not be empty")
+	MissingEmailErr                  = errors.New("Email must not be empty")
 	CouldNotGetNumClientsErr         = errors.New("Could not get num clients")
 	CouldNotFindRequestedClientErr   = errors.New("Could not find requested client")
 	CouldNotUpdateRequestedClientErr = errors.New("Could not update requested client")
@@ -103,6 +131,7 @@ var (
 
 	InvalidExerciseErr                 = errors.New("Invalid exercise")
 	CouldNotAddExercisesErr            = errors.New("Could not add the requested exercises")
+	MissingExerciseNameErr             = errors.New("Exercise name must not be empty")
 	CouldNotGetNumExercisesErr         = errors.New("Could not get num exercises")
 	CouldNotFindRequestedExerciseErr   = errors.New("Could not find requested exercise")
 	CouldNotUpdateRequestedExerciseErr = errors.New("Could not update requested exercise")
@@ -111,10 +140,30 @@ var (
 	InvalidWorkoutErr                 = errors.New("Invalid workout")
 	InvalidSessionErr                 = errors.New("Invalid session num")
 	MalformedWorkoutExerciseErr       = errors.New("Malformed exercise")
+	InvalidBarPathsLenErr             = errors.New("The bar paths list must either be empty or the same length as the ceiling of the number of sets")
+	VideoPathDirNotFileErr            = errors.New("Expected a video file, got dir")
+	TimePositionDataMismatchErr       = errors.New("The length of the time data and position data must match")
+	TimeDataLenErr                    = errors.New("The minimum number of samples was not provided")
 	CouldNotAddWorkoutErr             = errors.New("Could not add the requested workouts")
 	CouldNotGetNumWorkoutsErr         = errors.New("Could not get num workouts")
 	CouldNotGetTotalNumExercisesErr   = errors.New("Could not get total num exercises")
 	CouldNotGetTotalNumPhysEntriesErr = errors.New("Could not get total num phys entries")
 	CouldNotFindRequestedWorkoutErr   = errors.New("Could not find requested workout")
 	CouldNotDeleteRequestedWorkoutErr = errors.New("Could not delete requested workout")
+
+	InvalidHyperparamsErr               = errors.New("Invalid hyperparameters")
+	EncodingJsonHyperparamsErr          = errors.New("An error occurred encoding hyperparameters to json")
+	DecodingJsonHyperparamsErr          = errors.New("An error occurred decoding hyperparameters from json")
+	InvalidBarPathCalcErr               = errors.New("Invalid bar path calc conf")
+	InvalidMinNumSamplesErr             = errors.New("Invalid min num samples")
+	InvalidTimeDeltaEpsErr              = errors.New("Invalid time delta eps")
+	InvalidNearZeroFilterErr            = errors.New("Invalid near zero filter")
+	InvalidBarPathTrackerErr            = errors.New("Invalid bar path tracker conf")
+	InvalidMinLengthErr                 = errors.New("Invalid min length")
+	InvalidMinFileSizeErr               = errors.New("Invalid min file size")
+	InvalidMaxFileSizeErr               = errors.New("Invalid max file size")
+	CouldNotAddNumHyperparamsErr        = errors.New("Could not add requested hyperparams")
+	CouldNotGetNumHyperparamsErr        = errors.New("Could not get num hyperparams")
+	CouldNotFindRequestedHyperparamsErr = errors.New("Could not find requested hyperparams")
+	CouldNotDeleteHyperparamsErr        = errors.New("Could not delete requester hyperparams")
 )

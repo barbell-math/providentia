@@ -38,6 +38,7 @@ func clientMissingFirstName(ctxt context.Context) func(t *testing.T) {
 			Email:    "email@email.com",
 		})
 		sbtest.ContainsError(t, types.InvalidClientErr, err)
+		sbtest.ContainsError(t, types.MissingFirstNameErr, err)
 	}
 }
 
@@ -48,6 +49,7 @@ func clientMissingLastName(ctxt context.Context) func(t *testing.T) {
 			Email:     "email@email.com",
 		})
 		sbtest.ContainsError(t, types.InvalidClientErr, err)
+		sbtest.ContainsError(t, types.MissingLastNameErr, err)
 	}
 }
 
@@ -58,6 +60,7 @@ func clientMissingEmail(ctxt context.Context) func(t *testing.T) {
 			LastName:  "LName",
 		})
 		sbtest.ContainsError(t, types.InvalidClientErr, err)
+		sbtest.ContainsError(t, types.MissingEmailErr, err)
 	}
 }
 

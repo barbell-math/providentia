@@ -24,21 +24,21 @@ type Exercise struct {
 }
 
 type ExerciseFocus struct {
-	ID    int32  `json:"id"`
-	Focus string `json:"focus"`
+	ID    types.ExerciseFocus `json:"id"`
+	Focus string              `json:"focus"`
 }
 
 type ExerciseKind struct {
-	ID          int32  `json:"id"`
-	Kind        string `json:"kind"`
-	Description string `json:"description"`
+	ID          types.ExerciseKind `json:"id"`
+	Kind        string             `json:"kind"`
+	Description string             `json:"description"`
 }
 
 type ModelState struct {
 	ID            int64   `json:"id"`
 	ClientID      int64   `json:"client_id"`
 	TrainingLogID int64   `json:"training_log_id"`
-	ModelID       int32   `json:"model_id"`
+	HyperparamsID int32   `json:"hyperparams_id"`
 	V1            float64 `json:"v1"`
 	V2            float64 `json:"v2"`
 	V3            float64 `json:"v3"`
@@ -55,38 +55,47 @@ type ModelState struct {
 }
 
 type PhysicsData struct {
-	ID           int64                                                   `json:"id"`
-	Path         []string                                                `json:"path"`
-	Time         [][]types.Second                                        `json:"time"`
-	Position     [][]types.Vec2[types.Meter, types.Meter]                `json:"position"`
-	Velocity     [][]types.Vec2[types.MeterPerSec, types.MeterPerSec]    `json:"velocity"`
-	Acceleration [][]types.Vec2[types.MeterPerSec2, types.MeterPerSec2]  `json:"acceleration"`
-	Jerk         [][]types.Vec2[types.MeterPerSec3, types.MeterPerSec3]  `json:"jerk"`
-	Force        [][]types.Vec2[types.Newton, types.Newton]              `json:"force"`
-	Impulse      [][]types.Vec2[types.NewtonSec, types.NewtonSec]        `json:"impulse"`
-	Work         [][]types.Joule                                         `json:"work"`
-	Power        [][]types.Watt                                          `json:"power"`
-	RepSplits    [][]types.Split                                         `json:"rep_splits"`
-	MinVel       [][]types.PointInTime[types.Second, types.MeterPerSec]  `json:"min_vel"`
-	MaxVel       [][]types.PointInTime[types.Second, types.MeterPerSec]  `json:"max_vel"`
-	MinAcc       [][]types.PointInTime[types.Second, types.MeterPerSec2] `json:"min_acc"`
-	MaxAcc       [][]types.PointInTime[types.Second, types.MeterPerSec2] `json:"max_acc"`
-	MinForce     [][]types.PointInTime[types.Second, types.Newton]       `json:"min_force"`
-	MaxForce     [][]types.PointInTime[types.Second, types.Newton]       `json:"max_force"`
-	MinImpulse   [][]types.PointInTime[types.Second, types.NewtonSec]    `json:"min_impulse"`
-	MaxImpulse   [][]types.PointInTime[types.Second, types.NewtonSec]    `json:"max_impulse"`
-	AvgWork      [][]types.Joule                                         `json:"avg_work"`
-	MinWork      [][]types.PointInTime[types.Second, types.Joule]        `json:"min_work"`
-	MaxWork      [][]types.PointInTime[types.Second, types.Joule]        `json:"max_work"`
-	AvgPower     [][]types.Watt                                          `json:"avg_power"`
-	MinPower     [][]types.PointInTime[types.Second, types.Watt]         `json:"min_power"`
-	MaxPower     [][]types.PointInTime[types.Second, types.Watt]         `json:"max_power"`
+	ID             int64                                                   `json:"id"`
+	Path           []string                                                `json:"path"`
+	BarPathCalcID  int32                                                   `json:"bar_path_calc_id"`
+	BarPathTrackID pgtype.Int4                                             `json:"bar_path_track_id"`
+	Time           [][]types.Second                                        `json:"time"`
+	Position       [][]types.Vec2[types.Meter, types.Meter]                `json:"position"`
+	Velocity       [][]types.Vec2[types.MeterPerSec, types.MeterPerSec]    `json:"velocity"`
+	Acceleration   [][]types.Vec2[types.MeterPerSec2, types.MeterPerSec2]  `json:"acceleration"`
+	Jerk           [][]types.Vec2[types.MeterPerSec3, types.MeterPerSec3]  `json:"jerk"`
+	Force          [][]types.Vec2[types.Newton, types.Newton]              `json:"force"`
+	Impulse        [][]types.Vec2[types.NewtonSec, types.NewtonSec]        `json:"impulse"`
+	Work           [][]types.Joule                                         `json:"work"`
+	Power          [][]types.Watt                                          `json:"power"`
+	RepSplits      [][]types.Split                                         `json:"rep_splits"`
+	MinVel         [][]types.PointInTime[types.Second, types.MeterPerSec]  `json:"min_vel"`
+	MaxVel         [][]types.PointInTime[types.Second, types.MeterPerSec]  `json:"max_vel"`
+	MinAcc         [][]types.PointInTime[types.Second, types.MeterPerSec2] `json:"min_acc"`
+	MaxAcc         [][]types.PointInTime[types.Second, types.MeterPerSec2] `json:"max_acc"`
+	MinForce       [][]types.PointInTime[types.Second, types.Newton]       `json:"min_force"`
+	MaxForce       [][]types.PointInTime[types.Second, types.Newton]       `json:"max_force"`
+	MinImpulse     [][]types.PointInTime[types.Second, types.NewtonSec]    `json:"min_impulse"`
+	MaxImpulse     [][]types.PointInTime[types.Second, types.NewtonSec]    `json:"max_impulse"`
+	AvgWork        [][]types.Joule                                         `json:"avg_work"`
+	MinWork        [][]types.PointInTime[types.Second, types.Joule]        `json:"min_work"`
+	MaxWork        [][]types.PointInTime[types.Second, types.Joule]        `json:"max_work"`
+	AvgPower       [][]types.Watt                                          `json:"avg_power"`
+	MinPower       [][]types.PointInTime[types.Second, types.Watt]         `json:"min_power"`
+	MaxPower       [][]types.PointInTime[types.Second, types.Watt]         `json:"max_power"`
+}
+
+type ProvidentiaHyperparam struct {
+	ID      int32         `json:"id"`
+	ModelID types.ModelID `json:"model_id"`
+	Version int32         `json:"version"`
+	Params  []byte        `json:"params"`
 }
 
 type ProvidentiaModel struct {
-	ID          int32  `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	ID          types.ModelID `json:"id"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
 }
 
 type TrainingLog struct {

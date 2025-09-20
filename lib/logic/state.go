@@ -45,12 +45,6 @@ func ValidateState(s *types.State) error {
 	if err := checkStateGlobalConf(s); err != nil {
 		return err
 	}
-	if err := checkStateBarPathCalc(s); err != nil {
-		return err
-	}
-	if err := checkStateBarPathTracker(s); err != nil {
-		return err
-	}
 	if s.Log == nil {
 		return sberr.Wrap(types.InvalidLoggerErr, "The Log field must not be nil")
 	}
@@ -79,85 +73,6 @@ func checkStateGlobalConf(state *types.State) error {
 			sberr.Wrap(
 				types.InvalidBatchSizeErr,
 				"Must be >0. Got: %d", state.Global.BatchSize,
-			),
-		)
-	}
-	return nil
-}
-
-func checkStateBarPathCalc(state *types.State) error {
-	if state.BarPathCalc.MinNumSamples < 2 {
-		return sberr.AppendError(
-			types.InvalidBarPathCalcErr,
-			sberr.Wrap(
-				types.InvalidMinNumSamplesErr,
-				"Must be >=2. Got: %d", state.BarPathCalc.MinNumSamples,
-			),
-		)
-	}
-	if state.BarPathCalc.TimeDeltaEps <= 0 {
-		return sberr.AppendError(
-			types.InvalidBarPathCalcErr,
-			sberr.Wrap(
-				types.InvalidTimeDeltaEpsErr,
-				"Must be >=0. Got: %f", state.BarPathCalc.TimeDeltaEps,
-			),
-		)
-	}
-	if !state.BarPathCalc.ApproxErr.IsValid() {
-		return sberr.AppendError(
-			types.InvalidBarPathCalcErr,
-			types.ErrInvalidApproximationError,
-		)
-	}
-	if state.BarPathCalc.NearZeroFilter < 0 {
-		return sberr.AppendError(
-			types.InvalidBarPathCalcErr,
-			sberr.Wrap(
-				types.InvalidNearZeroFilterErr,
-				"Must be >0. Got: %f", state.BarPathCalc.NearZeroFilter,
-			),
-		)
-	}
-	return nil
-}
-
-func checkStateBarPathTracker(state *types.State) error {
-	if state.BarPathTracker.MinLength < 0 {
-		return sberr.AppendError(
-			types.InvalidBarPathTrackerErr,
-			sberr.Wrap(
-				types.InvalidMinLengthErr,
-				"Must be >0. Got: %f", state.BarPathTracker.MinLength,
-			),
-		)
-	}
-	if state.BarPathTracker.MinFileSize < 0 {
-		return sberr.AppendError(
-			types.InvalidBarPathTrackerErr,
-			sberr.Wrap(
-				types.InvalidMinFileSizeErr,
-				"Must be >0. Got: %d", state.BarPathTracker.MinFileSize,
-			),
-		)
-	}
-	if state.BarPathTracker.MaxFileSize < 0 {
-		return sberr.AppendError(
-			types.InvalidBarPathTrackerErr,
-			sberr.Wrap(
-				types.InvalidMaxFileSizeErr,
-				"Must be >0. Got: %d", state.BarPathTracker.MaxFileSize,
-			),
-		)
-	}
-	if state.BarPathTracker.MaxFileSize < state.BarPathTracker.MinFileSize {
-		return sberr.AppendError(
-			types.InvalidBarPathTrackerErr,
-			sberr.Wrap(
-				types.InvalidMaxFileSizeErr,
-				"Max size (%d) must be > min size (%d)",
-				state.BarPathTracker.MaxFileSize,
-				state.BarPathTracker.MinFileSize,
 			),
 		)
 	}
