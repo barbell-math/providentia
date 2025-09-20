@@ -2,11 +2,15 @@ package ops
 
 import (
 	"context"
+	"encoding/csv"
+	"io"
 	"net/mail"
+	"os"
 	"unsafe"
 
 	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
+	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
 	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
 	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
 )
@@ -72,6 +76,37 @@ func CreateClients(
 	}
 
 	return
+}
+
+func CreateClientsFromCSV(
+	ctxt context.Context,
+	state *types.State,
+	queries *dal.SyncQueries,
+	files ...string,
+) (opErr error) {
+	clients := []types.Client{}
+
+	idxs := [3]int{}
+	requestedCols := [3]string{"FirstName", "LastName", "Email"}
+
+	for _, file := range files {
+		if opErr = sbcsv.LoadCSVFile(file, &sbcsv.Opts{
+			RequestedCols: requestedCols[:],
+			Idxs:          idxs[:],
+			Op: func(row []string) error {
+				clients = append(clients, types.Client{
+					FirstName: row[idxs[0]],
+					LastName:  row[idxs[1]],
+					Email:     row[idxs[2]],
+				})
+				return nil
+			},
+		}); opErr != nil {
+			return opErr
+		}
+	}
+
+	return CreateClients(ctxt, state, queries, clients...)
 }
 
 func ReadNumClients(

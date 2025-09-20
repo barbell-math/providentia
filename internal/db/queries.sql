@@ -316,14 +316,14 @@ INSERT INTO providentia.physics_data(
 		JOIN providentia.model
 			ON providentia.model.id = providentia.hyperparams.model_id
 		WHERE providentia.model.name='BarPathCalc'
-			AND providentia.hyperparams.version=$2
+			AND providentia.hyperparams.version=$2	-- TODO - sqlc arg name
 	),
 	(
 		SELECT providentia.model.id FROM providentia.hyperparams
 		JOIN providentia.model
 			ON providentia.model.id = providentia.hyperparams.model_id
 		WHERE providentia.model.name='BarPathTracker'
-			AND providentia.hyperparams.version=$3
+			AND providentia.hyperparams.version=$3	-- TODO - sqlc arg name
 	),
 	$4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
 	$20, $21, $22, $23, $24, $25, $26, $27

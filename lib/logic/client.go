@@ -19,16 +19,24 @@ import (
 // [State.BatchSize] variable.
 //
 // If any error occurs no changes will be made to the database.
-func CreateClients(
-	ctxt context.Context,
-	clients ...types.Client,
-) (opErr error) {
+func CreateClients(ctxt context.Context, clients ...types.Client) (opErr error) {
 	if len(clients) == 0 {
 		return
 	}
 	return runOp(ctxt, opCalls{
 		op: func(state *types.State, queries *dal.SyncQueries) error {
 			return ops.CreateClients(ctxt, state, queries, clients...)
+		},
+	})
+}
+
+func CreateClientsFromCSV(ctxt context.Context, files ...string) (opErr error) {
+	if len(files) == 0 {
+		return
+	}
+	return runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			return ops.CreateClientsFromCSV(ctxt, state, queries, files...)
 		},
 	})
 }
@@ -79,10 +87,7 @@ func ReadClientsByEmail(
 // The context must have a [types.State] variable.
 //
 // If any error occurs no changes will be made to the database.
-func UpdateClients(
-	ctxt context.Context,
-	clients ...types.Client,
-) (opErr error) {
+func UpdateClients(ctxt context.Context, clients ...types.Client) (opErr error) {
 	if len(clients) == 0 {
 		return
 	}
