@@ -90,7 +90,7 @@ func CreateClientsFromCSV(
 		if opErr = sbcsv.LoadCSVFile(file, &sbcsv.Opts{
 			RequestedCols: requestedCols[:],
 			Idxs:          idxs[:],
-			Op: func(row []string) error {
+			Op: func(rowIdx int, row []string, idxs []int) error {
 				clients = append(clients, types.Client{
 					FirstName: row[idxs[0]],
 					LastName:  row[idxs[1]],

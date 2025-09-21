@@ -14,6 +14,7 @@ func TestClient(t *testing.T) {
 	t.Run("duplicateEmail", clientDuplicateEmail)
 	t.Run("transactionRollback", clientTransactionRollback)
 	t.Run("addGet", clientAddGet)
+	t.Run("addCSVGet", clientAddCSVGet)
 	t.Run("addUpdateGet", clientAddUpdateGet)
 	t.Run("addDeleteGet", clientAddDeleteGet)
 }
@@ -254,6 +255,37 @@ func clientAddDeleteGet(t *testing.T) {
 		sbtest.Eq(t, clients[offset].LastName, res[0].LastName)
 		sbtest.Eq(t, clients[offset].Email, res[0].Email)
 	}
+
+	_, err = ReadClientsByEmail(ctxt, "bad@email.com")
+	sbtest.ContainsError(t, types.CouldNotFindRequestedClientErr, err)
+}
+
+func clientAddCSVGet(t *testing.T) {
+	ctxt, cleanup := resetApp(context.Background())
+	t.Cleanup(cleanup)
+
+	err := CreateClientsFromCSV(ctxt, "./testData/clients.csv")
+	sbtest.Nil(t, err)
+
+	numClients, err := ReadNumClients(ctxt)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 2, numClients)
+
+	client, err := ReadClientsByEmail(ctxt, "one@gmail.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, client[0], types.Client{
+		FirstName: "OneFN",
+		LastName:  "OneLN",
+		Email:     "one@gmail.com",
+	})
+
+	client, err = ReadClientsByEmail(ctxt, "two@gmail.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, client[0], types.Client{
+		FirstName: "TwoFN",
+		LastName:  "TwoLN",
+		Email:     "two@gmail.com",
+	})
 
 	_, err = ReadClientsByEmail(ctxt, "bad@email.com")
 	sbtest.ContainsError(t, types.CouldNotFindRequestedClientErr, err)

@@ -30,6 +30,21 @@ func CreateClients(ctxt context.Context, clients ...types.Client) (opErr error) 
 	})
 }
 
+// Adds the clients supplied in the csv files to the database. Has the same
+// behavior as [CreateClients] other than getting the clients from csv files.
+// The csv files are expected to have column names on the first row and the
+// following columns must be present as identified by the column name on the
+// first row. More columns may be present, they will be ignored.
+//   - FirstName (string): the first name of the client
+//   - LastName (string): the last name of the client
+//   - Email (string): the email of the client
+//
+// The context must have a [types.State] variable.
+//
+// Clients will be uploaded in batches that respect the size set in the
+// [State.BatchSize] variable.
+//
+// If any error occurs no changes will be made to the database.
 func CreateClientsFromCSV(ctxt context.Context, files ...string) (opErr error) {
 	if len(files) == 0 {
 		return
