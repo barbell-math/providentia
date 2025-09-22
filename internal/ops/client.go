@@ -25,44 +25,21 @@ func CreateClients(
 		default:
 		}
 
-		for i := start; i < end; i++ {
-			iterCd := clients[i]
-			if iterCd.FirstName == "" {
-				opErr = sberr.AppendError(
-					types.InvalidClientErr, types.MissingFirstNameErr,
-				)
-				return
-			}
-			if iterCd.LastName == "" {
-				opErr = sberr.AppendError(
-					types.InvalidClientErr, types.MissingLastNameErr,
-				)
-				return
-			}
-			if iterCd.Email == "" {
-				opErr = sberr.AppendError(
-					types.InvalidClientErr, types.MissingEmailErr,
-				)
-				return
-			}
-			if _, err := mail.ParseAddress(iterCd.Email); err != nil {
-				opErr = sberr.Wrap(
-					sberr.AppendError(types.InvalidClientErr, err),
-					"Invalid email: %s", iterCd.Email,
-				)
-				return
-			}
+		chunk := clients[start:end]
+		if opErr = validateClients(chunk); opErr != nil {
+			return
 		}
 
 		var numRows int64
-		chunk := clients[start:end]
 		_ = dal.BulkCreateClientsParams(types.Client{})
 		numRows, opErr = dal.Query1x2(
 			dal.Q.BulkCreateClients, queries, ctxt,
 			*(*[]dal.BulkCreateClientsParams)(unsafe.Pointer(&chunk)),
 		)
 		if opErr != nil {
-			opErr = sberr.AppendError(types.CouldNotAddClientsErr, opErr)
+			opErr = sberr.AppendError(
+				types.CouldNotAddClientsErr, dal.FormatErr(opErr),
+			)
 			return
 		}
 		state.Log.Log(
@@ -75,29 +52,104 @@ func CreateClients(
 	return
 }
 
+func EnsureClientsExist(
+	ctxt context.Context,
+	state *types.State,
+	queries *dal.SyncQueries,
+	clients ...types.Client,
+) (opErr error) {
+	firstNames := make([]string, min(len(clients), int(state.Global.BatchSize)))
+	lastNames := make([]string, min(len(clients), int(state.Global.BatchSize)))
+	emails := make([]string, min(len(clients), int(state.Global.BatchSize)))
+
+	for start, end := range batchIndexes(clients, int(state.Global.BatchSize)) {
+		select {
+		case <-ctxt.Done():
+			return
+		default:
+		}
+
+		chunk := clients[start:end]
+		if opErr = validateClients(chunk); opErr != nil {
+			return
+		}
+
+		for i, c := range chunk {
+			firstNames[i] = c.FirstName
+			lastNames[i] = c.LastName
+			emails[i] = c.Email
+		}
+
+		opErr = dal.Query1x1(
+			dal.Q.EnsureClientsExist, queries, ctxt,
+			dal.EnsureClientsExistParams{
+				FirstNames: firstNames[:len(chunk)],
+				LastNames:  lastNames[:len(chunk)],
+				Emails:     emails[:len(chunk)],
+			},
+		)
+		if opErr != nil {
+			opErr = sberr.AppendError(
+				types.CouldNotAddClientsErr, dal.FormatErr(opErr),
+			)
+			return
+		}
+		state.Log.Log(
+			ctxt, sblog.VLevel(3),
+			"Ensured clients exist",
+			"NumClients", len(chunk),
+		)
+	}
+
+	return
+}
+
+func validateClients(clients []types.Client) (opErr error) {
+	for _, iterCd := range clients {
+		if iterCd.FirstName == "" {
+			opErr = sberr.AppendError(
+				types.InvalidClientErr, types.MissingFirstNameErr,
+			)
+			return
+		}
+		if iterCd.LastName == "" {
+			opErr = sberr.AppendError(
+				types.InvalidClientErr, types.MissingLastNameErr,
+			)
+			return
+		}
+		if iterCd.Email == "" {
+			opErr = sberr.AppendError(
+				types.InvalidClientErr, types.MissingEmailErr,
+			)
+			return
+		}
+		if _, err := mail.ParseAddress(iterCd.Email); err != nil {
+			opErr = sberr.Wrap(
+				sberr.AppendError(types.InvalidClientErr, err),
+				"Invalid email: %s", iterCd.Email,
+			)
+			return
+		}
+	}
+	return
+}
+
 func CreateClientsFromCSV(
 	ctxt context.Context,
 	state *types.State,
 	queries *dal.SyncQueries,
+	opts sbcsv.Opts,
 	files ...string,
 ) (opErr error) {
 	clients := []types.Client{}
-
-	idxs := [3]int{}
-	requestedCols := [3]string{"FirstName", "LastName", "Email"}
+	opts.ReuseRecord = true
 
 	for _, file := range files {
-		if opErr = sbcsv.LoadCSVFile(file, &sbcsv.Opts{
-			RequestedCols: requestedCols[:],
-			Idxs:          idxs[:],
-			Op: func(rowIdx int, row []string, idxs []int) error {
-				clients = append(clients, types.Client{
-					FirstName: row[idxs[0]],
-					LastName:  row[idxs[1]],
-					Email:     row[idxs[2]],
-				})
-				return nil
-			},
+		if opErr = sbcsv.LoadCSVFile(file, &sbcsv.LoadOpts{
+			Opts:          opts,
+			RequestedCols: sbcsv.ReqColsForStruct[types.Client](),
+			Op:            sbcsv.RowToStructOp(&clients),
 		}); opErr != nil {
 			return opErr
 		}
@@ -113,7 +165,9 @@ func ReadNumClients(
 ) (res int64, opErr error) {
 	res, opErr = dal.Query0x2(dal.Q.GetNumClients, queries, ctxt)
 	if opErr != nil {
-		opErr = sberr.AppendError(types.CouldNotGetNumClientsErr, opErr)
+		opErr = sberr.AppendError(
+			types.CouldNotGetNumClientsErr, dal.FormatErr(opErr),
+		)
 		return
 	}
 	state.Log.Log(
@@ -142,7 +196,9 @@ func ReadClientsByEmail(
 			dal.Q.GetClientsByEmail, queries, ctxt, emails[start:end],
 		)
 		if opErr != nil {
-			opErr = sberr.AppendError(types.CouldNotFindRequestedClientErr, opErr)
+			opErr = sberr.AppendError(
+				types.CouldNotFindRequestedClientErr, dal.FormatErr(opErr),
+			)
 			return
 		}
 		if len(rawData) != end-start {
@@ -187,7 +243,7 @@ func UpdateClients(
 		)
 		if opErr != nil {
 			opErr = sberr.AppendError(
-				types.CouldNotUpdateRequestedClientErr, opErr,
+				types.CouldNotUpdateRequestedClientErr, dal.FormatErr(opErr),
 			)
 			return
 		}
@@ -216,7 +272,9 @@ func DeleteClients(
 	var count int64
 	count, opErr = dal.Query1x2(dal.Q.DeleteClientsByEmail, queries, ctxt, emails)
 	if opErr != nil {
-		opErr = sberr.AppendError(types.CouldNotDeleteRequestedClientErr, opErr)
+		opErr = sberr.AppendError(
+			types.CouldNotDeleteRequestedClientErr, dal.FormatErr(opErr),
+		)
 		return
 	}
 	if count != int64(len(emails)) {

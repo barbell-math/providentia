@@ -29,6 +29,14 @@ SELECT SETVAL(
 -- name: BulkCreateClients :copyfrom
 INSERT INTO providentia.client (first_name, last_name, email) VALUES ($1, $2, $3);
 
+-- name: EnsureClientsExist :exec
+INSERT INTO providentia.client (first_name, last_name, email)
+SELECT
+	UNNEST(@first_names::TEXT[]),
+	UNNEST(@last_names::TEXT[]),
+	UNNEST(@emails::TEXT[])
+ON CONFLICT (first_name, last_name, email) DO NOTHING;
+
 -- name: GetNumClients :one
 SELECT COUNT(*) FROM providentia.client;
 
@@ -71,6 +79,14 @@ SELECT SETVAL(
 
 -- name: BulkCreateExercises :copyfrom
 INSERT INTO providentia.exercise (name, kind_id, focus_id) VALUES ($1, $2, $3);
+
+-- name: EnsureExercisesExist :exec
+INSERT INTO providentia.exercise (name, kind_id, focus_id)
+SELECT
+	UNNEST(@names::TEXT[]),
+	UNNEST(@kinds::INT4[]),
+	UNNEST(@focuses::INT4[])
+ON CONFLICT (name, kind_id, focus_id) DO NOTHING;
 
 -- name: GetNumExercises :one
 SELECT COUNT(*) FROM providentia.exercise;

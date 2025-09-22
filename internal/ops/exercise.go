@@ -6,6 +6,7 @@ import (
 
 	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
+	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
 	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
 	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
 )
@@ -23,39 +24,21 @@ func CreateExercises(
 		default:
 		}
 
-		for i := start; i < end; i++ {
-			iterEd := exercises[i]
-			if iterEd.Name == "" {
-				opErr = sberr.AppendError(
-					types.InvalidExerciseErr, types.MissingExerciseNameErr,
-				)
-				return
-			}
-			if !types.ExerciseFocus(iterEd.FocusID).IsValid() {
-				opErr = sberr.AppendError(
-					types.InvalidExerciseErr,
-					types.ErrInvalidExerciseFocus,
-				)
-				return
-			}
-			if !types.ExerciseKind(iterEd.KindID).IsValid() {
-				opErr = sberr.AppendError(
-					types.InvalidExerciseErr,
-					types.ErrInvalidExerciseKind,
-				)
-				return
-			}
+		chunk := exercises[start:end]
+		if opErr = validateExercises(chunk); opErr != nil {
+			return
 		}
 
 		var numRows int64
-		chunk := exercises[start:end]
 		_ = dal.BulkCreateExercisesParams(types.Exercise{})
 		numRows, opErr = dal.Query1x2(
 			dal.Q.BulkCreateExercises, queries, ctxt,
 			*(*[]dal.BulkCreateExercisesParams)(unsafe.Pointer(&chunk)),
 		)
 		if opErr != nil {
-			opErr = sberr.AppendError(types.CouldNotAddExercisesErr, opErr)
+			opErr = sberr.AppendError(
+				types.CouldNotAddExercisesErr, dal.FormatErr(opErr),
+			)
 			return
 		}
 
@@ -69,6 +52,110 @@ func CreateExercises(
 	return
 }
 
+func EnsureExercisesExist(
+	ctxt context.Context,
+	state *types.State,
+	queries *dal.SyncQueries,
+	exercises ...types.Exercise,
+) (opErr error) {
+	names := make([]string, min(len(exercises), int(state.Global.BatchSize)))
+	// TODO - would be nice to have the types be the enum types but sqlc
+	// continues to be a gigantic pain in my ass
+	kindIDs := make([]int32, min(len(exercises), int(state.Global.BatchSize)))
+	focusIDs := make([]int32, min(len(exercises), int(state.Global.BatchSize)))
+
+	for start, end := range batchIndexes(exercises, int(state.Global.BatchSize)) {
+		select {
+		case <-ctxt.Done():
+			return
+		default:
+		}
+
+		chunk := exercises[start:end]
+		if opErr = validateExercises(chunk); opErr != nil {
+			return
+		}
+
+		for i, e := range chunk {
+			names[i] = e.Name
+			kindIDs[i] = int32(e.KindID)
+			focusIDs[i] = int32(e.FocusID)
+		}
+
+		opErr = dal.Query1x1(
+			dal.Q.EnsureExercisesExist, queries, ctxt,
+			dal.EnsureExercisesExistParams{
+				Names:   names[:len(chunk)],
+				Kinds:   kindIDs[:len(chunk)],
+				Focuses: focusIDs[:len(chunk)],
+			},
+		)
+		if opErr != nil {
+			opErr = sberr.AppendError(
+				types.CouldNotAddExercisesErr, dal.FormatErr(opErr),
+			)
+			return
+		}
+
+		state.Log.Log(
+			ctxt, sblog.VLevel(3),
+			"Ensured exercises exist",
+			"NumExercises", len(chunk),
+		)
+	}
+
+	return
+}
+
+func validateExercises(exercises []types.Exercise) (opErr error) {
+	for _, iterEd := range exercises {
+		if iterEd.Name == "" {
+			opErr = sberr.AppendError(
+				types.InvalidExerciseErr, types.MissingExerciseNameErr,
+			)
+			return
+		}
+		if !types.ExerciseFocus(iterEd.FocusID).IsValid() {
+			opErr = sberr.AppendError(
+				types.InvalidExerciseErr,
+				types.ErrInvalidExerciseFocus,
+			)
+			return
+		}
+		if !types.ExerciseKind(iterEd.KindID).IsValid() {
+			opErr = sberr.AppendError(
+				types.InvalidExerciseErr,
+				types.ErrInvalidExerciseKind,
+			)
+			return
+		}
+	}
+	return
+}
+
+func CreateExercisesFromCSV(
+	ctxt context.Context,
+	state *types.State,
+	queries *dal.SyncQueries,
+	opts sbcsv.Opts,
+	files ...string,
+) (opErr error) {
+	exercises := []types.Exercise{}
+	opts.ReuseRecord = true
+
+	for _, file := range files {
+		if opErr = sbcsv.LoadCSVFile(file, &sbcsv.LoadOpts{
+			Opts:          opts,
+			RequestedCols: sbcsv.ReqColsForStruct[types.Exercise](),
+			Op:            sbcsv.RowToStructOp(&exercises),
+		}); opErr != nil {
+			return opErr
+		}
+	}
+
+	return CreateExercises(ctxt, state, queries, exercises...)
+}
+
 func ReadNumExercises(
 	ctxt context.Context,
 	state *types.State,
@@ -76,7 +163,9 @@ func ReadNumExercises(
 ) (res int64, opErr error) {
 	res, opErr = dal.Query0x2(dal.Q.GetNumExercises, queries, ctxt)
 	if opErr != nil {
-		opErr = sberr.AppendError(types.CouldNotGetNumExercisesErr, opErr)
+		opErr = sberr.AppendError(
+			types.CouldNotGetNumExercisesErr, dal.FormatErr(opErr),
+		)
 		return
 	}
 	state.Log.Log(ctxt, sblog.VLevel(3), "Read num exercises")
@@ -101,7 +190,9 @@ func ReadExercisesByName(
 		var rawData []dal.GetExercisesByNameRow
 		rawData, opErr = dal.Query1x2(dal.Q.GetExercisesByName, queries, ctxt, names[start:end])
 		if opErr != nil {
-			opErr = sberr.AppendError(types.CouldNotFindRequestedExerciseErr, opErr)
+			opErr = sberr.AppendError(
+				types.CouldNotFindRequestedExerciseErr, dal.FormatErr(opErr),
+			)
 			return
 		}
 		if len(rawData) != end-start {
@@ -146,7 +237,7 @@ func UpdateExercises(
 		)
 		if opErr != nil {
 			opErr = sberr.AppendError(
-				types.CouldNotUpdateRequestedExerciseErr, opErr,
+				types.CouldNotUpdateRequestedExerciseErr, dal.FormatErr(opErr),
 			)
 			return
 		}
@@ -174,7 +265,9 @@ func DeleteExercises(
 	var count int64
 	count, opErr = dal.Query1x2(dal.Q.DeleteExercisesByName, queries, ctxt, names)
 	if opErr != nil {
-		opErr = sberr.AppendError(types.CouldNotDeleteRequestedExerciseErr, opErr)
+		opErr = sberr.AppendError(
+			types.CouldNotDeleteRequestedExerciseErr, dal.FormatErr(opErr),
+		)
 		return
 	}
 	if count != int64(len(names)) {

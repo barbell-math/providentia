@@ -30,14 +30,18 @@ CREATE TABLE IF NOT EXISTS providentia.exercise (
 	id SERIAL4 NOT NULL PRIMARY KEY,
 	name TEXT NOT NULL UNIQUE,
 	kind_id INT4 NOT NULL REFERENCES providentia.exercise_kind(id) ON DELETE CASCADE,
-	focus_id INT4 NOT NULL REFERENCES providentia.exercise_focus(id) ON DELETE CASCADE
+	focus_id INT4 NOT NULL REFERENCES providentia.exercise_focus(id) ON DELETE CASCADE,
+
+	UNIQUE(name, kind_id, focus_id)
 );
 
 CREATE TABLE IF NOT EXISTS providentia.client (
 	id SERIAL8 NOT NULL PRIMARY KEY,
 	first_name TEXT NOT NULL,
 	last_name TEXT NOT NULL,
-	email TEXT NOT NULL UNIQUE
+	email TEXT NOT NULL UNIQUE,
+
+	UNIQUE(first_name, last_name, email)
 );
 
 CREATE TABLE IF NOT EXISTS providentia.physics_data (

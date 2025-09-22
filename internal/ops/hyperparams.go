@@ -6,6 +6,7 @@ import (
 
 	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
+	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
 	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
 	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
 )
@@ -49,13 +50,17 @@ func CreateHyperparams[T types.Hyperparams](
 			Version: getVersionFrom(&iterParams),
 			Params:  jsonParams,
 		}); opErr != nil {
-			opErr = sberr.AppendError(types.CouldNotAddNumHyperparamsErr, opErr)
+			opErr = sberr.AppendError(
+				types.CouldNotAddNumHyperparamsErr, dal.FormatErr(opErr),
+			)
 			return
 		}
 	}
 
 	if opErr = bufWriter.Flush(ctxt, queries); opErr != nil {
-		opErr = sberr.AppendError(types.CouldNotAddNumHyperparamsErr, opErr)
+		opErr = sberr.AppendError(
+			types.CouldNotAddNumHyperparamsErr, dal.FormatErr(opErr),
+		)
 		return
 	}
 
@@ -157,6 +162,29 @@ func setVersionTo[T types.Hyperparams](v *T, version int32) {
 	}
 }
 
+func CreateHyperparamsFromCSV[T types.Hyperparams](
+	ctxt context.Context,
+	state *types.State,
+	queries *dal.SyncQueries,
+	opts sbcsv.Opts,
+	files ...string,
+) (opErr error) {
+	params := []T{}
+	opts.ReuseRecord = true
+
+	for _, file := range files {
+		if opErr = sbcsv.LoadCSVFile(file, &sbcsv.LoadOpts{
+			Opts:          opts,
+			RequestedCols: sbcsv.ReqColsForStruct[T](),
+			Op:            sbcsv.RowToStructOp(&params),
+		}); opErr != nil {
+			return opErr
+		}
+	}
+
+	return CreateHyperparams[T](ctxt, state, queries, params...)
+}
+
 func ReadNumHyperparams(
 	ctxt context.Context,
 	state *types.State,
@@ -164,7 +192,9 @@ func ReadNumHyperparams(
 ) (res int64, opErr error) {
 	res, opErr = dal.Query0x2(dal.Q.GetNumHyperparams, queries, ctxt)
 	if opErr != nil {
-		opErr = sberr.AppendError(types.CouldNotGetNumHyperparamsErr, opErr)
+		opErr = sberr.AppendError(
+			types.CouldNotGetNumHyperparamsErr, dal.FormatErr(opErr),
+		)
 		return
 	}
 	state.Log.Log(ctxt, sblog.VLevel(3), "Read num hyperparams")
@@ -179,7 +209,9 @@ func ReadNumHyperparamsFor[T types.Hyperparams](
 	modelId := getModelIdFor[T]()
 	res, opErr = dal.Query1x2(dal.Q.GetNumHyperparamsFor, queries, ctxt, modelId)
 	if opErr != nil {
-		opErr = sberr.AppendError(types.CouldNotGetNumHyperparamsErr, opErr)
+		opErr = sberr.AppendError(
+			types.CouldNotGetNumHyperparamsErr, dal.FormatErr(opErr),
+		)
 		return
 	}
 	state.Log.Log(
@@ -216,7 +248,7 @@ func ReadHyperparamsByVersionFor[T types.Hyperparams](
 		)
 		if opErr != nil {
 			opErr = sberr.AppendError(
-				types.CouldNotFindRequestedHyperparamsErr, opErr,
+				types.CouldNotFindRequestedHyperparamsErr, dal.FormatErr(opErr),
 			)
 			return
 		}
@@ -266,7 +298,9 @@ func DeleteHyperparams[T types.Hyperparams](
 		},
 	)
 	if opErr != nil {
-		opErr = sberr.AppendError(types.CouldNotDeleteHyperparamsErr, opErr)
+		opErr = sberr.AppendError(
+			types.CouldNotDeleteHyperparamsErr, dal.FormatErr(opErr),
+		)
 		return
 	}
 	if count != int64(len(versions)) {

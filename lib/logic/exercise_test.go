@@ -8,6 +8,7 @@ import (
 
 	"code.barbellmath.net/barbell-math/providentia/internal/db/migrations"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
+	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
 	sbtest "code.barbellmath.net/barbell-math/smoothbrain-test"
 )
 
@@ -16,6 +17,8 @@ func TestExercise(t *testing.T) {
 	t.Run("duplicateName", exerciseDuplicateName)
 	t.Run("transactionRollback", exerciseTransactionRollback)
 	t.Run("addGet", exerciseAddGet)
+	t.Run("ensureGet", exerciseEnsureGet)
+	t.Run("addCSVGet", exerciseAddCSVGet)
 	t.Run("addUpdateGet", exerciseAddUpdateGet)
 	t.Run("addDeleteGet", exerciseAddDeleteGet)
 }
@@ -154,6 +157,50 @@ func exerciseAddGet(t *testing.T) {
 	sbtest.ContainsError(t, types.CouldNotFindRequestedExerciseErr, err)
 }
 
+func exerciseEnsureGet(t *testing.T) {
+	ctxt, cleanup := resetApp(context.Background())
+	t.Cleanup(cleanup)
+
+	exercises := make([]types.Exercise, 13)
+	for i := range len(exercises) {
+		exercises[i] = types.Exercise{
+			Name:    fmt.Sprintf("testExercise%d", i),
+			KindID:  types.MainCompound,
+			FocusID: types.Bench,
+		}
+	}
+
+	err := EnsureExercisesExist(ctxt, exercises...)
+	sbtest.Nil(t, err)
+
+	numExercises, err := ReadNumExercises(ctxt)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, int64(len(migrations.ExerciseSetupData))+13, numExercises)
+
+	for i := range len(exercises) {
+		res, err := ReadExercisesByName(ctxt, exercises[i].Name)
+		sbtest.Nil(t, err)
+		sbtest.Eq(t, 1, len(res))
+		sbtest.Eq(t, exercises[i].Name, res[0].Name)
+		sbtest.Eq(t, exercises[i].KindID, res[0].KindID)
+		sbtest.Eq(t, exercises[i].FocusID, res[0].FocusID)
+	}
+
+	_, err = ReadExercisesByName(ctxt, "badExercise")
+	sbtest.ContainsError(t, types.CouldNotFindRequestedExerciseErr, err)
+
+	err = EnsureExercisesExist(ctxt, exercises...)
+	sbtest.Nil(t, err)
+
+	numExercises, err = ReadNumExercises(ctxt)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, int64(len(migrations.ExerciseSetupData))+13, numExercises)
+
+	exercises[0].KindID = types.Accessory
+	err = EnsureExercisesExist(ctxt, exercises...)
+	sbtest.ContainsError(t, types.CouldNotAddExercisesErr, err)
+}
+
 func exerciseAddUpdateGet(t *testing.T) {
 	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
@@ -250,6 +297,45 @@ func exerciseAddDeleteGet(t *testing.T) {
 		sbtest.Eq(t, exercises[offset].KindID, res[0].KindID)
 		sbtest.Eq(t, exercises[offset].FocusID, res[0].FocusID)
 	}
+
+	_, err = ReadExercisesByName(ctxt, "badExercise")
+	sbtest.ContainsError(t, types.CouldNotFindRequestedExerciseErr, err)
+}
+
+func exerciseAddCSVGet(t *testing.T) {
+	ctxt, cleanup := resetApp(context.Background())
+	t.Cleanup(cleanup)
+
+	err := CreateExercisesFromCSV(ctxt, sbcsv.Opts{}, "./testData/exercises.csv")
+	sbtest.Nil(t, err)
+
+	numExercises, err := ReadNumExercises(ctxt)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 114, numExercises)
+
+	exercise, err := ReadExercisesByName(ctxt, "one")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, exercise[0], types.Exercise{
+		Name:    "one",
+		KindID:  types.MainCompoundAccessory,
+		FocusID: types.UnknownExerciseFocus,
+	})
+
+	exercise, err = ReadExercisesByName(ctxt, "two")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, exercise[0], types.Exercise{
+		Name:    "two",
+		KindID:  types.MainCompound,
+		FocusID: types.Squat,
+	})
+
+	exercise, err = ReadExercisesByName(ctxt, "three")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, exercise[0], types.Exercise{
+		Name:    "three",
+		KindID:  types.Accessory,
+		FocusID: types.Deadlift,
+	})
 
 	_, err = ReadExercisesByName(ctxt, "badExercise")
 	sbtest.ContainsError(t, types.CouldNotFindRequestedExerciseErr, err)

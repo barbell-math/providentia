@@ -7,6 +7,7 @@ import (
 	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
 	"code.barbellmath.net/barbell-math/providentia/internal/ops"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
+	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
 )
 
 // Adds the supplied workouts to the database and calculates the physics
@@ -64,6 +65,47 @@ func CreateWorkouts(
 				ctxt, state, queries,
 				barPathCalcParams, barTrackerCalcParams,
 				workouts...,
+			)
+		},
+	})
+}
+
+// Adds the workouts supplied in the csv files to the database. Has the same
+// behavior as [CreateWorkouts] other than getting the workouts from csv files.
+//
+// TODO - finish comment when done
+// The csv files are expected to have column names on the first row and the
+// following columns must be present as identified by the column name on the
+// first row. More columns may be present, they will be ignored.
+//   - FirstName (string): the first name of the client
+//   - LastName (string): the last name of the client
+//   - Email (string): the email of the client
+//
+// The `ReuseRecord` field on opts will be set to true before loading the csv
+// file. All other options are left alone.
+//
+// The context must have a [types.State] variable.
+//
+// Clients will be uploaded in batches that respect the size set in the
+// [State.BatchSize] variable.
+//
+// If any error occurs no changes will be made to the database.
+func CreateWorkoutsFromCSV(
+	ctxt context.Context,
+	barPathCalcParams *types.BarPathCalcHyperparams,
+	barTrackerCalcParams *types.BarPathTrackerHyperparams,
+	opts sbcsv.Opts,
+	files ...string,
+) (opErr error) {
+	if len(files) == 0 {
+		return
+	}
+	return runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			return ops.CreateWorkoutsFromCSV(
+				ctxt, state, queries,
+				barPathCalcParams, barTrackerCalcParams,
+				opts, files...,
 			)
 		},
 	})

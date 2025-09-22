@@ -76,6 +76,12 @@ func checkStateGlobalConf(state *types.State) error {
 			),
 		)
 	}
+	if state.Global.BatchSize > 1e5 {
+		state.Log.Warn(
+			"Large batch sizes can lead to OOM errors and will limit the " +
+				"number of concurrent jobs running at once",
+		)
+	}
 	return nil
 }
 

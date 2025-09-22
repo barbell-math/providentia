@@ -6,6 +6,7 @@ import (
 	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
 	"code.barbellmath.net/barbell-math/providentia/internal/ops"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
+	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
 )
 
 // Adds the supplied clients to the database. The supplied first name, last
@@ -30,6 +31,36 @@ func CreateClients(ctxt context.Context, clients ...types.Client) (opErr error) 
 	})
 }
 
+// Checks that the supplied clients are present in the database and adds them if
+// they are not present. In order for the supplied clients to be be considered
+// already present the first name, last name, and email fields must all match.
+// Any newly created clients must satisfy the uniqueness constraints outlined by
+// [CreateClients].
+//
+// This function will be slower than [CreateClients], so if you are working with
+// large amounts of data and are ok with erroring on duplicated clients consider
+// using [CreateClients].
+//
+// The context must have a [types.State] variable.
+//
+// Clients will be uploaded in batches that respect the size set in the
+// [State.BatchSize] variable.
+//
+// If any error occurs no changes will be made to the database.
+func EnsureClientsExist(
+	ctxt context.Context,
+	clients ...types.Client,
+) (opErr error) {
+	if len(clients) == 0 {
+		return
+	}
+	return runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			return ops.EnsureClientsExist(ctxt, state, queries, clients...)
+		},
+	})
+}
+
 // Adds the clients supplied in the csv files to the database. Has the same
 // behavior as [CreateClients] other than getting the clients from csv files.
 // The csv files are expected to have column names on the first row and the
@@ -39,19 +70,28 @@ func CreateClients(ctxt context.Context, clients ...types.Client) (opErr error) 
 //   - LastName (string): the last name of the client
 //   - Email (string): the email of the client
 //
+// The `ReuseRecord` field on opts will be set to true before loading the csv
+// file. All other options are left alone.
+//
 // The context must have a [types.State] variable.
 //
 // Clients will be uploaded in batches that respect the size set in the
 // [State.BatchSize] variable.
 //
 // If any error occurs no changes will be made to the database.
-func CreateClientsFromCSV(ctxt context.Context, files ...string) (opErr error) {
+func CreateClientsFromCSV(
+	ctxt context.Context,
+	opts sbcsv.Opts,
+	files ...string,
+) (opErr error) {
 	if len(files) == 0 {
 		return
 	}
 	return runOp(ctxt, opCalls{
 		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			return ops.CreateClientsFromCSV(ctxt, state, queries, files...)
+			return ops.CreateClientsFromCSV(
+				ctxt, state, queries, opts, files...,
+			)
 		},
 	})
 }

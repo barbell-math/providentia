@@ -105,14 +105,14 @@ INSERT INTO providentia.physics_data(
 		JOIN providentia.model
 			ON providentia.model.id = providentia.hyperparams.model_id
 		WHERE providentia.model.name='BarPathCalc'
-			AND providentia.hyperparams.version=$2
+			AND providentia.hyperparams.version=$2	-- TODO - sqlc arg name
 	),
 	(
 		SELECT providentia.model.id FROM providentia.hyperparams
 		JOIN providentia.model
 			ON providentia.model.id = providentia.hyperparams.model_id
 		WHERE providentia.model.name='BarPathTracker'
-			AND providentia.hyperparams.version=$3
+			AND providentia.hyperparams.version=$3	-- TODO - sqlc arg name
 	),
 	$4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
 	$20, $21, $22, $23, $24, $25, $26, $27
@@ -283,6 +283,46 @@ func (q *Queries) DeleteWorkoutsBetweenDates(ctx context.Context, arg DeleteWork
 	var count int64
 	err := row.Scan(&count)
 	return count, err
+}
+
+const ensureClientsExist = `-- name: EnsureClientsExist :exec
+INSERT INTO providentia.client (first_name, last_name, email)
+SELECT
+	UNNEST($1::TEXT[]),
+	UNNEST($2::TEXT[]),
+	UNNEST($3::TEXT[])
+ON CONFLICT (first_name, last_name, email) DO NOTHING
+`
+
+type EnsureClientsExistParams struct {
+	FirstNames []string `json:"first_names"`
+	LastNames  []string `json:"last_names"`
+	Emails     []string `json:"emails"`
+}
+
+func (q *Queries) EnsureClientsExist(ctx context.Context, arg EnsureClientsExistParams) error {
+	_, err := q.db.Exec(ctx, ensureClientsExist, arg.FirstNames, arg.LastNames, arg.Emails)
+	return err
+}
+
+const ensureExercisesExist = `-- name: EnsureExercisesExist :exec
+INSERT INTO providentia.exercise (name, kind_id, focus_id)
+SELECT
+	UNNEST($1::TEXT[]),
+	UNNEST($2::INT4[]),
+	UNNEST($3::INT4[])
+ON CONFLICT (name, kind_id, focus_id) DO NOTHING
+`
+
+type EnsureExercisesExistParams struct {
+	Names   []string `json:"names"`
+	Kinds   []int32  `json:"kinds"`
+	Focuses []int32  `json:"focuses"`
+}
+
+func (q *Queries) EnsureExercisesExist(ctx context.Context, arg EnsureExercisesExistParams) error {
+	_, err := q.db.Exec(ctx, ensureExercisesExist, arg.Names, arg.Kinds, arg.Focuses)
+	return err
 }
 
 const getAllWorkoutData = `-- name: GetAllWorkoutData :many

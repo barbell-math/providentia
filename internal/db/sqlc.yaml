@@ -136,3 +136,4 @@ overrides:
     providentia_client: Client
     providentia_training_log: TrainingLog
     providentia_model_state: ModelState
+    providentia_hyperparam: Hyperparam

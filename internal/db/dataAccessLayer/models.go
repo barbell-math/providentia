@@ -34,6 +34,13 @@ type ExerciseKind struct {
 	Description string             `json:"description"`
 }
 
+type Hyperparam struct {
+	ID      int32         `json:"id"`
+	ModelID types.ModelID `json:"model_id"`
+	Version int32         `json:"version"`
+	Params  []byte        `json:"params"`
+}
+
 type ModelState struct {
 	ID            int64   `json:"id"`
 	ClientID      int64   `json:"client_id"`
@@ -83,13 +90,6 @@ type PhysicsData struct {
 	AvgPower       [][]types.Watt                                          `json:"avg_power"`
 	MinPower       [][]types.PointInTime[types.Second, types.Watt]         `json:"min_power"`
 	MaxPower       [][]types.PointInTime[types.Second, types.Watt]         `json:"max_power"`
-}
-
-type ProvidentiaHyperparam struct {
-	ID      int32         `json:"id"`
-	ModelID types.ModelID `json:"model_id"`
-	Version int32         `json:"version"`
-	Params  []byte        `json:"params"`
 }
 
 type ProvidentiaModel struct {

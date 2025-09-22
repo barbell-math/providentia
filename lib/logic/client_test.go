@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
+	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
 	sbtest "code.barbellmath.net/barbell-math/smoothbrain-test"
 )
 
@@ -14,6 +15,7 @@ func TestClient(t *testing.T) {
 	t.Run("duplicateEmail", clientDuplicateEmail)
 	t.Run("transactionRollback", clientTransactionRollback)
 	t.Run("addGet", clientAddGet)
+	t.Run("ensureGet", clientEnsureGet)
 	t.Run("addCSVGet", clientAddCSVGet)
 	t.Run("addUpdateGet", clientAddUpdateGet)
 	t.Run("addDeleteGet", clientAddDeleteGet)
@@ -163,6 +165,48 @@ func clientAddGet(t *testing.T) {
 	sbtest.ContainsError(t, types.CouldNotFindRequestedClientErr, err)
 }
 
+func clientEnsureGet(t *testing.T) {
+	ctxt, cleanup := resetApp(context.Background())
+	t.Cleanup(cleanup)
+
+	clients := make([]types.Client, 13)
+	for i := range len(clients) {
+		clients[i] = types.Client{
+			FirstName: fmt.Sprintf("FName%d", i),
+			LastName:  fmt.Sprintf("LName%d", i),
+			Email:     fmt.Sprintf("email%d@email.com", i),
+		}
+	}
+
+	err := EnsureClientsExist(ctxt, clients...)
+	sbtest.Nil(t, err)
+
+	numClients, err := ReadNumClients(ctxt)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 13, numClients)
+
+	for i := range len(clients) {
+		res, err := ReadClientsByEmail(ctxt, clients[i].Email)
+		sbtest.Nil(t, err)
+		sbtest.Eq(t, 1, len(res))
+		sbtest.Eq(t, clients[i], res[0])
+	}
+
+	_, err = ReadClientsByEmail(ctxt, "bad@email.com")
+	sbtest.ContainsError(t, types.CouldNotFindRequestedClientErr, err)
+
+	err = EnsureClientsExist(ctxt, clients...)
+	sbtest.Nil(t, err)
+
+	numClients, err = ReadNumClients(ctxt)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 13, numClients)
+
+	clients[0].FirstName = clients[1].FirstName
+	err = EnsureClientsExist(ctxt, clients...)
+	sbtest.ContainsError(t, types.CouldNotAddClientsErr, err)
+}
+
 func clientAddUpdateGet(t *testing.T) {
 	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
@@ -264,7 +308,7 @@ func clientAddCSVGet(t *testing.T) {
 	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 
-	err := CreateClientsFromCSV(ctxt, "./testData/clients.csv")
+	err := CreateClientsFromCSV(ctxt, sbcsv.Opts{}, "./testData/clients.csv")
 	sbtest.Nil(t, err)
 
 	numClients, err := ReadNumClients(ctxt)

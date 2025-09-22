@@ -150,6 +150,7 @@ var (
 	CouldNotGetTotalNumPhysEntriesErr = errors.New("Could not get total num phys entries")
 	CouldNotFindRequestedWorkoutErr   = errors.New("Could not find requested workout")
 	CouldNotDeleteRequestedWorkoutErr = errors.New("Could not delete requested workout")
+	InvalidDataDirErr                 = errors.New("Invalid data dir")
 
 	InvalidHyperparamsErr               = errors.New("Invalid hyperparameters")
 	EncodingJsonHyperparamsErr          = errors.New("An error occurred encoding hyperparameters to json")

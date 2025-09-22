@@ -6,15 +6,32 @@ import (
 	"io/fs"
 	"math"
 	"os"
+	"path"
+	"path/filepath"
+	"strings"
 	"time"
 	"unsafe"
 
 	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
 	"code.barbellmath.net/barbell-math/providentia/internal/jobs"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
+	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
 	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
 	sbjobqueue "code.barbellmath.net/barbell-math/smoothbrain-jobQueue"
 	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
+)
+
+type (
+	rawTrainingLog struct {
+		DatePerformed time.Time
+		Session       uint16
+		Exercise      string
+		Weight        types.Kilogram
+		Sets          float64
+		Reps          int32
+		Effort        types.RPE
+		DataDir       string
+	}
 )
 
 func CreateWorkouts(
@@ -99,7 +116,9 @@ func CreateWorkouts(
 					Effort:           iterE.Effort,
 				},
 			); opErr != nil {
-				opErr = sberr.AppendError(types.CouldNotAddWorkoutErr, opErr)
+				opErr = sberr.AppendError(
+					types.CouldNotAddWorkoutErr, dal.FormatErr(opErr),
+				)
 				return
 			}
 
@@ -117,7 +136,9 @@ func CreateWorkouts(
 	}
 
 	if opErr = bufWriter.Flush(ctxt, queries); opErr != nil {
-		opErr = sberr.AppendError(types.CouldNotAddWorkoutErr, opErr)
+		opErr = sberr.AppendError(
+			types.CouldNotAddWorkoutErr, dal.FormatErr(opErr),
+		)
 		return
 	}
 
@@ -181,10 +202,10 @@ func validateWorkout(
 				// These are surface level checks that make it so trivial errors
 				// "fail fast" here rather than in a separate go routine in the
 				// physics job queue.
-				var fs fs.FileInfo
-				if fs, opErr = os.Stat(videoPath); opErr != nil {
+				var fi fs.FileInfo
+				if fi, opErr = os.Stat(videoPath); opErr != nil {
 					return wrapErr(opErr, "")
-				} else if fs.IsDir() {
+				} else if fi.IsDir() {
 					opErr = wrapErr(
 						types.VideoPathDirNotFileErr,
 						"Path: %s", videoPath,
@@ -222,6 +243,102 @@ func validateWorkout(
 	return
 }
 
+func CreateWorkoutsFromCSV(
+	ctxt context.Context,
+	state *types.State,
+	queries *dal.SyncQueries,
+	barPathCalcParams *types.BarPathCalcHyperparams,
+	barTrackerCalcParams *types.BarPathTrackerHyperparams,
+	opts sbcsv.Opts,
+	files ...string,
+) (opErr error) {
+	params := []types.RawWorkout{}
+	opts.ReuseRecord = true
+
+	for _, file := range files {
+		clientName := strings.TrimSuffix(path.Base(file), path.Ext(file))
+
+		if opErr = sbcsv.LoadCSVFile(file, &sbcsv.LoadOpts{
+			Opts:          opts,
+			RequestedCols: sbcsv.ReqColsForStruct[types.RawWorkout](),
+			Op: func(
+				o *sbcsv.Opts,
+				rowIdx int,
+				row []string,
+				reqCols []sbcsv.RequestedCols,
+			) error {
+				rawData, err := sbcsv.RowToStruct[rawTrainingLog](o, row, reqCols)
+				if err != nil {
+					return err
+				}
+
+				variants, err := parseDataDir(rawData.DataDir)
+				if err != nil {
+					return err
+				}
+
+				iterID := types.WorkoutID{
+					ClientEmail:   clientName,
+					Session:       rawData.Session,
+					DatePerformed: rawData.DatePerformed,
+				}
+				if len(params) == 0 || params[len(params)-1].WorkoutID == iterID {
+					params = append(params, types.RawWorkout{WorkoutID: iterID})
+				}
+				params[len(params)-1].Exercises = append(
+					params[len(params)-1].Exercises,
+					types.RawExerciseData{
+						Name:    rawData.Exercise,
+						Weight:  rawData.Weight,
+						Sets:    rawData.Sets,
+						Reps:    rawData.Reps,
+						Effort:  rawData.Effort,
+						BarPath: variants,
+					},
+				)
+
+				return nil
+			},
+		}); opErr != nil {
+			return opErr
+		}
+	}
+
+	return CreateWorkouts(
+		ctxt, state, queries,
+		barPathCalcParams, barTrackerCalcParams,
+		params...,
+	)
+}
+
+func parseDataDir(dir string) (res []types.BarPathVariant, err error) {
+	if dir == "" {
+		return
+	}
+	var fi fs.FileInfo
+	if fi, err = os.Stat(dir); err != nil {
+		return
+	} else if !fi.IsDir() {
+		err = sberr.Wrap(
+			types.InvalidDataDirErr, "'%s' was not a dir but must be", dir,
+		)
+		return
+	}
+
+	if err = filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() || !strings.HasSuffix(d.Name(), "Set") {
+			return nil
+		}
+		fmt.Println(path)
+		return nil
+	}); err != nil {
+		err = sberr.AppendError(types.InvalidDataDirErr, err)
+		return
+	}
+
+	return
+}
+
 func ReadClientTotalNumTrainingLogEntries(
 	ctxt context.Context,
 	state *types.State,
@@ -232,7 +349,9 @@ func ReadClientTotalNumTrainingLogEntries(
 		dal.Q.GetTotalNumTrainingLogEntriesForClient, queries, ctxt, clientEmail,
 	)
 	if opErr != nil {
-		opErr = sberr.AppendError(types.CouldNotGetTotalNumExercisesErr, opErr)
+		opErr = sberr.AppendError(
+			types.CouldNotGetTotalNumExercisesErr, dal.FormatErr(opErr),
+		)
 		return
 	}
 	state.Log.Log(ctxt, sblog.VLevel(3), "Read total num exercises for client")
@@ -249,7 +368,9 @@ func ReadClientTotalNumPhysEntries(
 		dal.Q.GetTotalNumPhysicsEntriesForClient, queries, ctxt, clientEmail,
 	)
 	if opErr != nil {
-		opErr = sberr.AppendError(types.CouldNotGetTotalNumPhysEntriesErr, opErr)
+		opErr = sberr.AppendError(
+			types.CouldNotGetTotalNumPhysEntriesErr, dal.FormatErr(opErr),
+		)
 		return
 	}
 	state.Log.Log(
@@ -269,7 +390,9 @@ func ReadClientNumWorkouts(
 		dal.Q.GetNumWorkoutsForClient, queries, ctxt, clientEmail,
 	)
 	if opErr != nil {
-		opErr = sberr.AppendError(types.CouldNotGetNumWorkoutsErr, opErr)
+		opErr = sberr.AppendError(
+			types.CouldNotGetNumWorkoutsErr, dal.FormatErr(opErr),
+		)
 		return
 	}
 	state.Log.Log(ctxt, sblog.VLevel(3), "Read num workouts for client")
@@ -302,7 +425,7 @@ func ReadWorkoutsByID(
 		)
 		if opErr != nil {
 			opErr = sberr.AppendError(
-				types.CouldNotFindRequestedWorkoutErr, opErr,
+				types.CouldNotFindRequestedWorkoutErr, dal.FormatErr(opErr),
 			)
 			return
 		}
@@ -353,7 +476,9 @@ func ReadWorkoutsInDateRange(
 	var ok bool
 	ok, opErr = dal.Query1x2(dal.Q.ClientExists, queries, ctxt, clientEmail)
 	if opErr != nil {
-		opErr = sberr.AppendError(types.CouldNotFindRequestedWorkoutErr, opErr)
+		opErr = sberr.AppendError(
+			types.CouldNotFindRequestedWorkoutErr, dal.FormatErr(opErr),
+		)
 		return
 	} else if !ok {
 		opErr = sberr.AppendError(
@@ -375,7 +500,7 @@ func ReadWorkoutsInDateRange(
 	)
 	if opErr != nil {
 		opErr = sberr.AppendError(
-			types.CouldNotFindRequestedWorkoutErr, opErr,
+			types.CouldNotFindRequestedWorkoutErr, dal.FormatErr(opErr),
 		)
 		return
 	}
@@ -475,7 +600,7 @@ func DeleteWorkouts(
 		)
 		if opErr != nil {
 			opErr = sberr.AppendError(
-				types.CouldNotDeleteRequestedWorkoutErr, opErr,
+				types.CouldNotDeleteRequestedWorkoutErr, dal.FormatErr(opErr),
 			)
 			return
 		}
@@ -512,7 +637,9 @@ func DeleteWorkoutsInDateRange(
 	var ok bool
 	ok, opErr = dal.Query1x2(dal.Q.ClientExists, queries, ctxt, clientEmail)
 	if opErr != nil {
-		opErr = sberr.AppendError(types.CouldNotFindRequestedWorkoutErr, opErr)
+		opErr = sberr.AppendError(
+			types.CouldNotFindRequestedWorkoutErr, dal.FormatErr(opErr),
+		)
 		return
 	} else if !ok {
 		opErr = sberr.AppendError(
@@ -534,7 +661,7 @@ func DeleteWorkoutsInDateRange(
 	)
 	if opErr != nil {
 		opErr = sberr.AppendError(
-			types.CouldNotDeleteRequestedWorkoutErr, opErr,
+			types.CouldNotDeleteRequestedWorkoutErr, dal.FormatErr(opErr),
 		)
 		return
 	}

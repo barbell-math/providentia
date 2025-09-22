@@ -6,6 +6,7 @@ import (
 	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
 	"code.barbellmath.net/barbell-math/providentia/internal/ops"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
+	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
 )
 
 // Adds the supplied hyperparameters to the database. The supplied hyperparams
@@ -41,6 +42,38 @@ func CreateHyperparams[T types.Hyperparams](
 	return runOp(ctxt, opCalls{
 		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
 			return ops.CreateHyperparams(ctxt, state, queries, params...)
+		},
+	})
+}
+
+// Adds the hyperparams supplied in the csv files to the database. Has the same
+// behavior as [CreateHyperparams] other than getting the clients from csv files.
+// The csv files are expected to have column names on the first row. The fields
+// of each hyperparams struct are used to determine the required columns, the
+// column names, and types for each column.
+//
+// The `ReuseRecord` field on opts will be set to true before loading the csv
+// file. All other options are left alone.
+//
+// The context must have a [types.State] variable.
+//
+// Clients will be uploaded in batches that respect the size set in the
+// [State.BatchSize] variable.
+//
+// If any error occurs no changes will be made to the database.
+func CreateHyperparamsFromCSV[T types.Hyperparams](
+	ctxt context.Context,
+	opts sbcsv.Opts,
+	files ...string,
+) (opErr error) {
+	if len(files) == 0 {
+		return
+	}
+	return runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			return ops.CreateHyperparamsFromCSV[T](
+				ctxt, state, queries, opts, files...,
+			)
 		},
 	})
 }
