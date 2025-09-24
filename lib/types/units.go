@@ -20,7 +20,6 @@ type (
 	Joule float64
 	Watt  float64
 
-	// V2[T ~float64]               = Vec2[T, T]
 	Vec2[T ~float64, U ~float64] struct {
 		X T
 		Y U

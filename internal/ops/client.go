@@ -184,6 +184,7 @@ func ReadClientsByEmail(
 	emails ...string,
 ) (res []types.Client, opErr error) {
 	res = make([]types.Client, len(emails))
+
 	for start, end := range batchIndexes(emails, int(state.Global.BatchSize)) {
 		select {
 		case <-ctxt.Done():
@@ -215,6 +216,55 @@ func ReadClientsByEmail(
 		state.Log.Log(
 			ctxt, sblog.VLevel(3),
 			"Read clients from email",
+			"Num", len(rawData),
+		)
+	}
+
+	return
+}
+
+func FindClientsByEmail(
+	ctxt context.Context,
+	state *types.State,
+	queries *dal.SyncQueries,
+	emails ...string,
+) (res []types.Found[types.Client], opErr error) {
+	res = make([]types.Found[types.Client], len(emails))
+
+	for start, end := range batchIndexes(emails, int(state.Global.BatchSize)) {
+		select {
+		case <-ctxt.Done():
+			return
+		default:
+		}
+
+		var rawData []dal.FindClientsByEmailRow
+		rawData, opErr = dal.Query1x2(
+			dal.Q.FindClientsByEmail, queries, ctxt, emails[start:end],
+		)
+		if opErr != nil {
+			opErr = sberr.AppendError(
+				types.CouldNotFindRequestedClientErr, dal.FormatErr(opErr),
+			)
+			return
+		}
+
+		rawDataIdx := 0
+		for i := 0; i < end-start; i++ {
+			res[i+start].Found = (rawDataIdx < len(rawData) && rawData[rawDataIdx].Ord-1 == int64(i))
+			if res[i+start].Found {
+				res[i+start].Value = types.Client{
+					FirstName: rawData[rawDataIdx].FirstName,
+					LastName:  rawData[rawDataIdx].LastName,
+					Email:     rawData[rawDataIdx].Email,
+				}
+				rawDataIdx++
+			}
+		}
+
+		state.Log.Log(
+			ctxt, sblog.VLevel(3),
+			"Found clients from email",
 			"Num", len(rawData),
 		)
 	}

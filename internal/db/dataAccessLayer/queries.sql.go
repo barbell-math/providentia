@@ -105,55 +105,53 @@ INSERT INTO providentia.physics_data(
 		JOIN providentia.model
 			ON providentia.model.id = providentia.hyperparams.model_id
 		WHERE providentia.model.name='BarPathCalc'
-			AND providentia.hyperparams.version=$2	-- TODO - sqlc arg name
+			AND providentia.hyperparams.version=$26
 	),
 	(
 		SELECT providentia.model.id FROM providentia.hyperparams
 		JOIN providentia.model
 			ON providentia.model.id = providentia.hyperparams.model_id
 		WHERE providentia.model.name='BarPathTracker'
-			AND providentia.hyperparams.version=$3	-- TODO - sqlc arg name
+			AND providentia.hyperparams.version=$27
 	),
-	$4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
-	$20, $21, $22, $23, $24, $25, $26, $27
+	$2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
+	$18, $19, $20, $21, $22, $23, $24, $25
 ) RETURNING id
 `
 
 type CreatePhysicsDataParams struct {
-	Path         []string                                                `json:"path"`
-	Version      int32                                                   `json:"version"`
-	Version_2    int32                                                   `json:"version_2"`
-	Time         [][]types.Second                                        `json:"time"`
-	Position     [][]types.Vec2[types.Meter, types.Meter]                `json:"position"`
-	Velocity     [][]types.Vec2[types.MeterPerSec, types.MeterPerSec]    `json:"velocity"`
-	Acceleration [][]types.Vec2[types.MeterPerSec2, types.MeterPerSec2]  `json:"acceleration"`
-	Jerk         [][]types.Vec2[types.MeterPerSec3, types.MeterPerSec3]  `json:"jerk"`
-	Force        [][]types.Vec2[types.Newton, types.Newton]              `json:"force"`
-	Impulse      [][]types.Vec2[types.NewtonSec, types.NewtonSec]        `json:"impulse"`
-	Work         [][]types.Joule                                         `json:"work"`
-	Power        [][]types.Watt                                          `json:"power"`
-	RepSplits    [][]types.Split                                         `json:"rep_splits"`
-	MinVel       [][]types.PointInTime[types.Second, types.MeterPerSec]  `json:"min_vel"`
-	MaxVel       [][]types.PointInTime[types.Second, types.MeterPerSec]  `json:"max_vel"`
-	MinAcc       [][]types.PointInTime[types.Second, types.MeterPerSec2] `json:"min_acc"`
-	MaxAcc       [][]types.PointInTime[types.Second, types.MeterPerSec2] `json:"max_acc"`
-	MinForce     [][]types.PointInTime[types.Second, types.Newton]       `json:"min_force"`
-	MaxForce     [][]types.PointInTime[types.Second, types.Newton]       `json:"max_force"`
-	MinImpulse   [][]types.PointInTime[types.Second, types.NewtonSec]    `json:"min_impulse"`
-	MaxImpulse   [][]types.PointInTime[types.Second, types.NewtonSec]    `json:"max_impulse"`
-	AvgWork      [][]types.Joule                                         `json:"avg_work"`
-	MinWork      [][]types.PointInTime[types.Second, types.Joule]        `json:"min_work"`
-	MaxWork      [][]types.PointInTime[types.Second, types.Joule]        `json:"max_work"`
-	AvgPower     [][]types.Watt                                          `json:"avg_power"`
-	MinPower     [][]types.PointInTime[types.Second, types.Watt]         `json:"min_power"`
-	MaxPower     [][]types.PointInTime[types.Second, types.Watt]         `json:"max_power"`
+	Path                        []string                                                `json:"path"`
+	Time                        [][]types.Second                                        `json:"time"`
+	Position                    [][]types.Vec2[types.Meter, types.Meter]                `json:"position"`
+	Velocity                    [][]types.Vec2[types.MeterPerSec, types.MeterPerSec]    `json:"velocity"`
+	Acceleration                [][]types.Vec2[types.MeterPerSec2, types.MeterPerSec2]  `json:"acceleration"`
+	Jerk                        [][]types.Vec2[types.MeterPerSec3, types.MeterPerSec3]  `json:"jerk"`
+	Force                       [][]types.Vec2[types.Newton, types.Newton]              `json:"force"`
+	Impulse                     [][]types.Vec2[types.NewtonSec, types.NewtonSec]        `json:"impulse"`
+	Work                        [][]types.Joule                                         `json:"work"`
+	Power                       [][]types.Watt                                          `json:"power"`
+	RepSplits                   [][]types.Split                                         `json:"rep_splits"`
+	MinVel                      [][]types.PointInTime[types.Second, types.MeterPerSec]  `json:"min_vel"`
+	MaxVel                      [][]types.PointInTime[types.Second, types.MeterPerSec]  `json:"max_vel"`
+	MinAcc                      [][]types.PointInTime[types.Second, types.MeterPerSec2] `json:"min_acc"`
+	MaxAcc                      [][]types.PointInTime[types.Second, types.MeterPerSec2] `json:"max_acc"`
+	MinForce                    [][]types.PointInTime[types.Second, types.Newton]       `json:"min_force"`
+	MaxForce                    [][]types.PointInTime[types.Second, types.Newton]       `json:"max_force"`
+	MinImpulse                  [][]types.PointInTime[types.Second, types.NewtonSec]    `json:"min_impulse"`
+	MaxImpulse                  [][]types.PointInTime[types.Second, types.NewtonSec]    `json:"max_impulse"`
+	AvgWork                     [][]types.Joule                                         `json:"avg_work"`
+	MinWork                     [][]types.PointInTime[types.Second, types.Joule]        `json:"min_work"`
+	MaxWork                     [][]types.PointInTime[types.Second, types.Joule]        `json:"max_work"`
+	AvgPower                    [][]types.Watt                                          `json:"avg_power"`
+	MinPower                    [][]types.PointInTime[types.Second, types.Watt]         `json:"min_power"`
+	MaxPower                    [][]types.PointInTime[types.Second, types.Watt]         `json:"max_power"`
+	BarPathCalcParamsVersion    int32                                                   `json:"bar_path_calc_params_version"`
+	BarPathTrackerParamsVersion int32                                                   `json:"bar_path_tracker_params_version"`
 }
 
 func (q *Queries) CreatePhysicsData(ctx context.Context, arg CreatePhysicsDataParams) (int64, error) {
 	row := q.db.QueryRow(ctx, createPhysicsData,
 		arg.Path,
-		arg.Version,
-		arg.Version_2,
 		arg.Time,
 		arg.Position,
 		arg.Velocity,
@@ -178,6 +176,8 @@ func (q *Queries) CreatePhysicsData(ctx context.Context, arg CreatePhysicsDataPa
 		arg.AvgPower,
 		arg.MinPower,
 		arg.MaxPower,
+		arg.BarPathCalcParamsVersion,
+		arg.BarPathTrackerParamsVersion,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -325,6 +325,51 @@ func (q *Queries) EnsureExercisesExist(ctx context.Context, arg EnsureExercisesE
 	return err
 }
 
+const findClientsByEmail = `-- name: FindClientsByEmail :many
+SELECT
+	providentia.client.first_name,
+	providentia.client.last_name,
+	providentia.client.email,
+	ord::INT8
+FROM providentia.client 
+JOIN UNNEST($1::TEXT[])
+WITH ORDINALITY t(email, ord)
+USING (email) 
+ORDER BY ord
+`
+
+type FindClientsByEmailRow struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
+	Ord       int64  `json:"ord"`
+}
+
+func (q *Queries) FindClientsByEmail(ctx context.Context, dollar_1 []string) ([]FindClientsByEmailRow, error) {
+	rows, err := q.db.Query(ctx, findClientsByEmail, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FindClientsByEmailRow
+	for rows.Next() {
+		var i FindClientsByEmailRow
+		if err := rows.Scan(
+			&i.FirstName,
+			&i.LastName,
+			&i.Email,
+			&i.Ord,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAllWorkoutData = `-- name: GetAllWorkoutData :many
 SELECT
 	providentia.exercise.name,
@@ -414,6 +459,8 @@ type GetAllWorkoutDataRow struct {
 	MaxPower     [][]types.PointInTime[types.Second, types.Watt]         `json:"max_power"`
 }
 
+// TODO - figure out if ordinality trick can be used here - is there a way to
+// make the join on multiple columns?
 func (q *Queries) GetAllWorkoutData(ctx context.Context, arg GetAllWorkoutDataParams) ([]GetAllWorkoutDataRow, error) {
 	rows, err := q.db.Query(ctx, getAllWorkoutData, arg.Email, arg.InterSessionCntr, arg.DatePerformed)
 	if err != nil {
@@ -629,8 +676,15 @@ func (q *Queries) GetClientIdByEmail(ctx context.Context, email string) (int64, 
 }
 
 const getClientsByEmail = `-- name: GetClientsByEmail :many
-SELECT first_name, last_name, email
-FROM providentia.client WHERE email = ANY($1::TEXT[])
+SELECT
+	providentia.client.first_name,
+	providentia.client.last_name,
+	providentia.client.email
+FROM providentia.client 
+JOIN UNNEST($1::TEXT[])
+WITH ORDINALITY t(email, ord)
+USING (email) 
+ORDER BY ord
 `
 
 type GetClientsByEmailRow struct {
@@ -671,8 +725,15 @@ func (q *Queries) GetExerciseIdByName(ctx context.Context, name string) (int32, 
 }
 
 const getExercisesByName = `-- name: GetExercisesByName :many
-SELECT name, kind_id, focus_id
-FROM providentia.exercise WHERE name = ANY($1::TEXT[])
+SELECT
+	providentia.exercise.name,
+	providentia.exercise.kind_id,
+	providentia.exercise.focus_id
+FROM providentia.exercise 
+JOIN UNNEST($1::TEXT[])
+WITH ORDINALITY t(name, ord)
+USING (name) 
+ORDER BY ord
 `
 
 type GetExercisesByNameRow struct {
@@ -702,8 +763,15 @@ func (q *Queries) GetExercisesByName(ctx context.Context, dollar_1 []string) ([]
 }
 
 const getHyperparamsByVersionFor = `-- name: GetHyperparamsByVersionFor :many
-SELECT version, params FROM providentia.hyperparams
-WHERE model_id=$1 AND version = ANY($2::INT4[])
+SELECT
+	providentia.hyperparams.version,
+	providentia.hyperparams.params
+FROM providentia.hyperparams
+JOIN UNNEST($2::INT4[])
+WITH ORDINALITY t(version, ord)
+USING (version)
+WHERE model_id=$1
+ORDER BY ord
 `
 
 type GetHyperparamsByVersionForParams struct {

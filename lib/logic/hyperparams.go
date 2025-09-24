@@ -46,6 +46,36 @@ func CreateHyperparams[T types.Hyperparams](
 	})
 }
 
+// Checks that the supplied hyperparams are present in the database and adds
+// them if they are not present. In order for the supplied hyperparams to be be
+// considered already present the model type, version number, and parameter
+// fields must all match. Any newly created hyperparams must satisfy the
+// uniqueness constraints outlined by [CreateHyperparams].
+//
+// This function will be slower than [CreateHyperparams], so if you are working
+// with large amounts of data and are ok with erroring on duplicated hyperparams
+// consider using [CreateHyperparams].
+//
+// The context must have a [types.State] variable.
+//
+// Hyperparams will be uploaded in batches that respect the size set in the
+// [State.BatchSize] variable.
+//
+// If any error occurs no changes will be made to the database.
+func EnsureHyperparamsExist[T types.Hyperparams](
+	ctxt context.Context,
+	params ...T,
+) (opErr error) {
+	if len(params) == 0 {
+		return
+	}
+	return runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			return ops.EnsureHyperparamsExist(ctxt, state, queries, params...)
+		},
+	})
+}
+
 // Adds the hyperparams supplied in the csv files to the database. Has the same
 // behavior as [CreateHyperparams] other than getting the clients from csv files.
 // The csv files are expected to have column names on the first row. The fields

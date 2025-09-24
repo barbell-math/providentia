@@ -14,11 +14,12 @@ func TestClient(t *testing.T) {
 	t.Run("failingNoWrites", clientFailingNoWrites)
 	t.Run("duplicateEmail", clientDuplicateEmail)
 	t.Run("transactionRollback", clientTransactionRollback)
-	t.Run("addGet", clientAddGet)
-	t.Run("ensureGet", clientEnsureGet)
-	t.Run("addCSVGet", clientAddCSVGet)
-	t.Run("addUpdateGet", clientAddUpdateGet)
-	t.Run("addDeleteGet", clientAddDeleteGet)
+	t.Run("createRead", clientCreateRead)
+	t.Run("ensureRead", clientEnsureRead)
+	t.Run("createFind", clientCreateFind)
+	t.Run("createCSVRead", clientCreateCSVRead)
+	t.Run("createUpdateRead", clientCreateUpdateRead)
+	t.Run("createDeleteRead", clientCreateDeleteRead)
 }
 
 func clientFailingNoWrites(t *testing.T) {
@@ -132,7 +133,7 @@ func clientTransactionRollback(t *testing.T) {
 	sbtest.Eq(t, 13, numClients)
 }
 
-func clientAddGet(t *testing.T) {
+func clientCreateRead(t *testing.T) {
 	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 
@@ -165,7 +166,7 @@ func clientAddGet(t *testing.T) {
 	sbtest.ContainsError(t, types.CouldNotFindRequestedClientErr, err)
 }
 
-func clientEnsureGet(t *testing.T) {
+func clientEnsureRead(t *testing.T) {
 	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 
@@ -207,7 +208,59 @@ func clientEnsureGet(t *testing.T) {
 	sbtest.ContainsError(t, types.CouldNotAddClientsErr, err)
 }
 
-func clientAddUpdateGet(t *testing.T) {
+func clientCreateFind(t *testing.T) {
+	ctxt, cleanup := resetApp(context.Background())
+	t.Cleanup(cleanup)
+
+	clients := make([]types.Client, 13)
+	for i := range len(clients) {
+		clients[i] = types.Client{
+			FirstName: fmt.Sprintf("FName%d", i),
+			LastName:  fmt.Sprintf("LName%d", i),
+			Email:     fmt.Sprintf("email%d@email.com", i),
+		}
+	}
+
+	err := CreateClients(ctxt, clients...)
+	sbtest.Nil(t, err)
+
+	numClients, err := ReadNumClients(ctxt)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 13, numClients)
+
+	for i := range len(clients) {
+		res, err := FindClientsByEmail(ctxt, clients[i].Email)
+		sbtest.Nil(t, err)
+		sbtest.Eq(t, 1, len(res))
+		sbtest.True(t, res[0].Found)
+		sbtest.Eq(t, clients[i].FirstName, res[0].Value.FirstName)
+		sbtest.Eq(t, clients[i].LastName, res[0].Value.LastName)
+		sbtest.Eq(t, clients[i].Email, res[0].Value.Email)
+	}
+
+	res, err := FindClientsByEmail(ctxt, "bad@email.com")
+	sbtest.Nil(t, err)
+	sbtest.False(t, res[0].Found)
+
+	emails := []string{}
+	for i := range len(clients) {
+		emails = append(emails, clients[i].Email, "bad@email.com")
+	}
+	res, err = FindClientsByEmail(ctxt, emails...)
+	sbtest.Nil(t, err)
+	for i := range len(emails) {
+		if i%2 == 0 {
+			sbtest.True(t, res[i].Found)
+			sbtest.Eq(t, clients[i/2].FirstName, res[i].Value.FirstName)
+			sbtest.Eq(t, clients[i/2].LastName, res[i].Value.LastName)
+			sbtest.Eq(t, clients[i/2].Email, res[i].Value.Email)
+		} else {
+			sbtest.False(t, res[i].Found)
+		}
+	}
+}
+
+func clientCreateUpdateRead(t *testing.T) {
 	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 
@@ -253,7 +306,7 @@ func clientAddUpdateGet(t *testing.T) {
 	sbtest.ContainsError(t, types.CouldNotFindRequestedClientErr, err)
 }
 
-func clientAddDeleteGet(t *testing.T) {
+func clientCreateDeleteRead(t *testing.T) {
 	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 
@@ -304,7 +357,7 @@ func clientAddDeleteGet(t *testing.T) {
 	sbtest.ContainsError(t, types.CouldNotFindRequestedClientErr, err)
 }
 
-func clientAddCSVGet(t *testing.T) {
+func clientCreateCSVRead(t *testing.T) {
 	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 

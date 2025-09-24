@@ -113,7 +113,7 @@ func ReadNumClients(ctxt context.Context) (res int64, opErr error) {
 
 // Gets the client data associated with the supplied emails if they exist. If
 // they do not exist an error will be returned. The order of the returned
-// clients may not match the order of the supplied client emails.
+// clients will match the order of the supplied client emails.
 //
 // The context must have a [types.State] variable.
 //
@@ -128,7 +128,33 @@ func ReadClientsByEmail(
 	opErr = runOp(ctxt, opCalls{
 		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
 			res, err = ops.ReadClientsByEmail(ctxt, state, queries, emails...)
-			return err
+			return
+		},
+	})
+	return
+}
+
+// Gets the client data associated with the supplied emails if they exist. If a
+// client exists it will be put in the returned slice and the found flag will be
+// set to true. If a client does not exist the value in the slice will be a zero
+// initialized client and the found flag will be set to false. No error will be
+// returned if a client does not exist. The order of the returned clients will
+// match the order of the supplied client emails.
+//
+// The context must have a [types.State] variable.
+//
+// No changes will be made to the database.
+func FindClientsByEmail(
+	ctxt context.Context,
+	emails ...string,
+) (res []types.Found[types.Client], opErr error) {
+	if len(emails) == 0 {
+		return
+	}
+	opErr = runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			res, err = ops.FindClientsByEmail(ctxt, state, queries, emails...)
+			return
 		},
 	})
 	return

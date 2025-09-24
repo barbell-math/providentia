@@ -12,6 +12,7 @@ import (
 func TestHyperparams(t *testing.T) {
 	t.Run("failingNoWrites", hyperparamsFailingNoWrites)
 	t.Run("addGet", hyperparamsAddGet)
+	t.Run("ensureGet", hyperparamsEnsureGet)
 	t.Run("addDeleteGet", hyperparamsAddDeleteGet)
 }
 
@@ -184,6 +185,100 @@ func hyperparamsAddGet(t *testing.T) {
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, 1, len(params2))
 	sbtest.Eq(t, params2[0], trackParams[1])
+}
+
+func hyperparamsEnsureGet(t *testing.T) {
+	ctxt, cleanup := resetApp(context.Background())
+	t.Cleanup(cleanup)
+
+	calcParams := []types.BarPathCalcHyperparams{{
+		Version:        1,
+		MinNumSamples:  2,
+		TimeDeltaEps:   1,
+		ApproxErr:      types.SecondOrder,
+		NearZeroFilter: 1,
+	}, {
+		Version:        2,
+		MinNumSamples:  2,
+		TimeDeltaEps:   1,
+		ApproxErr:      types.SecondOrder,
+		NearZeroFilter: 1,
+	}}
+	trackParams := []types.BarPathTrackerHyperparams{{
+		Version:     1,
+		MinLength:   1,
+		MinFileSize: 1,
+		MaxFileSize: 2,
+	}, {
+		Version:     2,
+		MinLength:   1,
+		MinFileSize: 1,
+		MaxFileSize: 2,
+	}}
+
+	err := EnsureHyperparamsExist(ctxt, calcParams...)
+	sbtest.Nil(t, err)
+
+	err = EnsureHyperparamsExist(ctxt, trackParams...)
+	sbtest.Nil(t, err)
+
+	res, err := ReadNumHyperparams(ctxt)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 6, res)
+
+	res, err = ReadNumHyperparamsFor[types.BarPathCalcHyperparams](ctxt)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 3, res)
+	res, err = ReadNumHyperparamsFor[types.BarPathTrackerHyperparams](ctxt)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 3, res)
+
+	params, err := ReadHyperparamsByVersionFor[types.BarPathCalcHyperparams](
+		ctxt, 1,
+	)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 1, len(params))
+	sbtest.Eq(t, params[0], calcParams[0])
+
+	params, err = ReadHyperparamsByVersionFor[types.BarPathCalcHyperparams](
+		ctxt, 2,
+	)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 1, len(params))
+	sbtest.Eq(t, params[0], calcParams[1])
+
+	params2, err := ReadHyperparamsByVersionFor[types.BarPathTrackerHyperparams](
+		ctxt, 1,
+	)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 1, len(params2))
+	sbtest.Eq(t, params2[0], trackParams[0])
+
+	params2, err = ReadHyperparamsByVersionFor[types.BarPathTrackerHyperparams](
+		ctxt, 2,
+	)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 1, len(params2))
+	sbtest.Eq(t, params2[0], trackParams[1])
+
+	err = EnsureHyperparamsExist(ctxt, calcParams...)
+	sbtest.Nil(t, err)
+
+	err = EnsureHyperparamsExist(ctxt, trackParams...)
+	sbtest.Nil(t, err)
+
+	res, err = ReadNumHyperparams(ctxt)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 6, res)
+
+	err = EnsureHyperparamsExist(ctxt, types.BarPathCalcHyperparams{
+		Version:        1,
+		MinNumSamples:  2,
+		TimeDeltaEps:   3,
+		ApproxErr:      types.FourthOrder,
+		NearZeroFilter: 4,
+	})
+	sbtest.ContainsError(t, types.CouldNotAddNumHyperparamsErr, err)
 }
 
 func hyperparamsAddDeleteGet(t *testing.T) {

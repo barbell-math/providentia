@@ -72,6 +72,78 @@ func CreateHyperparams[T types.Hyperparams](
 	return
 }
 
+func EnsureHyperparamsExist[T types.Hyperparams](
+	ctxt context.Context,
+	state *types.State,
+	queries *dal.SyncQueries,
+	params ...T,
+) (opErr error) {
+	modelId := getModelIdFor[T]()
+	bufWriter := dal.NewBufferedWriter(
+		state.Global.BatchSize,
+		dal.Q.BulkCreateHyperparams,
+		func() (err error) { return },
+	)
+
+	for _, iterParams := range params {
+		select {
+		case <-ctxt.Done():
+			return
+		default:
+		}
+
+		// There is no way to express deep-JSON equality in SQL, so we have to
+		// make a bunch of round trips to the database :(
+		// TODO - bulk read without error??
+		// ReadHyperparamsByVersionIfPresentFor
+		param, iterErr := ReadHyperparamsByVersionFor[T](
+			ctxt, state, queries, getVersionFrom(&iterParams),
+		)
+		if iterErr == nil && len(param) == 1 && param[0] == iterParams {
+			continue
+		}
+
+		// param either does not exist or is different from what was requested,
+		// try to create it
+		var jsonParams []byte
+		jsonParams, opErr = json.Marshal(iterParams)
+		if opErr != nil {
+			opErr = sberr.AppendError(
+				types.InvalidHyperparamsErr,
+				types.EncodingJsonHyperparamsErr,
+				opErr,
+			)
+		}
+		if opErr = bufWriter.Write(
+			ctxt, queries,
+			dal.BulkCreateHyperparamsParams{
+				ModelID: modelId,
+				Version: getVersionFrom(&iterParams),
+				Params:  jsonParams,
+			},
+		); opErr != nil {
+			opErr = sberr.AppendError(
+				types.CouldNotAddNumHyperparamsErr, dal.FormatErr(opErr),
+			)
+			return
+		}
+	}
+
+	if opErr = bufWriter.Flush(ctxt, queries); opErr != nil {
+		opErr = sberr.AppendError(
+			types.CouldNotAddNumHyperparamsErr, dal.FormatErr(opErr),
+		)
+		return
+	}
+
+	state.Log.Log(
+		ctxt, sblog.VLevel(3),
+		"Ensured hyperparams exist",
+		"NumHyperparams", len(params),
+	)
+	return
+}
+
 func validateHyperparams[T types.Hyperparams](v T) (opErr error) {
 	switch params := any(v).(type) {
 	case types.BarPathCalcHyperparams:

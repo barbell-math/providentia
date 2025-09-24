@@ -44,8 +44,27 @@ SELECT COUNT(*) FROM providentia.client;
 SELECT id FROM providentia.client WHERE email = $1;
 
 -- name: GetClientsByEmail :many
-SELECT first_name, last_name, email
-FROM providentia.client WHERE email = ANY($1::TEXT[]);
+SELECT
+	providentia.client.first_name,
+	providentia.client.last_name,
+	providentia.client.email
+FROM providentia.client 
+JOIN UNNEST($1::TEXT[])
+WITH ORDINALITY t(email, ord)
+USING (email) 
+ORDER BY ord;
+
+-- name: FindClientsByEmail :many
+SELECT
+	providentia.client.first_name,
+	providentia.client.last_name,
+	providentia.client.email,
+	ord::INT8
+FROM providentia.client 
+JOIN UNNEST($1::TEXT[])
+WITH ORDINALITY t(email, ord)
+USING (email) 
+ORDER BY ord;
 
 -- name: ClientExists :one
 SELECT EXISTS(SELECT 1 FROM providentia.client WHERE email = $1);
@@ -95,8 +114,15 @@ SELECT COUNT(*) FROM providentia.exercise;
 SELECT id FROM providentia.exercise WHERE name = $1;
 
 -- name: GetExercisesByName :many
-SELECT name, kind_id, focus_id
-FROM providentia.exercise WHERE name = ANY($1::TEXT[]);
+SELECT
+	providentia.exercise.name,
+	providentia.exercise.kind_id,
+	providentia.exercise.focus_id
+FROM providentia.exercise 
+JOIN UNNEST($1::TEXT[])
+WITH ORDINALITY t(name, ord)
+USING (name) 
+ORDER BY ord;
 
 -- name: UpdateExerciseByName :exec
 UPDATE providentia.exercise SET kind_id=$2, focus_id=$3
@@ -152,8 +178,15 @@ SELECT COUNT(*) FROM providentia.hyperparams
 WHERE providentia.hyperparams.model_id=$1;
 
 -- name: GetHyperparamsByVersionFor :many
-SELECT version, params FROM providentia.hyperparams
-WHERE model_id=$1 AND version = ANY(@versions::INT4[]);
+SELECT
+	providentia.hyperparams.version,
+	providentia.hyperparams.params
+FROM providentia.hyperparams
+JOIN UNNEST(@versions::INT4[])
+WITH ORDINALITY t(version, ord)
+USING (version)
+WHERE model_id=$1
+ORDER BY ord;
 
 -- name: DeleteHyperparamsByVersionFor :one
 WITH deleted_hyperparams AS (
@@ -190,6 +223,8 @@ SELECT COUNT(*) FROM (
 ) AS result;
 
 -- name: GetAllWorkoutData :many
+-- TODO - figure out if ordinality trick can be used here - is there a way to
+-- make the join on multiple columns?
 SELECT
 	providentia.exercise.name,
 	providentia.training_log.weight,
@@ -332,17 +367,17 @@ INSERT INTO providentia.physics_data(
 		JOIN providentia.model
 			ON providentia.model.id = providentia.hyperparams.model_id
 		WHERE providentia.model.name='BarPathCalc'
-			AND providentia.hyperparams.version=$2	-- TODO - sqlc arg name
+			AND providentia.hyperparams.version=sqlc.arg(bar_path_calc_params_version)
 	),
 	(
 		SELECT providentia.model.id FROM providentia.hyperparams
 		JOIN providentia.model
 			ON providentia.model.id = providentia.hyperparams.model_id
 		WHERE providentia.model.name='BarPathTracker'
-			AND providentia.hyperparams.version=$3	-- TODO - sqlc arg name
+			AND providentia.hyperparams.version=sqlc.arg(bar_path_tracker_params_version)
 	),
-	$4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
-	$20, $21, $22, $23, $24, $25, $26, $27
+	$2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
+	$18, $19, $20, $21, $22, $23, $24, $25
 ) RETURNING id;
 
 -- name: GetTotalNumPhysicsEntriesForClient :one
