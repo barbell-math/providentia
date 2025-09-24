@@ -84,48 +84,57 @@ func EnsureHyperparamsExist[T types.Hyperparams](
 		dal.Q.BulkCreateHyperparams,
 		func() (err error) { return },
 	)
+	versions := make([]int32, min(len(params), int(state.Global.BatchSize)))
 
-	for _, iterParams := range params {
+	for start, end := range batchIndexes(params, int(state.Global.BatchSize)) {
 		select {
 		case <-ctxt.Done():
 			return
 		default:
 		}
 
-		// There is no way to express deep-JSON equality in SQL, so we have to
-		// make a bunch of round trips to the database :(
-		// TODO - bulk read without error??
-		// ReadHyperparamsByVersionIfPresentFor
-		param, iterErr := ReadHyperparamsByVersionFor[T](
-			ctxt, state, queries, getVersionFrom(&iterParams),
-		)
-		if iterErr == nil && len(param) == 1 && param[0] == iterParams {
-			continue
+		chunk := params[start:end]
+		for i := range end - start {
+			versions[i] = getVersionFrom(&chunk[i])
 		}
 
-		// param either does not exist or is different from what was requested,
-		// try to create it
-		var jsonParams []byte
-		jsonParams, opErr = json.Marshal(iterParams)
+		// There is no way to express deep-JSON equality in SQL, so we have to
+		// make a bunch of round trips to the database :(
+		var existingParams []types.Found[T]
+		existingParams, opErr = FindHyperparamsByVersionFor[T](
+			ctxt, state, queries, versions[:len(chunk)]...,
+		)
 		if opErr != nil {
-			opErr = sberr.AppendError(
-				types.InvalidHyperparamsErr,
-				types.EncodingJsonHyperparamsErr,
-				opErr,
-			)
-		}
-		if opErr = bufWriter.Write(
-			ctxt, queries,
-			dal.BulkCreateHyperparamsParams{
-				ModelID: modelId,
-				Version: getVersionFrom(&iterParams),
-				Params:  jsonParams,
-			},
-		); opErr != nil {
-			opErr = sberr.AppendError(
-				types.CouldNotAddNumHyperparamsErr, dal.FormatErr(opErr),
-			)
 			return
+		}
+
+		for i, param := range existingParams[:len(chunk)] {
+			if param.Found && param.Value == params[i+start] {
+				continue
+			}
+
+			var jsonParams []byte
+			jsonParams, opErr = json.Marshal(params[i+start])
+			if opErr != nil {
+				opErr = sberr.AppendError(
+					types.InvalidHyperparamsErr,
+					types.EncodingJsonHyperparamsErr,
+					opErr,
+				)
+			}
+			if opErr = bufWriter.Write(
+				ctxt, queries,
+				dal.BulkCreateHyperparamsParams{
+					ModelID: modelId,
+					Version: getVersionFrom(&params[i+start]),
+					Params:  jsonParams,
+				},
+			); opErr != nil {
+				opErr = sberr.AppendError(
+					types.CouldNotAddNumHyperparamsErr, dal.FormatErr(opErr),
+				)
+				return
+			}
 		}
 	}
 

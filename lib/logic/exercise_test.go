@@ -149,9 +149,7 @@ func exerciseCreateRead(t *testing.T) {
 		res, err := ReadExercisesByName(ctxt, exercises[i].Name)
 		sbtest.Nil(t, err)
 		sbtest.Eq(t, 1, len(res))
-		sbtest.Eq(t, exercises[i].Name, res[0].Name)
-		sbtest.Eq(t, exercises[i].KindID, res[0].KindID)
-		sbtest.Eq(t, exercises[i].FocusID, res[0].FocusID)
+		sbtest.Eq(t, exercises[i], res[0])
 	}
 
 	_, err = ReadExercisesByName(ctxt, "badExercise")
@@ -182,9 +180,7 @@ func exerciseEnsureRead(t *testing.T) {
 		res, err := ReadExercisesByName(ctxt, exercises[i].Name)
 		sbtest.Nil(t, err)
 		sbtest.Eq(t, 1, len(res))
-		sbtest.Eq(t, exercises[i].Name, res[0].Name)
-		sbtest.Eq(t, exercises[i].KindID, res[0].KindID)
-		sbtest.Eq(t, exercises[i].FocusID, res[0].FocusID)
+		sbtest.Eq(t, exercises[i], res[0])
 	}
 
 	_, err = ReadExercisesByName(ctxt, "badExercise")
@@ -226,9 +222,7 @@ func exerciseCreateFind(t *testing.T) {
 		res, err := FindExercisesByName(ctxt, exercises[i].Name)
 		sbtest.Nil(t, err)
 		sbtest.Eq(t, 1, len(res))
-		sbtest.Eq(t, exercises[i].Name, res[0].Value.Name)
-		sbtest.Eq(t, exercises[i].KindID, res[0].Value.KindID)
-		sbtest.Eq(t, exercises[i].FocusID, res[0].Value.FocusID)
+		sbtest.Eq(t, exercises[i], res[0].Value)
 	}
 
 	res, err := FindExercisesByName(ctxt, "badExercise")
@@ -244,9 +238,7 @@ func exerciseCreateFind(t *testing.T) {
 	for i := range len(names) {
 		if i%2 == 0 {
 			sbtest.True(t, res[i].Found)
-			sbtest.Eq(t, exercises[i/2].Name, res[i].Value.Name)
-			sbtest.Eq(t, exercises[i/2].KindID, res[i].Value.KindID)
-			sbtest.Eq(t, exercises[i/2].FocusID, res[i].Value.FocusID)
+			sbtest.Eq(t, exercises[i/2], res[i].Value)
 		} else {
 			sbtest.False(t, res[i].Found)
 		}
@@ -290,9 +282,7 @@ func exerciseCreateUpdateRead(t *testing.T) {
 		res, err := ReadExercisesByName(ctxt, exercises[i].Name)
 		sbtest.Nil(t, err)
 		sbtest.Eq(t, 1, len(res))
-		sbtest.Eq(t, exercises[i].Name, res[0].Name)
-		sbtest.Eq(t, exercises[i].KindID, res[0].KindID)
-		sbtest.Eq(t, exercises[i].FocusID, res[0].FocusID)
+		sbtest.Eq(t, exercises[i], res[0])
 	}
 
 	_, err = ReadExercisesByName(ctxt, "badExercise")
@@ -345,9 +335,7 @@ func exerciseCreateDeleteRead(t *testing.T) {
 		res, err := ReadExercisesByName(ctxt, exercises[offset].Name)
 		sbtest.Nil(t, err)
 		sbtest.Eq(t, 1, len(res))
-		sbtest.Eq(t, exercises[offset].Name, res[0].Name)
-		sbtest.Eq(t, exercises[offset].KindID, res[0].KindID)
-		sbtest.Eq(t, exercises[offset].FocusID, res[0].FocusID)
+		sbtest.Eq(t, exercises[offset], res[0])
 	}
 
 	_, err = ReadExercisesByName(ctxt, "badExercise")

@@ -157,9 +157,7 @@ func clientCreateRead(t *testing.T) {
 		res, err := ReadClientsByEmail(ctxt, clients[i].Email)
 		sbtest.Nil(t, err)
 		sbtest.Eq(t, 1, len(res))
-		sbtest.Eq(t, clients[i].FirstName, res[0].FirstName)
-		sbtest.Eq(t, clients[i].LastName, res[0].LastName)
-		sbtest.Eq(t, clients[i].Email, res[0].Email)
+		sbtest.Eq(t, clients[i], res[0])
 	}
 
 	_, err = ReadClientsByEmail(ctxt, "bad@email.com")
