@@ -233,9 +233,7 @@ func clientCreateFind(t *testing.T) {
 		sbtest.Nil(t, err)
 		sbtest.Eq(t, 1, len(res))
 		sbtest.True(t, res[0].Found)
-		sbtest.Eq(t, clients[i].FirstName, res[0].Value.FirstName)
-		sbtest.Eq(t, clients[i].LastName, res[0].Value.LastName)
-		sbtest.Eq(t, clients[i].Email, res[0].Value.Email)
+		sbtest.Eq(t, clients[i], res[0].Value)
 	}
 
 	res, err := FindClientsByEmail(ctxt, "bad@email.com")
@@ -251,9 +249,7 @@ func clientCreateFind(t *testing.T) {
 	for i := range len(emails) {
 		if i%2 == 0 {
 			sbtest.True(t, res[i].Found)
-			sbtest.Eq(t, clients[i/2].FirstName, res[i].Value.FirstName)
-			sbtest.Eq(t, clients[i/2].LastName, res[i].Value.LastName)
-			sbtest.Eq(t, clients[i/2].Email, res[i].Value.Email)
+			sbtest.Eq(t, clients[i/2], res[i].Value)
 		} else {
 			sbtest.False(t, res[i].Found)
 		}

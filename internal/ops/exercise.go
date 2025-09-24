@@ -188,7 +188,9 @@ func ReadExercisesByName(
 		}
 
 		var rawData []dal.GetExercisesByNameRow
-		rawData, opErr = dal.Query1x2(dal.Q.GetExercisesByName, queries, ctxt, names[start:end])
+		rawData, opErr = dal.Query1x2(
+			dal.Q.GetExercisesByName, queries, ctxt, names[start:end],
+		)
 		if opErr != nil {
 			opErr = sberr.AppendError(
 				types.CouldNotFindRequestedExerciseErr, dal.FormatErr(opErr),
@@ -208,7 +210,56 @@ func ReadExercisesByName(
 
 		state.Log.Log(
 			ctxt, sblog.VLevel(3),
-			"Read clients from email",
+			"Read exercises from name",
+			"Num", len(rawData),
+		)
+	}
+
+	return
+}
+
+func FindExercisesByName(
+	ctxt context.Context,
+	state *types.State,
+	queries *dal.SyncQueries,
+	names ...string,
+) (res []types.Found[types.Exercise], opErr error) {
+	res = make([]types.Found[types.Exercise], len(names))
+
+	for start, end := range batchIndexes(names, int(state.Global.BatchSize)) {
+		select {
+		case <-ctxt.Done():
+			return
+		default:
+		}
+
+		var rawData []dal.FindExercisesByNameRow
+		rawData, opErr = dal.Query1x2(
+			dal.Q.FindExercisesByName, queries, ctxt, names[start:end],
+		)
+		if opErr != nil {
+			opErr = sberr.AppendError(
+				types.CouldNotFindRequestedExerciseErr, dal.FormatErr(opErr),
+			)
+			return
+		}
+
+		rawDataIdx := 0
+		for i := 0; i < end-start; i++ {
+			res[i+start].Found = (rawDataIdx < len(rawData) && rawData[rawDataIdx].Ord-1 == int64(i))
+			if res[i+start].Found {
+				res[i+start].Value = types.Exercise{
+					Name:    rawData[rawDataIdx].Name,
+					KindID:  rawData[rawDataIdx].KindID,
+					FocusID: rawData[rawDataIdx].FocusID,
+				}
+				rawDataIdx++
+			}
+		}
+
+		state.Log.Log(
+			ctxt, sblog.VLevel(3),
+			"Found exercises from name",
 			"Num", len(rawData),
 		)
 	}

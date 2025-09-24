@@ -370,6 +370,95 @@ func (q *Queries) FindClientsByEmail(ctx context.Context, dollar_1 []string) ([]
 	return items, nil
 }
 
+const findExercisesByName = `-- name: FindExercisesByName :many
+SELECT
+	providentia.exercise.name,
+	providentia.exercise.kind_id,
+	providentia.exercise.focus_id,
+	ord::INT8
+FROM providentia.exercise 
+JOIN UNNEST($1::TEXT[])
+WITH ORDINALITY t(name, ord)
+USING (name) 
+ORDER BY ord
+`
+
+type FindExercisesByNameRow struct {
+	Name    string              `json:"name"`
+	KindID  types.ExerciseKind  `json:"kind_id"`
+	FocusID types.ExerciseFocus `json:"focus_id"`
+	Ord     int64               `json:"ord"`
+}
+
+func (q *Queries) FindExercisesByName(ctx context.Context, dollar_1 []string) ([]FindExercisesByNameRow, error) {
+	rows, err := q.db.Query(ctx, findExercisesByName, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FindExercisesByNameRow
+	for rows.Next() {
+		var i FindExercisesByNameRow
+		if err := rows.Scan(
+			&i.Name,
+			&i.KindID,
+			&i.FocusID,
+			&i.Ord,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const findHyperparamsByVersionFor = `-- name: FindHyperparamsByVersionFor :many
+SELECT
+	providentia.hyperparams.version,
+	providentia.hyperparams.params,
+	ord::INT8
+FROM providentia.hyperparams
+JOIN UNNEST($2::INT4[])
+WITH ORDINALITY t(version, ord)
+USING (version)
+WHERE model_id=$1
+ORDER BY ord
+`
+
+type FindHyperparamsByVersionForParams struct {
+	ModelID  types.ModelID `json:"model_id"`
+	Versions []int32       `json:"versions"`
+}
+
+type FindHyperparamsByVersionForRow struct {
+	Version int32  `json:"version"`
+	Params  []byte `json:"params"`
+	Ord     int64  `json:"ord"`
+}
+
+func (q *Queries) FindHyperparamsByVersionFor(ctx context.Context, arg FindHyperparamsByVersionForParams) ([]FindHyperparamsByVersionForRow, error) {
+	rows, err := q.db.Query(ctx, findHyperparamsByVersionFor, arg.ModelID, arg.Versions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FindHyperparamsByVersionForRow
+	for rows.Next() {
+		var i FindHyperparamsByVersionForRow
+		if err := rows.Scan(&i.Version, &i.Params, &i.Ord); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAllWorkoutData = `-- name: GetAllWorkoutData :many
 SELECT
 	providentia.exercise.name,

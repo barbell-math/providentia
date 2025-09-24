@@ -124,6 +124,18 @@ WITH ORDINALITY t(name, ord)
 USING (name) 
 ORDER BY ord;
 
+-- name: FindExercisesByName :many
+SELECT
+	providentia.exercise.name,
+	providentia.exercise.kind_id,
+	providentia.exercise.focus_id,
+	ord::INT8
+FROM providentia.exercise 
+JOIN UNNEST($1::TEXT[])
+WITH ORDINALITY t(name, ord)
+USING (name) 
+ORDER BY ord;
+
 -- name: UpdateExerciseByName :exec
 UPDATE providentia.exercise SET kind_id=$2, focus_id=$3
 WHERE providentia.exercise.name=$1;
@@ -181,6 +193,18 @@ WHERE providentia.hyperparams.model_id=$1;
 SELECT
 	providentia.hyperparams.version,
 	providentia.hyperparams.params
+FROM providentia.hyperparams
+JOIN UNNEST(@versions::INT4[])
+WITH ORDINALITY t(version, ord)
+USING (version)
+WHERE model_id=$1
+ORDER BY ord;
+
+-- name: FindHyperparamsByVersionFor :many
+SELECT
+	providentia.hyperparams.version,
+	providentia.hyperparams.params,
+	ord::INT8
 FROM providentia.hyperparams
 JOIN UNNEST(@versions::INT4[])
 WITH ORDINALITY t(version, ord)

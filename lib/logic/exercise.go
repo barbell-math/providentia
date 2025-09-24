@@ -132,7 +132,33 @@ func ReadExercisesByName(
 	opErr = runOp(ctxt, opCalls{
 		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
 			res, err = ops.ReadExercisesByName(ctxt, state, queries, names...)
-			return err
+			return
+		},
+	})
+	return
+}
+
+// Gets the exercise data associated with the supplied exercises if they exist.
+// If a exercise exists it will be put in the returned slice and the found flag
+// will be set to true. If a exercise does not exist the value in the slice will
+// be a zero initialized exercise and the found flag will be set to false. No
+// error will be returned if a exercise does not exist. The order of the
+// returned exercises will match the order of the supplied exercise emails.
+//
+// The context must have a [types.State] variable.
+//
+// No changes will be made to the database.
+func FindExercisesByName(
+	ctxt context.Context,
+	names ...string,
+) (res []types.Found[types.Exercise], opErr error) {
+	if len(names) == 0 {
+		return
+	}
+	opErr = runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			res, err = ops.FindExercisesByName(ctxt, state, queries, names...)
+			return
 		},
 	})
 	return

@@ -16,11 +16,12 @@ func TestExercise(t *testing.T) {
 	t.Run("failingNoWrites", exerciseFailingNoWrites)
 	t.Run("duplicateName", exerciseDuplicateName)
 	t.Run("transactionRollback", exerciseTransactionRollback)
-	t.Run("addGet", exerciseAddGet)
-	t.Run("ensureGet", exerciseEnsureGet)
-	t.Run("addCSVGet", exerciseAddCSVGet)
-	t.Run("addUpdateGet", exerciseAddUpdateGet)
-	t.Run("addDeleteGet", exerciseAddDeleteGet)
+	t.Run("createRead", exerciseCreateRead)
+	t.Run("ensureRead", exerciseEnsureRead)
+	t.Run("createFind", exerciseCreateFind)
+	t.Run("createCSVRead", exerciseCreateCSVRead)
+	t.Run("createUpdateRead", exerciseCreateUpdateRead)
+	t.Run("createDeleteRead", exerciseCreateDeleteRead)
 }
 
 func exerciseFailingNoWrites(t *testing.T) {
@@ -124,7 +125,7 @@ func exerciseTransactionRollback(t *testing.T) {
 	sbtest.Eq(t, int64(len(migrations.ExerciseSetupData))+13, numExercises)
 }
 
-func exerciseAddGet(t *testing.T) {
+func exerciseCreateRead(t *testing.T) {
 	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 
@@ -157,7 +158,7 @@ func exerciseAddGet(t *testing.T) {
 	sbtest.ContainsError(t, types.CouldNotFindRequestedExerciseErr, err)
 }
 
-func exerciseEnsureGet(t *testing.T) {
+func exerciseEnsureRead(t *testing.T) {
 	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 
@@ -201,7 +202,58 @@ func exerciseEnsureGet(t *testing.T) {
 	sbtest.ContainsError(t, types.CouldNotAddExercisesErr, err)
 }
 
-func exerciseAddUpdateGet(t *testing.T) {
+func exerciseCreateFind(t *testing.T) {
+	ctxt, cleanup := resetApp(context.Background())
+	t.Cleanup(cleanup)
+
+	exercises := make([]types.Exercise, 13)
+	for i := range len(exercises) {
+		exercises[i] = types.Exercise{
+			Name:    fmt.Sprintf("testExercise%d", i),
+			KindID:  types.MainCompound,
+			FocusID: types.Bench,
+		}
+	}
+
+	err := CreateExercises(ctxt, exercises...)
+	sbtest.Nil(t, err)
+
+	numExercises, err := ReadNumExercises(ctxt)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, int64(len(migrations.ExerciseSetupData))+13, numExercises)
+
+	for i := range len(exercises) {
+		res, err := FindExercisesByName(ctxt, exercises[i].Name)
+		sbtest.Nil(t, err)
+		sbtest.Eq(t, 1, len(res))
+		sbtest.Eq(t, exercises[i].Name, res[0].Value.Name)
+		sbtest.Eq(t, exercises[i].KindID, res[0].Value.KindID)
+		sbtest.Eq(t, exercises[i].FocusID, res[0].Value.FocusID)
+	}
+
+	res, err := FindExercisesByName(ctxt, "badExercise")
+	sbtest.Nil(t, err)
+	sbtest.False(t, res[0].Found)
+
+	names := []string{}
+	for i := range len(exercises) {
+		names = append(names, exercises[i].Name, "badExercise")
+	}
+	res, err = FindExercisesByName(ctxt, names...)
+	sbtest.Nil(t, err)
+	for i := range len(names) {
+		if i%2 == 0 {
+			sbtest.True(t, res[i].Found)
+			sbtest.Eq(t, exercises[i/2].Name, res[i].Value.Name)
+			sbtest.Eq(t, exercises[i/2].KindID, res[i].Value.KindID)
+			sbtest.Eq(t, exercises[i/2].FocusID, res[i].Value.FocusID)
+		} else {
+			sbtest.False(t, res[i].Found)
+		}
+	}
+}
+
+func exerciseCreateUpdateRead(t *testing.T) {
 	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 
@@ -247,7 +299,7 @@ func exerciseAddUpdateGet(t *testing.T) {
 	sbtest.ContainsError(t, types.CouldNotFindRequestedExerciseErr, err)
 }
 
-func exerciseAddDeleteGet(t *testing.T) {
+func exerciseCreateDeleteRead(t *testing.T) {
 	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 
@@ -302,7 +354,7 @@ func exerciseAddDeleteGet(t *testing.T) {
 	sbtest.ContainsError(t, types.CouldNotFindRequestedExerciseErr, err)
 }
 
-func exerciseAddCSVGet(t *testing.T) {
+func exerciseCreateCSVRead(t *testing.T) {
 	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 

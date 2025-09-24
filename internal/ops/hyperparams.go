@@ -337,12 +337,72 @@ func ReadHyperparamsByVersionFor[T types.Hyperparams](
 				opErr = sberr.AppendError(
 					types.DecodingJsonHyperparamsErr, opErr,
 				)
+				return
 			}
 		}
 
 		state.Log.Log(
 			ctxt, sblog.VLevel(3),
 			"Read hyperparams by version",
+			"ModelID", modelId,
+			"Num", len(rawData),
+		)
+	}
+
+	return
+}
+
+func FindHyperparamsByVersionFor[T types.Hyperparams](
+	ctxt context.Context,
+	state *types.State,
+	queries *dal.SyncQueries,
+	versions ...int32,
+) (res []types.Found[T], opErr error) {
+	res = make([]types.Found[T], len(versions))
+	modelId := getModelIdFor[T]()
+
+	for start, end := range batchIndexes(versions, int(state.Global.BatchSize)) {
+		select {
+		case <-ctxt.Done():
+			return
+		default:
+		}
+
+		var rawData []dal.FindHyperparamsByVersionForRow
+		rawData, opErr = dal.Query1x2(
+			dal.Q.FindHyperparamsByVersionFor, queries, ctxt,
+			dal.FindHyperparamsByVersionForParams{
+				ModelID:  modelId,
+				Versions: versions[start:end],
+			},
+		)
+		if opErr != nil {
+			opErr = sberr.AppendError(
+				types.CouldNotFindRequestedHyperparamsErr, dal.FormatErr(opErr),
+			)
+			return
+		}
+
+		rawDataIdx := 0
+		for i := 0; i < end-start; i++ {
+			res[i+start].Found = (rawDataIdx < len(rawData) && rawData[rawDataIdx].Ord-1 == int64(i))
+			if res[i+start].Found {
+				setVersionTo(&res[i+start].Value, rawData[rawDataIdx].Version)
+				if opErr = json.Unmarshal(
+					rawData[rawDataIdx].Params, &res[i+start].Value,
+				); opErr != nil {
+					opErr = sberr.AppendError(
+						types.DecodingJsonHyperparamsErr, opErr,
+					)
+					return
+				}
+				rawDataIdx++
+			}
+		}
+
+		state.Log.Log(
+			ctxt, sblog.VLevel(3),
+			"Found hyperparams by version",
 			"ModelID", modelId,
 			"Num", len(rawData),
 		)
