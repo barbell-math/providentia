@@ -14,6 +14,7 @@ func TestWorkout(t *testing.T) {
 	t.Run("failingNoWrites", workoutFailingNoWrites)
 	t.Run("duplicateWorkout", workoutDuplicateWorkout)
 	t.Run("createReadNoPhysicsData", workoutCreateReadNoPhysicsData)
+	t.Run("ensureReadNoPhysicsData", workoutEnsureReadNoPhysicsData)
 	t.Run("createFindNoPhysicsData", workoutCreateFindNoPhysicsData)
 	t.Run("createReadTimeSeriesPhysicsData", workoutCreateReadTimeSeriesPhysicsData)
 	// TODO
@@ -603,6 +604,101 @@ func workoutCreateReadNoPhysicsData(t *testing.T) {
 		DatePerformed: sbtest.MustParseTime(time.DateOnly, "2025-01-02"),
 	})
 	sbtest.ContainsError(t, types.CouldNotFindRequestedWorkoutErr, err)
+}
+
+func workoutEnsureReadNoPhysicsData(t *testing.T) {
+	ctxt, cleanup := resetApp(context.Background())
+	t.Cleanup(cleanup)
+
+	err := CreateClients(ctxt, types.Client{
+		FirstName: "FName", LastName: "LName", Email: "email@email.com",
+	})
+
+	workouts := [2]types.RawWorkout{
+		types.RawWorkout{
+			WorkoutID: types.WorkoutID{
+				ClientEmail:   "email@email.com",
+				Session:       1,
+				DatePerformed: sbtest.MustParseTime(time.DateOnly, "2025-01-02"),
+			},
+			Exercises: []types.RawExerciseData{
+				types.RawExerciseData{
+					Name:   "Squat",
+					Weight: 355,
+					Sets:   5,
+					Reps:   5,
+					Effort: 8.5,
+				},
+				types.RawExerciseData{
+					Name:   "Bench",
+					Weight: 135,
+					Sets:   3,
+					Reps:   8,
+					Effort: 5,
+				},
+			},
+		},
+		types.RawWorkout{
+			WorkoutID: types.WorkoutID{
+				ClientEmail:   "email@email.com",
+				Session:       1,
+				DatePerformed: sbtest.MustParseTime(time.DateOnly, "2025-01-03"),
+			},
+			Exercises: []types.RawExerciseData{
+				types.RawExerciseData{
+					Name:   "Deadlift",
+					Weight: 405,
+					Sets:   6,
+					Reps:   6,
+					Effort: 7,
+				},
+			},
+		},
+	}
+
+	err = EnsureWorkoutsExist(
+		ctxt,
+		&types.BarPathCalcHyperparams{ApproxErr: types.SecondOrder},
+		&types.BarPathTrackerHyperparams{},
+		workouts[:]...,
+	)
+	sbtest.Nil(t, err)
+	numExercises, err := ReadClientTotalNumTrainingLogEntries(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 3, numExercises)
+	numRawWorkouts, err := ReadClientNumWorkouts(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 2, numRawWorkouts)
+	numPhysEntries, err := ReadClientTotalNumPhysEntries(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 0, numPhysEntries)
+
+	res, err := ReadWorkoutsByID(
+		ctxt, workouts[0].WorkoutID, workouts[1].WorkoutID,
+	)
+	rawWorkoutEqSavedWorkout(t, workouts[:], res)
+
+	err = EnsureWorkoutsExist(
+		ctxt,
+		&types.BarPathCalcHyperparams{ApproxErr: types.SecondOrder},
+		&types.BarPathTrackerHyperparams{},
+		workouts[:]...,
+	)
+	sbtest.Nil(t, err)
+	numExercises, err = ReadClientTotalNumTrainingLogEntries(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 3, numExercises)
+	numRawWorkouts, err = ReadClientNumWorkouts(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 2, numRawWorkouts)
+	numPhysEntries, err = ReadClientTotalNumPhysEntries(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 0, numPhysEntries)
+
+	res, err = ReadWorkoutsByID(
+		ctxt, workouts[0].WorkoutID, workouts[1].WorkoutID,
+	)
+	rawWorkoutEqSavedWorkout(t, workouts[:], res)
 }
 
 func workoutCreateFindNoPhysicsData(t *testing.T) {

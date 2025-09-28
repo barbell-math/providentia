@@ -21,6 +21,7 @@ func CreateClients(
 	for start, end := range batchIndexes(clients, int(state.Global.BatchSize)) {
 		select {
 		case <-ctxt.Done():
+			opErr = ctxt.Err()
 			return
 		default:
 		}
@@ -65,6 +66,7 @@ func EnsureClientsExist(
 	for start, end := range batchIndexes(clients, int(state.Global.BatchSize)) {
 		select {
 		case <-ctxt.Done():
+			opErr = ctxt.Err()
 			return
 		default:
 		}
@@ -188,6 +190,7 @@ func ReadClientsByEmail(
 	for start, end := range batchIndexes(emails, int(state.Global.BatchSize)) {
 		select {
 		case <-ctxt.Done():
+			opErr = ctxt.Err()
 			return
 		default:
 		}
@@ -234,6 +237,7 @@ func FindClientsByEmail(
 	for start, end := range batchIndexes(emails, int(state.Global.BatchSize)) {
 		select {
 		case <-ctxt.Done():
+			opErr = ctxt.Err()
 			return
 		default:
 		}
@@ -282,6 +286,7 @@ func UpdateClients(
 	for _, c := range clients {
 		select {
 		case <-ctxt.Done():
+			opErr = ctxt.Err()
 			return
 		default:
 		}

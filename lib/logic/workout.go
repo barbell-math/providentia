@@ -81,7 +81,7 @@ func EnsureWorkoutsExist(
 	}
 	return runOp(ctxt, opCalls{
 		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			return ops.CreateWorkouts(
+			return ops.EnsureWorkoutsExist(
 				ctxt, state, queries,
 				barPathCalcParams, barTrackerCalcParams,
 				workouts...,

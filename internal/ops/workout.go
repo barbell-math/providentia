@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 	"unsafe"
@@ -77,6 +78,7 @@ func CreateWorkouts(
 	for _, iterW := range data {
 		select {
 		case <-ctxt.Done():
+			opErr = ctxt.Err()
 			return
 		default:
 		}
@@ -112,6 +114,110 @@ func EnsureWorkoutsExist(
 	barTrackerCalcParams *types.BarPathTrackerHyperparams,
 	data ...types.RawWorkout,
 ) (opErr error) {
+	batch, _ := sbjobqueue.BatchWithContext(ctxt)
+	clientCache := dal.NewClientIdCache(state.Global.PerRequestIdCacheSize)
+	exerciseCache := dal.NewExerciseIdCache(state.Global.PerRequestIdCacheSize)
+	bufWriter := dal.NewBufferedWriter(
+		state.Global.BatchSize,
+		dal.Q.BulkCreateTrainingLogs,
+		func() (err error) {
+			if err := batch.Wait(); err != nil {
+				return err
+			}
+			return
+		},
+	)
+	params := createSingleWorkoutParams{
+		barPathCalcParams:    barPathCalcParams,
+		barTrackerCalcParams: barTrackerCalcParams,
+		batch:                batch,
+		clientCache:          &clientCache,
+		exerciseCache:        &exerciseCache,
+		bufWriter:            &bufWriter,
+	}
+
+	for _, iterW := range data {
+		select {
+		case <-ctxt.Done():
+			opErr = ctxt.Err()
+			return
+		default:
+		}
+
+		var rawData []dal.GetRawWorkoutDataRow
+		rawData, opErr = dal.Query1x2(
+			dal.Q.GetRawWorkoutData, queries, ctxt, dal.GetRawWorkoutDataParams{
+				Email:            iterW.ClientEmail,
+				InterSessionCntr: int16(iterW.Session),
+				DatePerformed:    dal.TimeToPGDate(iterW.DatePerformed),
+			},
+		)
+		if opErr != nil {
+			return
+		}
+
+		if len(rawData) == 0 || len(iterW.Exercises) != len(rawData) {
+			goto workoutsNotEqual
+		}
+		for i, exercise := range rawData {
+			// We already know the email, session, and date match because
+			// the query matches on those fields.
+			eq := exercise.Name == iterW.Exercises[i].Name
+			eq = eq && exercise.Weight == iterW.Exercises[i].Weight
+			eq = eq && exercise.Sets == iterW.Exercises[i].Sets
+			eq = eq && exercise.Reps == iterW.Exercises[i].Reps
+			eq = eq && exercise.Effort == iterW.Exercises[i].Effort
+			eq = eq && len(exercise.Time) == len(iterW.Exercises[i].BarPath)
+			eq = eq && len(exercise.Position) == len(iterW.Exercises[i].BarPath)
+			if !eq {
+				goto workoutsNotEqual
+			}
+
+			for j, barPath := range iterW.Exercises[i].BarPath {
+				switch barPath.Source() {
+				case types.NoBarPathData:
+					eq = eq && len(exercise.Time[j]) == 0
+					eq = eq && len(exercise.Position[j]) == 0
+					eq = eq && exercise.Path[j] == ""
+				case types.VideoBarPathData:
+					path, _ := barPath.VideoData()
+					eq = eq && exercise.Path[j] == path
+				case types.TimeSeriesBarPathData:
+					tsData, _ := barPath.TimeSeriesData()
+					eq = eq && slices.Equal(tsData.TimeData, exercise.Time[j])
+					eq = eq && slices.Equal(
+						tsData.PositionData, exercise.Position[j],
+					)
+				}
+				if !eq {
+					goto workoutsNotEqual
+				}
+			}
+		}
+
+		continue
+	workoutsNotEqual:
+
+		params.w = &iterW
+		if opErr = createSingleWorkout(
+			ctxt, state, queries, params,
+		); opErr != nil {
+			return
+		}
+	}
+
+	if opErr = bufWriter.Flush(ctxt, queries); opErr != nil {
+		opErr = sberr.AppendError(
+			types.CouldNotAddWorkoutErr, dal.FormatErr(opErr),
+		)
+		return
+	}
+
+	state.Log.Log(
+		ctxt, sblog.VLevel(3),
+		"Ensured workouts exist",
+		"NumWorkouts", len(data),
+	)
 	return
 }
 
@@ -448,6 +554,7 @@ func ReadWorkoutsByID(
 	for i, id := range ids {
 		select {
 		case <-ctxt.Done():
+			opErr = ctxt.Err()
 			return
 		default:
 		}
@@ -498,6 +605,7 @@ func FindWorkoutsByID(
 	for i, id := range ids {
 		select {
 		case <-ctxt.Done():
+			opErr = ctxt.Err()
 			return
 		default:
 		}
@@ -597,6 +705,7 @@ func ReadWorkoutsInDateRange(
 	for i := range len(rawData) {
 		select {
 		case <-ctxt.Done():
+			opErr = ctxt.Err()
 			return
 		default:
 		}
@@ -666,6 +775,7 @@ func DeleteWorkouts(
 	for _, id := range ids {
 		select {
 		case <-ctxt.Done():
+			opErr = ctxt.Err()
 			return
 		default:
 		}

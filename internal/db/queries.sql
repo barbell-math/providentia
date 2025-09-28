@@ -246,6 +246,29 @@ SELECT COUNT(*) FROM (
 	GROUP BY date_performed, inter_session_cntr
 ) AS result;
 
+-- name: GetRawWorkoutData :many
+SELECT
+	providentia.exercise.name,
+	providentia.training_log.weight,
+	providentia.training_log.sets,
+	providentia.training_log.reps,
+	providentia.training_log.effort,
+	providentia.physics_data.path,
+	providentia.physics_data.time,
+	providentia.physics_data.position
+FROM providentia.training_log
+JOIN providentia.exercise
+	ON providentia.training_log.exercise_id=providentia.exercise.id
+JOIN providentia.client
+	ON providentia.training_log.client_id=providentia.client.id
+LEFT JOIN providentia.physics_data
+	ON providentia.training_log.physics_id=providentia.physics_data.id
+WHERE
+	providentia.client.email = $1 AND
+	providentia.training_log.inter_session_cntr = $2 AND
+	providentia.training_log.date_performed = $3
+ORDER BY training_log.inter_workout_cntr ASC;
+
 -- name: GetAllWorkoutData :many
 -- TODO - figure out if ordinality trick can be used here - is there a way to
 -- make the join on multiple columns?

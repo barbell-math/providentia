@@ -20,6 +20,7 @@ func CreateExercises(
 	for start, end := range batchIndexes(exercises, int(state.Global.BatchSize)) {
 		select {
 		case <-ctxt.Done():
+			opErr = ctxt.Err()
 			return
 		default:
 		}
@@ -67,6 +68,7 @@ func EnsureExercisesExist(
 	for start, end := range batchIndexes(exercises, int(state.Global.BatchSize)) {
 		select {
 		case <-ctxt.Done():
+			opErr = ctxt.Err()
 			return
 		default:
 		}
@@ -183,6 +185,7 @@ func ReadExercisesByName(
 	for start, end := range batchIndexes(names, int(state.Global.BatchSize)) {
 		select {
 		case <-ctxt.Done():
+			opErr = ctxt.Err()
 			return
 		default:
 		}
@@ -229,6 +232,7 @@ func FindExercisesByName(
 	for start, end := range batchIndexes(names, int(state.Global.BatchSize)) {
 		select {
 		case <-ctxt.Done():
+			opErr = ctxt.Err()
 			return
 		default:
 		}
@@ -277,6 +281,7 @@ func UpdateExercises(
 	for _, e := range exercises {
 		select {
 		case <-ctxt.Done():
+			opErr = ctxt.Err()
 			return
 		default:
 		}

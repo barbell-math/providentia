@@ -27,6 +27,7 @@ func CreateHyperparams[T types.Hyperparams](
 	for _, iterParams := range params {
 		select {
 		case <-ctxt.Done():
+			opErr = ctxt.Err()
 			return
 		default:
 		}
@@ -89,6 +90,7 @@ func EnsureHyperparamsExist[T types.Hyperparams](
 	for start, end := range batchIndexes(params, int(state.Global.BatchSize)) {
 		select {
 		case <-ctxt.Done():
+			opErr = ctxt.Err()
 			return
 		default:
 		}
@@ -315,6 +317,7 @@ func ReadHyperparamsByVersionFor[T types.Hyperparams](
 	for start, end := range batchIndexes(versions, int(state.Global.BatchSize)) {
 		select {
 		case <-ctxt.Done():
+			opErr = ctxt.Err()
 			return
 		default:
 		}
@@ -373,6 +376,7 @@ func FindHyperparamsByVersionFor[T types.Hyperparams](
 	for start, end := range batchIndexes(versions, int(state.Global.BatchSize)) {
 		select {
 		case <-ctxt.Done():
+			opErr = ctxt.Err()
 			return
 		default:
 		}
