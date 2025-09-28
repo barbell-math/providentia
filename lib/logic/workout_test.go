@@ -13,15 +13,16 @@ import (
 func TestWorkout(t *testing.T) {
 	t.Run("failingNoWrites", workoutFailingNoWrites)
 	t.Run("duplicateWorkout", workoutDuplicateWorkout)
-	t.Run("addGetNoPhysicsData", workoutAddGetNoPhysicsData)
-	t.Run("addGetTimeSeriesPhysicsData", workoutAddGetTimeSeriesPhysicsData)
+	t.Run("createReadNoPhysicsData", workoutCreateReadNoPhysicsData)
+	t.Run("createFindNoPhysicsData", workoutCreateFindNoPhysicsData)
+	t.Run("createReadTimeSeriesPhysicsData", workoutCreateReadTimeSeriesPhysicsData)
 	// TODO
-	// t.Run("addGetVideoPhysicsData", workoutAddGetVideoPhysicsData)
-	t.Run("addGetDateRange", workoutAddGetDateRange)
+	// t.Run("addGetVideoPhysicsData", workoutCreateReadVideoPhysicsData)
+	t.Run("createReadDateRange", workoutCreateReadDateRange)
 	// TODO
 	// t.Run("addUpdateGet", clientAddUpdateGet)
-	t.Run("addDeleteGet", workoutAddDeleteGet)
-	t.Run("addDeleteGetDateRange", workoutAddDeleteGetDateRange)
+	t.Run("createDeleteGet", workoutCreateDeleteGet)
+	t.Run("createDeleteGetDateRange", workoutCreateDeleteGetDateRange)
 }
 
 func workoutFailingNoWrites(t *testing.T) {
@@ -524,7 +525,7 @@ func workoutDuplicateWorkout(t *testing.T) {
 	sbtest.Eq(t, 1, numPhysEntries)
 }
 
-func workoutAddGetNoPhysicsData(t *testing.T) {
+func workoutCreateReadNoPhysicsData(t *testing.T) {
 	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 
@@ -604,7 +605,92 @@ func workoutAddGetNoPhysicsData(t *testing.T) {
 	sbtest.ContainsError(t, types.CouldNotFindRequestedWorkoutErr, err)
 }
 
-func workoutAddGetTimeSeriesPhysicsData(t *testing.T) {
+func workoutCreateFindNoPhysicsData(t *testing.T) {
+	ctxt, cleanup := resetApp(context.Background())
+	t.Cleanup(cleanup)
+
+	err := CreateClients(ctxt, types.Client{
+		FirstName: "FName", LastName: "LName", Email: "email@email.com",
+	})
+
+	workouts := [2]types.RawWorkout{
+		types.RawWorkout{
+			WorkoutID: types.WorkoutID{
+				ClientEmail:   "email@email.com",
+				Session:       1,
+				DatePerformed: sbtest.MustParseTime(time.DateOnly, "2025-01-02"),
+			},
+			Exercises: []types.RawExerciseData{
+				types.RawExerciseData{
+					Name:   "Squat",
+					Weight: 355,
+					Sets:   5,
+					Reps:   5,
+					Effort: 8.5,
+				},
+				types.RawExerciseData{
+					Name:   "Bench",
+					Weight: 135,
+					Sets:   3,
+					Reps:   8,
+					Effort: 5,
+				},
+			},
+		},
+		types.RawWorkout{
+			WorkoutID: types.WorkoutID{
+				ClientEmail:   "email@email.com",
+				Session:       1,
+				DatePerformed: sbtest.MustParseTime(time.DateOnly, "2025-01-03"),
+			},
+			Exercises: []types.RawExerciseData{
+				types.RawExerciseData{
+					Name:   "Deadlift",
+					Weight: 405,
+					Sets:   6,
+					Reps:   6,
+					Effort: 7,
+				},
+			},
+		},
+	}
+
+	err = CreateWorkouts(
+		ctxt,
+		&types.BarPathCalcHyperparams{},
+		&types.BarPathTrackerHyperparams{},
+		workouts[:]...,
+	)
+	sbtest.Nil(t, err)
+	numExercises, err := ReadClientTotalNumTrainingLogEntries(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 3, numExercises)
+	numRawWorkouts, err := ReadClientNumWorkouts(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 2, numRawWorkouts)
+	numPhysEntries, err := ReadClientTotalNumPhysEntries(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 0, numPhysEntries)
+
+	res, err := FindWorkoutsByID(
+		ctxt, workouts[0].WorkoutID, workouts[1].WorkoutID,
+	)
+	for i, w := range res {
+		sbtest.True(t, w.Found)
+		rawWorkoutEqSavedWorkout(t, workouts[i:i+1], []types.Workout{w.Value})
+	}
+
+	res, err = FindWorkoutsByID(ctxt, types.WorkoutID{
+		ClientEmail:   "bad@email.com",
+		Session:       1,
+		DatePerformed: sbtest.MustParseTime(time.DateOnly, "2025-01-02"),
+	})
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 1, len(res))
+	sbtest.False(t, res[0].Found)
+}
+
+func workoutCreateReadTimeSeriesPhysicsData(t *testing.T) {
 	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 
@@ -750,7 +836,7 @@ func workoutAddGetTimeSeriesPhysicsData(t *testing.T) {
 	sbtest.ContainsError(t, types.CouldNotFindRequestedWorkoutErr, err)
 }
 
-func workoutAddGetDateRange(t *testing.T) {
+func workoutCreateReadDateRange(t *testing.T) {
 	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 
@@ -919,7 +1005,7 @@ func workoutAddGetDateRange(t *testing.T) {
 
 // TODO - workoutAddUpdateGet
 
-func workoutAddDeleteGet(t *testing.T) {
+func workoutCreateDeleteGet(t *testing.T) {
 	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 
@@ -1101,7 +1187,7 @@ func workoutAddDeleteGet(t *testing.T) {
 	sbtest.ContainsError(t, types.CouldNotFindRequestedWorkoutErr, err)
 }
 
-func workoutAddDeleteGetDateRange(t *testing.T) {
+func workoutCreateDeleteGetDateRange(t *testing.T) {
 	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 

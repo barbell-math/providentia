@@ -445,12 +445,55 @@ func ReadWorkoutsByID(
 		)
 	}
 
-	state.Log.Log(
-		ctxt, sblog.VLevel(3),
-		"Read workouts from client",
-		"Num", len(ids),
-	)
+	state.Log.Log(ctxt, sblog.VLevel(3), "Read workouts by ID", "Num", len(ids))
+	return
+}
 
+func FindWorkoutsByID(
+	ctxt context.Context,
+	state *types.State,
+	queries *dal.SyncQueries,
+	ids ...types.WorkoutID,
+) (res []types.Found[types.Workout], opErr error) {
+	res = make([]types.Found[types.Workout], len(ids))
+
+	for i, id := range ids {
+		select {
+		case <-ctxt.Done():
+			return
+		default:
+		}
+
+		var rawData []dal.GetAllWorkoutDataRow
+		rawData, opErr = dal.Query1x2(
+			dal.Q.GetAllWorkoutData, queries, ctxt,
+			dal.GetAllWorkoutDataParams{
+				Email:            id.ClientEmail,
+				InterSessionCntr: int16(id.Session),
+				DatePerformed:    dal.TimeToPGDate(id.DatePerformed),
+			},
+		)
+		if opErr != nil {
+			opErr = sberr.AppendError(
+				types.CouldNotFindRequestedWorkoutErr, dal.FormatErr(opErr),
+			)
+			return
+		}
+		if len(rawData) == 0 {
+			res[i].Found = false
+			continue
+		}
+		res[i].Found = true
+		res[i].Value.WorkoutID = id
+		res[i].Value.Exercises = make([]types.ExerciseData, len(rawData))
+		_ = dal.GetAllWorkoutDataRow(types.ExerciseData{})
+		copy(
+			res[i].Value.Exercises,
+			*(*[]types.ExerciseData)(unsafe.Pointer(&rawData)),
+		)
+	}
+
+	state.Log.Log(ctxt, sblog.VLevel(3), "Found workouts by ID", "Num", len(ids))
 	return
 }
 

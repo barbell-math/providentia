@@ -182,10 +182,29 @@ func ReadWorkoutsByID(
 	ctxt context.Context,
 	ids ...types.WorkoutID,
 ) (res []types.Workout, opErr error) {
+	if len(ids) == 0 {
+		return
+	}
 	opErr = runOp(ctxt, opCalls{
 		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
 			res, err = ops.ReadWorkoutsByID(ctxt, state, queries, ids...)
-			return err
+			return
+		},
+	})
+	return
+}
+
+func FindWorkoutsByID(
+	ctxt context.Context,
+	ids ...types.WorkoutID,
+) (res []types.Found[types.Workout], opErr error) {
+	if len(ids) == 0 {
+		return
+	}
+	opErr = runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			res, err = ops.FindWorkoutsByID(ctxt, state, queries, ids...)
+			return
 		},
 	})
 	return
@@ -229,6 +248,9 @@ func DeleteWorkouts(
 	ctxt context.Context,
 	ids ...types.WorkoutID,
 ) (opErr error) {
+	if len(ids) == 0 {
+		return
+	}
 	opErr = runOp(ctxt, opCalls{
 		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
 			err = ops.DeleteWorkouts(ctxt, state, queries, ids...)
