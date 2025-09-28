@@ -70,6 +70,26 @@ func CreateWorkouts(
 	})
 }
 
+func EnsureWorkoutsExist(
+	ctxt context.Context,
+	barPathCalcParams *types.BarPathCalcHyperparams,
+	barTrackerCalcParams *types.BarPathTrackerHyperparams,
+	workouts ...types.RawWorkout,
+) (opErr error) {
+	if len(workouts) == 0 {
+		return
+	}
+	return runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			return ops.CreateWorkouts(
+				ctxt, state, queries,
+				barPathCalcParams, barTrackerCalcParams,
+				workouts...,
+			)
+		},
+	})
+}
+
 // Adds the workouts supplied in the csv files to the database. Has the same
 // behavior as [CreateWorkouts] other than getting the workouts from csv files.
 //
@@ -173,7 +193,8 @@ func ReadClientNumWorkouts(
 }
 
 // Gets the workout data associated with the supplied ids if they exist. If they
-// do not exist an error will be returned.
+// do not exist an error will be returned. The order of the returned workouts
+// will match the order of the supplied workotu ids.
 //
 // The context must have a [types.State] variable.
 //
@@ -194,6 +215,16 @@ func ReadWorkoutsByID(
 	return
 }
 
+// Gets the workout data associated with the supplied workout ids if they exist.
+// If a workout exists it will be put in the returned slice and the found flag
+// will be set to true. If a workout does not exist the value in the slice will
+// be a zero initialized workout and the found flag will be set to false. No
+// error will be returned if a workout does not exist. The order of the returned
+// workouts will match the order of the supplied workout id's.
+//
+// The context must have a [types.State] variable.
+//
+// No changes will be made to the database.
 func FindWorkoutsByID(
 	ctxt context.Context,
 	ids ...types.WorkoutID,

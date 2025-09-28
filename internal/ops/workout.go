@@ -32,6 +32,16 @@ type (
 		Effort        types.RPE
 		DataDir       string
 	}
+
+	createSingleWorkoutParams struct {
+		w                    *types.RawWorkout
+		barPathCalcParams    *types.BarPathCalcHyperparams
+		barTrackerCalcParams *types.BarPathTrackerHyperparams
+		batch                *sbjobqueue.Batch
+		clientCache          *dal.IdCache[string, int64]
+		exerciseCache        *dal.IdCache[string, int32]
+		bufWriter            *dal.BufferedWriter[dal.BulkCreateTrainingLogsParams]
+	}
 )
 
 func CreateWorkouts(
@@ -55,6 +65,14 @@ func CreateWorkouts(
 			return
 		},
 	)
+	params := createSingleWorkoutParams{
+		barPathCalcParams:    barPathCalcParams,
+		barTrackerCalcParams: barTrackerCalcParams,
+		batch:                batch,
+		clientCache:          &clientCache,
+		exerciseCache:        &exerciseCache,
+		bufWriter:            &bufWriter,
+	}
 
 	for _, iterW := range data {
 		select {
@@ -63,75 +81,11 @@ func CreateWorkouts(
 		default:
 		}
 
-		if opErr = validateWorkout(
-			&iterW, barPathCalcParams, barTrackerCalcParams,
+		params.w = &iterW
+		if opErr = createSingleWorkout(
+			ctxt, state, queries, params,
 		); opErr != nil {
-			opErr = sberr.AppendError(types.InvalidWorkoutErr, opErr)
 			return
-		}
-
-		var iterClientId int64
-		if iterClientId, opErr = clientCache.Get(
-			ctxt, queries, iterW.ClientEmail,
-		); opErr != nil {
-			opErr = sberr.AppendError(
-				types.InvalidWorkoutErr,
-				sberr.Wrap(
-					types.CouldNotFindRequestedClientErr,
-					"Unknown Email: %s", iterW.ClientEmail,
-				),
-				opErr,
-			)
-			return
-		}
-
-		for i, iterE := range iterW.Exercises {
-			var iterExerciseId int32
-			if iterExerciseId, opErr = exerciseCache.Get(
-				ctxt, queries, iterE.Name,
-			); opErr != nil {
-				opErr = sberr.AppendError(
-					types.InvalidWorkoutErr,
-					types.MalformedWorkoutExerciseErr,
-					sberr.Wrap(
-						types.CouldNotFindRequestedExerciseErr,
-						"Unknown Exercise: %s", iterE.Name,
-					),
-					opErr,
-				)
-				return
-			}
-
-			if opErr = bufWriter.Write(
-				ctxt, queries,
-				dal.BulkCreateTrainingLogsParams{
-					ClientID:         iterClientId,
-					ExerciseID:       iterExerciseId,
-					DatePerformed:    dal.TimeToPGDate(iterW.DatePerformed),
-					InterSessionCntr: int16(iterW.Session),
-					InterWorkoutCntr: int16(i + 1),
-					Weight:           iterE.Weight,
-					Sets:             iterE.Sets,
-					Reps:             iterE.Reps,
-					Effort:           iterE.Effort,
-				},
-			); opErr != nil {
-				opErr = sberr.AppendError(
-					types.CouldNotAddWorkoutErr, dal.FormatErr(opErr),
-				)
-				return
-			}
-
-			if len(iterE.BarPath) > 0 {
-				state.PhysicsJobQueue.Schedule(&jobs.Physics{
-					BarPath:              iterE.BarPath,
-					Tl:                   bufWriter.Last(),
-					B:                    batch,
-					Q:                    queries,
-					BarPathCalcParams:    barPathCalcParams,
-					BarTrackerCalcParams: barTrackerCalcParams,
-				})
-			}
 		}
 	}
 
@@ -150,11 +104,95 @@ func CreateWorkouts(
 	return
 }
 
-func validateWorkout(
-	w *types.RawWorkout,
+func EnsureWorkoutsExist(
+	ctxt context.Context,
+	state *types.State,
+	queries *dal.SyncQueries,
 	barPathCalcParams *types.BarPathCalcHyperparams,
 	barTrackerCalcParams *types.BarPathTrackerHyperparams,
+	data ...types.RawWorkout,
 ) (opErr error) {
+	return
+}
+
+func createSingleWorkout(
+	ctxt context.Context,
+	state *types.State,
+	queries *dal.SyncQueries,
+	params createSingleWorkoutParams,
+) (opErr error) {
+	if opErr = validateWorkout(params); opErr != nil {
+		opErr = sberr.AppendError(types.InvalidWorkoutErr, opErr)
+		return
+	}
+
+	var iterClientId int64
+	if iterClientId, opErr = params.clientCache.Get(
+		ctxt, queries, params.w.ClientEmail,
+	); opErr != nil {
+		opErr = sberr.AppendError(
+			types.InvalidWorkoutErr,
+			sberr.Wrap(
+				types.CouldNotFindRequestedClientErr,
+				"Unknown Email: %s", params.w.ClientEmail,
+			),
+			opErr,
+		)
+		return
+	}
+
+	for i, iterE := range params.w.Exercises {
+		var iterExerciseId int32
+		if iterExerciseId, opErr = params.exerciseCache.Get(
+			ctxt, queries, iterE.Name,
+		); opErr != nil {
+			opErr = sberr.AppendError(
+				types.InvalidWorkoutErr,
+				types.MalformedWorkoutExerciseErr,
+				sberr.Wrap(
+					types.CouldNotFindRequestedExerciseErr,
+					"Unknown Exercise: %s", iterE.Name,
+				),
+				opErr,
+			)
+			return
+		}
+
+		if opErr = params.bufWriter.Write(
+			ctxt, queries,
+			dal.BulkCreateTrainingLogsParams{
+				ClientID:         iterClientId,
+				ExerciseID:       iterExerciseId,
+				DatePerformed:    dal.TimeToPGDate(params.w.DatePerformed),
+				InterSessionCntr: int16(params.w.Session),
+				InterWorkoutCntr: int16(i + 1),
+				Weight:           iterE.Weight,
+				Sets:             iterE.Sets,
+				Reps:             iterE.Reps,
+				Effort:           iterE.Effort,
+			},
+		); opErr != nil {
+			opErr = sberr.AppendError(
+				types.CouldNotAddWorkoutErr, dal.FormatErr(opErr),
+			)
+			return
+		}
+
+		if len(iterE.BarPath) > 0 {
+			state.PhysicsJobQueue.Schedule(&jobs.Physics{
+				BarPath:              iterE.BarPath,
+				Tl:                   params.bufWriter.Last(),
+				B:                    params.batch,
+				Q:                    queries,
+				BarPathCalcParams:    params.barPathCalcParams,
+				BarTrackerCalcParams: params.barTrackerCalcParams,
+			})
+		}
+	}
+	return
+}
+
+func validateWorkout(params createSingleWorkoutParams) (opErr error) {
 	curExercise := -1
 	curSet := -1
 	wrapErr := func(err error, msg string, args ...any) error {
@@ -168,17 +206,17 @@ func validateWorkout(
 		)
 	}
 
-	if w.Session <= 0 {
+	if params.w.Session <= 0 {
 		opErr = sberr.Wrap(
 			types.InvalidSessionErr,
-			"Must be >0, Got: %d", w.Session,
+			"Must be >0, Got: %d", params.w.Session,
 		)
 		return
 	}
 
-	for curExercise = range len(w.Exercises) {
+	for curExercise = range len(params.w.Exercises) {
 		curSet = -1
-		iterE := w.Exercises[curExercise]
+		iterE := params.w.Exercises[curExercise]
 
 		if len(iterE.BarPath) == 0 {
 			// Not supplying any physics or bar path data is valid
@@ -229,11 +267,11 @@ func validateWorkout(
 					)
 					return
 				}
-				if lenTimeData < int(barPathCalcParams.MinNumSamples) {
+				if lenTimeData < int(params.barPathCalcParams.MinNumSamples) {
 					opErr = wrapErr(
 						types.TimeDataLenErr,
 						"minimum num samples: %d, got: %d",
-						barPathCalcParams.MinNumSamples, lenTimeData,
+						params.barPathCalcParams.MinNumSamples, lenTimeData,
 					)
 					return
 				}
