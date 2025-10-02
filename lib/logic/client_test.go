@@ -355,7 +355,9 @@ func clientCreateCSVRead(t *testing.T) {
 	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 
-	err := CreateClientsFromCSV(ctxt, sbcsv.Opts{}, "./testData/clients.csv")
+	err := CreateClientsFromCSV(
+		ctxt, sbcsv.Opts{}, "./testData/simpleData/clients.csv",
+	)
 	sbtest.Nil(t, err)
 
 	numClients, err := ReadNumClients(ctxt)

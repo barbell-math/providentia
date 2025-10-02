@@ -346,7 +346,9 @@ func exerciseCreateCSVRead(t *testing.T) {
 	ctxt, cleanup := resetApp(context.Background())
 	t.Cleanup(cleanup)
 
-	err := CreateExercisesFromCSV(ctxt, sbcsv.Opts{}, "./testData/exercises.csv")
+	err := CreateExercisesFromCSV(
+		ctxt, sbcsv.Opts{}, "./testData/simpleData/exercises.csv",
+	)
 	sbtest.Nil(t, err)
 
 	numExercises, err := ReadNumExercises(ctxt)

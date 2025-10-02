@@ -14,6 +14,7 @@ func TestHyperparams(t *testing.T) {
 	t.Run("createRead", hyperparamsCreateRead)
 	t.Run("ensureRead", hyperparamsEnsureRead)
 	t.Run("createFind", hyperparamsCreateFind)
+	t.Run("createCSVRead", hyperparamsCreateCSVRead)
 	t.Run("addDeleteRead", hyperparamsCreateDeleteRead)
 }
 
@@ -129,6 +130,91 @@ func hyperparamsCreateRead(t *testing.T) {
 		TimeDeltaEps:   1,
 		ApproxErr:      types.SecondOrder,
 		NearZeroFilter: 1,
+	}}
+	trackParams := []types.BarPathTrackerHyperparams{{
+		Version:     1,
+		MinLength:   1,
+		MinFileSize: 1,
+		MaxFileSize: 2,
+	}, {
+		Version:     2,
+		MinLength:   1,
+		MinFileSize: 1,
+		MaxFileSize: 2,
+	}}
+
+	err := CreateHyperparams(ctxt, calcParams...)
+	sbtest.Nil(t, err)
+
+	err = CreateHyperparams(ctxt, trackParams...)
+	sbtest.Nil(t, err)
+
+	res, err := ReadNumHyperparams(ctxt)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 6, res)
+
+	res, err = ReadNumHyperparamsFor[types.BarPathCalcHyperparams](ctxt)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 3, res)
+	res, err = ReadNumHyperparamsFor[types.BarPathTrackerHyperparams](ctxt)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 3, res)
+
+	params, err := ReadHyperparamsByVersionFor[types.BarPathCalcHyperparams](
+		ctxt, 1,
+	)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 1, len(params))
+	sbtest.Eq(t, params[0], calcParams[0])
+
+	params, err = ReadHyperparamsByVersionFor[types.BarPathCalcHyperparams](
+		ctxt, 2,
+	)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 1, len(params))
+	sbtest.Eq(t, params[0], calcParams[1])
+
+	params2, err := ReadHyperparamsByVersionFor[types.BarPathTrackerHyperparams](
+		ctxt, 1,
+	)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 1, len(params2))
+	sbtest.Eq(t, params2[0], trackParams[0])
+
+	params2, err = ReadHyperparamsByVersionFor[types.BarPathTrackerHyperparams](
+		ctxt, 2,
+	)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 1, len(params2))
+	sbtest.Eq(t, params2[0], trackParams[1])
+}
+
+func hyperparamsCreateCSVRead(t *testing.T) {
+	ctxt, cleanup := resetApp(context.Background())
+	t.Cleanup(cleanup)
+
+	calcParams := []types.BarPathCalcHyperparams{{
+		Version:         1,
+		MinNumSamples:   2,
+		TimeDeltaEps:    1,
+		ApproxErr:       types.SecondOrder,
+		NearZeroFilter:  1,
+		SmootherWeight1: 0.1,
+		SmootherWeight2: 0.2,
+		SmootherWeight3: 0.3,
+		SmootherWeight4: 0.4,
+		SmootherWeight5: 0.5,
+	}, {
+		Version:         2,
+		MinNumSamples:   2,
+		TimeDeltaEps:    1,
+		ApproxErr:       types.SecondOrder,
+		NearZeroFilter:  1,
+		SmootherWeight1: 0.1,
+		SmootherWeight2: 0.2,
+		SmootherWeight3: 0.3,
+		SmootherWeight4: 0.4,
+		SmootherWeight5: 0.5,
 	}}
 	trackParams := []types.BarPathTrackerHyperparams{{
 		Version:     1,
