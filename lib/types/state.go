@@ -9,17 +9,19 @@ import (
 )
 
 type (
-	PhysicsJob struct{} // Used to identify a physics job
-	VideoJob   struct{} // Used to identify a video job
+	PhysicsJob   struct{} // Used to identify a physics job
+	VideoJob     struct{} // Used to identify a video job
+	CSVLoaderJob struct{} // Used to identify a csv loader job
 
 	// The state the rest of providentia will use. Almost all functions
 	// available for external use from this library will require this state to
 	// be available in the passed in context.
 	State struct {
-		Log             *slog.Logger
-		DB              *pgxpool.Pool
-		PhysicsJobQueue *sbjobqueue.JobQueue[PhysicsJob]
-		VideoJobQueue   *sbjobqueue.JobQueue[VideoJob]
+		Log               *slog.Logger
+		DB                *pgxpool.Pool
+		PhysicsJobQueue   *sbjobqueue.JobQueue[PhysicsJob]
+		VideoJobQueue     *sbjobqueue.JobQueue[VideoJob]
+		CSVLoaderJobQueue *sbjobqueue.JobQueue[CSVLoaderJob]
 
 		Global GlobalConf
 	}
@@ -29,8 +31,9 @@ var (
 	InvalidGlobalErr    = errors.New("Invalid global conf")
 	InvalidBatchSizeErr = errors.New("Invalid batch size")
 
-	InvalidLoggerErr          = errors.New("Invalid logger")
-	InvalidDBErr              = errors.New("Invalid database connection pool")
-	InvalidPhysicsJobQueueErr = errors.New("Invalid physics job queue")
-	InvalidVideoJobQueue      = errors.New("Invalid video job queue")
+	InvalidLoggerErr            = errors.New("Invalid logger")
+	InvalidDBErr                = errors.New("Invalid database connection pool")
+	InvalidPhysicsJobQueueErr   = errors.New("Invalid physics job queue")
+	InvalidVideoJobQueue        = errors.New("Invalid video job queue")
+	InvalidCSVLoaderJobQueueErr = errors.New("Invalid csv loader job queue")
 )

@@ -63,6 +63,12 @@ func ValidateState(s *types.State) error {
 			"The VideoJobQueue field must not be nil",
 		)
 	}
+	if s.CSVLoaderJobQueue == nil {
+		return sberr.Wrap(
+			types.InvalidCSVLoaderJobQueueErr,
+			"The CSVLoaderJobQueue field must not be nil",
+		)
+	}
 	return nil
 }
 

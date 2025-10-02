@@ -2,13 +2,17 @@ package ops
 
 import (
 	"context"
+	"math"
 	"net/mail"
+	"runtime"
 	"unsafe"
 
 	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
+	"code.barbellmath.net/barbell-math/providentia/internal/jobs"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
 	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
+	sbjobqueue "code.barbellmath.net/barbell-math/smoothbrain-jobQueue"
 	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
 )
 
@@ -144,20 +148,34 @@ func CreateClientsFromCSV(
 	opts sbcsv.Opts,
 	files ...string,
 ) (opErr error) {
-	clients := []types.Client{}
 	opts.ReuseRecord = true
+	batch, _ := sbjobqueue.BatchWithContext(ctxt)
 
 	for _, file := range files {
-		if opErr = sbcsv.LoadCSVFile(file, &sbcsv.LoadOpts{
-			Opts:          opts,
-			RequestedCols: sbcsv.ReqColsForStruct[types.Client](),
-			Op:            sbcsv.RowToStructOp(&clients),
-		}); opErr != nil {
-			return opErr
+		var fileChunks [][]byte
+		if fileChunks, opErr = sbcsv.ChunkFile(
+			file, sbcsv.ChunkFileOpts{
+				PredictedAvgRowSizeInBytes: 100,
+				MinChunkRows:               1e5,
+				MaxChunkRows:               math.MaxInt,
+				RequestedNumChunks:         runtime.NumCPU(),
+			},
+		); opErr != nil {
+			return
+		}
+		for _, chunk := range fileChunks {
+			state.CSVLoaderJobQueue.Schedule(&jobs.CSVLoader[types.Client]{
+				S:         state,
+				Q:         queries,
+				B:         batch,
+				FileChunk: chunk,
+				Opts:      &opts,
+				WriteFunc: CreateClients,
+			})
 		}
 	}
 
-	return CreateClients(ctxt, state, queries, clients...)
+	return batch.Wait()
 }
 
 func ReadNumClients(

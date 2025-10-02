@@ -7,7 +7,7 @@ import (
 	"math"
 	"os"
 	"path"
-	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"time"
@@ -23,17 +23,6 @@ import (
 )
 
 type (
-	rawTrainingLog struct {
-		DatePerformed time.Time
-		Session       uint16
-		Exercise      string
-		Weight        types.Kilogram
-		Sets          float64
-		Reps          int32
-		Effort        types.RPE
-		DataDir       string
-	}
-
 	createSingleWorkoutParams struct {
 		w                    *types.RawWorkout
 		barPathCalcParams    *types.BarPathCalcHyperparams
@@ -396,91 +385,50 @@ func CreateWorkoutsFromCSV(
 	opts sbcsv.Opts,
 	files ...string,
 ) (opErr error) {
-	params := []types.RawWorkout{}
 	opts.ReuseRecord = true
+	batch, _ := sbjobqueue.BatchWithContext(ctxt)
 
 	for _, file := range files {
+		var fileChunks [][]byte
 		clientName := strings.TrimSuffix(path.Base(file), path.Ext(file))
-
-		if opErr = sbcsv.LoadCSVFile(file, &sbcsv.LoadOpts{
-			Opts:          opts,
-			RequestedCols: sbcsv.ReqColsForStruct[types.RawWorkout](),
-			Op: func(
-				o *sbcsv.Opts,
-				rowIdx int,
-				row []string,
-				reqCols []sbcsv.RequestedCols,
-			) error {
-				rawData, err := sbcsv.RowToStruct[rawTrainingLog](o, row, reqCols)
-				if err != nil {
-					return err
-				}
-
-				variants, err := parseDataDir(rawData.DataDir)
-				if err != nil {
-					return err
-				}
-
-				iterID := types.WorkoutID{
-					ClientEmail:   clientName,
-					Session:       rawData.Session,
-					DatePerformed: rawData.DatePerformed,
-				}
-				if len(params) == 0 || params[len(params)-1].WorkoutID == iterID {
-					params = append(params, types.RawWorkout{WorkoutID: iterID})
-				}
-				params[len(params)-1].Exercises = append(
-					params[len(params)-1].Exercises,
-					types.RawExerciseData{
-						Name:    rawData.Exercise,
-						Weight:  rawData.Weight,
-						Sets:    rawData.Sets,
-						Reps:    rawData.Reps,
-						Effort:  rawData.Effort,
-						BarPath: variants,
-					},
-				)
-
-				return nil
+		// MinChunkRows is set kinda low so that other job queues have a greater
+		// chance of being filled up. Can help loading data with sparse physics
+		// data, won't speed up loading data with dense physics data.
+		if fileChunks, opErr = sbcsv.ChunkFile(
+			file, sbcsv.ChunkFileOpts{
+				NumRowSamples:      2,
+				MinChunkRows:       1e1,
+				MaxChunkRows:       math.MaxInt,
+				RequestedNumChunks: runtime.NumCPU(),
 			},
-		}); opErr != nil {
-			return opErr
+		); opErr != nil {
+			return
+		}
+		for _, chunk := range fileChunks {
+			state.CSVLoaderJobQueue.Schedule(&jobs.CSVLoader[types.RawWorkout]{
+				S:          state,
+				Q:          queries,
+				B:          batch,
+				ClientName: clientName,
+				FileChunk:  chunk,
+				Opts:       &opts,
+				WriteFunc: func(
+					ctxt context.Context,
+					state *types.State,
+					queries *dal.SyncQueries,
+					values ...types.RawWorkout,
+				) error {
+					return CreateWorkouts(
+						ctxt, state, queries,
+						barPathCalcParams, barTrackerCalcParams,
+						values...,
+					)
+				},
+			})
 		}
 	}
 
-	return CreateWorkouts(
-		ctxt, state, queries,
-		barPathCalcParams, barTrackerCalcParams,
-		params...,
-	)
-}
-
-func parseDataDir(dir string) (res []types.BarPathVariant, err error) {
-	if dir == "" {
-		return
-	}
-	var fi fs.FileInfo
-	if fi, err = os.Stat(dir); err != nil {
-		return
-	} else if !fi.IsDir() {
-		err = sberr.Wrap(
-			types.InvalidDataDirErr, "'%s' was not a dir but must be", dir,
-		)
-		return
-	}
-
-	if err = filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
-		if d.IsDir() || !strings.HasSuffix(d.Name(), "Set") {
-			return nil
-		}
-		fmt.Println(path)
-		return nil
-	}); err != nil {
-		err = sberr.AppendError(types.InvalidDataDirErr, err)
-		return
-	}
-
-	return
+	return batch.Wait()
 }
 
 func ReadClientTotalNumTrainingLogEntries(

@@ -70,6 +70,23 @@ func CreateWorkouts(
 	})
 }
 
+// Checks that the supplied workouts are present in the database and adds them
+// if they are not present. In order for the supplied workouts to be be
+// considered already present all fields must match, including the physics time
+// series data and video paths. Any newly created workouts must satisfy the
+// uniqueness constraints outlined by [CreateWorkouts].
+//
+// This function will be slower than [CreateWorkouts] due to the large number of
+// network trips and non-trivial comparison logic. If you are working with large
+// amounts of data and are ok with erroring on duplicated clients consider using
+// [CreateWorkouts].
+//
+// The context must have a [types.State] variable.
+//
+// Workouts will be uploaded in batches that respect the size set in the
+// [State.BatchSize] variable.
+//
+// If any error occurs no changes will be made to the database.
 func EnsureWorkoutsExist(
 	ctxt context.Context,
 	barPathCalcParams *types.BarPathCalcHyperparams,

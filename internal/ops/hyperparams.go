@@ -3,11 +3,15 @@ package ops
 import (
 	"context"
 	"encoding/json"
+	"math"
+	"runtime"
 
 	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
+	"code.barbellmath.net/barbell-math/providentia/internal/jobs"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
 	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
+	sbjobqueue "code.barbellmath.net/barbell-math/smoothbrain-jobQueue"
 	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
 )
 
@@ -252,20 +256,34 @@ func CreateHyperparamsFromCSV[T types.Hyperparams](
 	opts sbcsv.Opts,
 	files ...string,
 ) (opErr error) {
-	params := []T{}
 	opts.ReuseRecord = true
+	batch, _ := sbjobqueue.BatchWithContext(ctxt)
 
 	for _, file := range files {
-		if opErr = sbcsv.LoadCSVFile(file, &sbcsv.LoadOpts{
-			Opts:          opts,
-			RequestedCols: sbcsv.ReqColsForStruct[T](),
-			Op:            sbcsv.RowToStructOp(&params),
-		}); opErr != nil {
-			return opErr
+		var fileChunks [][]byte
+		if fileChunks, opErr = sbcsv.ChunkFile(
+			file, sbcsv.ChunkFileOpts{
+				NumRowSamples:      2,
+				MinChunkRows:       1e5,
+				MaxChunkRows:       math.MaxInt,
+				RequestedNumChunks: runtime.NumCPU(),
+			},
+		); opErr != nil {
+			return
+		}
+		for _, chunk := range fileChunks {
+			state.CSVLoaderJobQueue.Schedule(&jobs.CSVLoader[T]{
+				S:         state,
+				Q:         queries,
+				B:         batch,
+				FileChunk: chunk,
+				Opts:      &opts,
+				WriteFunc: CreateHyperparams[T],
+			})
 		}
 	}
 
-	return CreateHyperparams[T](ctxt, state, queries, params...)
+	return batch.Wait()
 }
 
 func ReadNumHyperparams(

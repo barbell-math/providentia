@@ -95,7 +95,7 @@ func testAppMain(
 	}
 	go sbjobqueue.Poll(
 		appLifetime,
-		state.PhysicsJobQueue, state.VideoJobQueue,
+		state.PhysicsJobQueue, state.VideoJobQueue, state.CSVLoaderJobQueue,
 	)
 
 	// Notice how cancellation can be derived from a parent context. This allows

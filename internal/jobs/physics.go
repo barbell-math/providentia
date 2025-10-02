@@ -33,7 +33,8 @@ func (p *Physics) Run(ctxt context.Context) error {
 	barpathphysdata.InitBarPathCalcPhysicsData(
 		&physData, p.BarPathCalcParams, len(p.BarPath),
 	)
-	// TODO - barpathtracker.InitBarPathTrackerData(&physData, p.BarTrackerCalcParams)
+	// TODO
+	// barpathtracker.InitBarPathTrackerData(&physData, p.BarTrackerCalcParams)
 
 	for i, set := range p.BarPath {
 		select {

@@ -43,6 +43,11 @@ func ConfDefaults() *types.Conf {
 			MaxNumWorkers:  uint32(runtime.NumCPU()),
 			MaxJobsPerPoll: 1,
 		},
+		CSVLoaderJobQueue: sbjobqueue.Opts{
+			QueueLen:       10,
+			MaxNumWorkers:  uint32(runtime.NumCPU()),
+			MaxJobsPerPoll: 1,
+		},
 	}
 }
 
@@ -82,15 +87,9 @@ func ConfDefaultRequiredArgs() []string {
 //   - <longArgStart>.VideoJobQueue.QueueLen
 //   - <longArgStart>.VideoJobQueue.MaxNumWorkers
 //   - <longArgStart>.VideoJobQueue.MaxJobsPerPoll
-//   - <longArgStart>.BarPathCalc.MinNumSamples
-//   - <longArgStart>.BarPathCalc.TimeDeltaEps
-//   - <longArgStart>.BarPathCalc.ApproxErr
-//   - <longArgStart>.BarPathCalc.NearZeroFilter
-//   - <longArgStart>.BarPathCalc.SmootherWeight1
-//   - <longArgStart>.BarPathCalc.SmootherWeight2
-//   - <longArgStart>.BarPathCalc.SmootherWeight3
-//   - <longArgStart>.BarPathCalc.SmootherWeight4
-//   - <longArgStart>.BarPathCalc.SmootherWeight5
+//   - <longArgStart>.CSVLoaderJobQueue.QueueLen
+//   - <longArgStart>.CSVLoaderJobQueue.MaxNumWorkers
+//   - <longArgStart>.CSVLoaderJobQueue.MaxJobsPerPoll
 func ConfParser(
 	fs *flag.FlagSet,
 	val *types.Conf,
@@ -128,58 +127,60 @@ func ConfParser(
 		),
 	)
 
-	fs.Func(
-		startStr("PhysicsJobQueue", "QueueLen"),
-		"The maximum queue length for the physics job queue. Once reached adding to the queue will be a blocking operation",
-		sbargp.Uint(
-			&val.PhysicsJobQueue.QueueLen,
-			_default.PhysicsJobQueue.QueueLen,
-			10,
-		),
+	jobQueueArguments(
+		fs, startStr, "Physics",
+		&val.PhysicsJobQueue, &_default.PhysicsJobQueue,
 	)
-	fs.Func(
-		startStr("PhysicsJobQueue", "MaxNumWorkers"),
-		"The maximum number of workers for the physics job queue",
-		sbargp.Uint(
-			&val.PhysicsJobQueue.MaxNumWorkers,
-			_default.PhysicsJobQueue.MaxNumWorkers,
-			10,
-		),
+	jobQueueArguments(
+		fs, startStr, "Video",
+		&val.VideoJobQueue, &_default.VideoJobQueue,
 	)
-	fs.Func(
-		startStr("PhysicsJobQueue", "MaxJobsPerPoll"),
-		"The maximum number of jobs the physics job queue can run each time it is polled",
-		sbargp.Uint(
-			&val.PhysicsJobQueue.MaxJobsPerPoll,
-			_default.PhysicsJobQueue.MaxJobsPerPoll,
-			10,
-		),
+	jobQueueArguments(
+		fs, startStr, "CSVLoader",
+		&val.CSVLoaderJobQueue, &_default.CSVLoaderJobQueue,
 	)
+}
 
+func jobQueueArguments(
+	fs *flag.FlagSet,
+	startStr func(names ...string) string,
+	queueName string,
+	val *sbjobqueue.Opts,
+	_default *sbjobqueue.Opts,
+) {
 	fs.Func(
-		startStr("VideoJobQueue", "QueueLen"),
-		"The maximum queue length for the video job queue. Once reached adding to the queue will be a blocking operation",
+		startStr(fmt.Sprintf("%sJobQueue", queueName), "QueueLen"),
+		fmt.Sprintf(
+			"The maximum queue length for the %s job queue. Once reached adding to the queue will be a blocking operation",
+			queueName,
+		),
 		sbargp.Uint(
-			&val.VideoJobQueue.QueueLen,
-			_default.VideoJobQueue.QueueLen,
+			&val.QueueLen,
+			_default.QueueLen,
 			10,
 		),
 	)
 	fs.Func(
-		startStr("VideoJobQueue", "MaxNumWorkers"),
-		"The maximum number of workers for the video job queue",
+		startStr(fmt.Sprintf("%sJobQueue", queueName), "MaxNumWorkers"),
+		fmt.Sprintf(
+			"The maximum number of workers for the %s job queue",
+			queueName,
+		),
 		sbargp.Uint(
-			&val.VideoJobQueue.MaxNumWorkers,
-			_default.VideoJobQueue.MaxNumWorkers,
+			&val.MaxNumWorkers,
+			_default.MaxNumWorkers,
 			10,
 		),
 	)
 	fs.Func(
-		startStr("VideoJobQueue", "MaxJobsPerPoll"),
-		"The maximum number of jobs the video job queue can run each time it is polled",
+		startStr(fmt.Sprintf("%sJobQueue", queueName), "MaxJobsPerPoll"),
+		fmt.Sprintf(
+			"The maximum number of jobs the %s job queue can run each time it is polled",
+			queueName,
+		),
 		sbargp.Uint(
-			&val.VideoJobQueue.MaxJobsPerPoll,
-			_default.VideoJobQueue.MaxJobsPerPoll,
+			&val.MaxJobsPerPoll,
+			_default.MaxJobsPerPoll,
 			10,
 		),
 	)
@@ -206,6 +207,11 @@ func ConfToState(
 	}
 	if state.VideoJobQueue, err = sbjobqueue.NewJobQueue[types.VideoJob](
 		&c.VideoJobQueue,
+	); err != nil {
+		return
+	}
+	if state.CSVLoaderJobQueue, err = sbjobqueue.NewJobQueue[types.CSVLoaderJob](
+		&c.CSVLoaderJobQueue,
 	); err != nil {
 		return
 	}
