@@ -4,8 +4,8 @@ code.barbellmath.net/barbell-math/smoothbrain-bs v0.0.0-20250831070729-5632f2448
 code.barbellmath.net/barbell-math/smoothbrain-bs v0.0.0-20250831070729-5632f2448d7f/go.mod h1:BFg3zJ/aCHtI131FpH/MKlVUnUMD2r590qPKr0afa2U=
 code.barbellmath.net/barbell-math/smoothbrain-cgoGlue v0.0.0-20250901064600-3ef6fc548d82 h1:5ZdJY7jbDkw7k+2Bh6eg1rW7RrcwrRfsRO6X8qztUrQ=
 code.barbellmath.net/barbell-math/smoothbrain-cgoGlue v0.0.0-20250901064600-3ef6fc548d82/go.mod h1:bp9woMieEp6b1s5HjoeoYcWnGXg1enhdMHUXBqi66N4=
-code.barbellmath.net/barbell-math/smoothbrain-csv v0.0.0-20251002055938-447e397c6805 h1:6WdCl5SeI/G4FYMoy9bSwhJ4subms34HQBEeylZCVjI=
-code.barbellmath.net/barbell-math/smoothbrain-csv v0.0.0-20251002055938-447e397c6805/go.mod h1:9MPTOrUXzGYyLbwyzxjuMcPp36xfd/sXW0p4b2Zm8yo=
+code.barbellmath.net/barbell-math/smoothbrain-csv v0.0.0-20251005184806-71d9c02d4048 h1:UiYN80cuKUB4OZpgcvv5NcqCeRzLqfmuvr+4nr9nlDU=
+code.barbellmath.net/barbell-math/smoothbrain-csv v0.0.0-20251005184806-71d9c02d4048/go.mod h1:9MPTOrUXzGYyLbwyzxjuMcPp36xfd/sXW0p4b2Zm8yo=
 code.barbellmath.net/barbell-math/smoothbrain-errs v0.0.0-20250922060744-10f1be6d5cd5 h1:LeFLDX6zqmmm9lviBLNg8a07MoW05qLVvspzKURj/nI=
 code.barbellmath.net/barbell-math/smoothbrain-errs v0.0.0-20250922060744-10f1be6d5cd5/go.mod h1:/RPzJHhXkH6M3EbHehsWMVFykadZcHmJDTJdedmPSqo=
 code.barbellmath.net/barbell-math/smoothbrain-jobQueue v0.0.0-20250831071525-40f7c4d71378 h1:bkaC8k9pHr4nSd6VexK2DQG6VtFyuiYZ/ICI83gxhJg=
@@ -38,8 +38,8 @@ github.com/stretchr/testify v1.8.1 h1:w7B6lhMri9wdJUVmEZPGGhZzrYTPvgJArz7wNPgYKs
 github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
 golang.org/x/crypto v0.42.0 h1:chiH31gIWm57EkTXpwnqf8qeuMUi0yekh6mT2AvFlqI=
 golang.org/x/crypto v0.42.0/go.mod h1:4+rDnOTJhQCx2q7/j6rAN5XDw8kPjeaXEUR2eL94ix8=
-golang.org/x/exp v0.0.0-20250911091902-df9299821621 h1:2id6c1/gto0kaHYyrixvknJ8tUK/Qs5IsmBtrc+FtgU=
-golang.org/x/exp v0.0.0-20250911091902-df9299821621/go.mod h1:TwQYMMnGpvZyc+JpB/UAuTNIsVJifOlSkrZkhcvpVUk=
+golang.org/x/exp v0.0.0-20251002181428-27f1f14c8bb9 h1:TQwNpfvNkxAVlItJf6Cr5JTsVZoC/Sj7K3OZv2Pc14A=
+golang.org/x/exp v0.0.0-20251002181428-27f1f14c8bb9/go.mod h1:TwQYMMnGpvZyc+JpB/UAuTNIsVJifOlSkrZkhcvpVUk=
 golang.org/x/sync v0.17.0 h1:l60nONMj9l5drqw6jlhIELNv9I0A4OFgRsG9k2oT9Ug=
 golang.org/x/sync v0.17.0/go.mod h1:9KTHXmSnoGruLpwFjVSX0lNNA75CykiMECbovNTZqGI=
 golang.org/x/text v0.29.0 h1:1neNs90w9YzJ9BocxfsQNHKuAT4pkghyXc4nhZ6sJvk=
