@@ -6,16 +6,14 @@ import (
 )
 
 type (
-	Found[T any] struct {
-		Found bool
-		Value T
-	}
-
+	// The set of all available hyperparameters.
 	Hyperparams interface {
 		BarPathCalcHyperparams |
 			BarPathTrackerHyperparams
 	}
 
+	// Hyperparameters used by the algorithm that calculates physics data from
+	// the bars position over time.
 	BarPathCalcHyperparams struct {
 		Version         int32
 		MinNumSamples   uint64
@@ -29,6 +27,8 @@ type (
 		SmootherWeight5 float64
 	}
 
+	// Hyperparameters used by the algorithm that gets the bars position over
+	// time from a video.
 	BarPathTrackerHyperparams struct {
 		Version     int32
 		MinLength   Second

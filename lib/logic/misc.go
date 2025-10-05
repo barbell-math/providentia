@@ -17,3 +17,17 @@ func RunMigrations(ctxt context.Context) (opErr error) {
 		},
 	})
 }
+
+func UploadCSVDataDir(
+	ctxt context.Context,
+	dir string,
+	opts *types.CSVDataDirOptions,
+) (opErr error) {
+	opErr = runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			err = ops.UploadCSVDataDir(ctxt, state, queries, dir, opts)
+			return
+		},
+	})
+	return
+}

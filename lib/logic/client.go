@@ -89,8 +89,26 @@ func CreateClientsFromCSV(
 	}
 	return runOp(ctxt, opCalls{
 		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			return ops.CreateClientsFromCSV(
-				ctxt, state, queries, opts, files...,
+			return ops.UploadClientsFromCSV(
+				ctxt, state, queries, ops.CreateClients, opts, files...,
+			)
+		},
+	})
+}
+
+// TODO - comment, test?
+func EnsureClientsExistFromCSV(
+	ctxt context.Context,
+	opts sbcsv.Opts,
+	files ...string,
+) (opErr error) {
+	if len(files) == 0 {
+		return
+	}
+	return runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			return ops.UploadClientsFromCSV(
+				ctxt, state, queries, ops.EnsureClientsExist, opts, files...,
 			)
 		},
 	})

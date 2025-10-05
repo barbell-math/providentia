@@ -93,8 +93,25 @@ func CreateExercisesFromCSV(
 	}
 	return runOp(ctxt, opCalls{
 		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			return ops.CreateExercisesFromCSV(
-				ctxt, state, queries, opts, files...,
+			return ops.UploadExercisesFromCSV(
+				ctxt, state, queries, ops.CreateExercises, opts, files...,
+			)
+		},
+	})
+}
+
+func EnsureExercisesExistFromCSV(
+	ctxt context.Context,
+	opts sbcsv.Opts,
+	files ...string,
+) (opErr error) {
+	if len(files) == 0 {
+		return
+	}
+	return runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			return ops.UploadExercisesFromCSV(
+				ctxt, state, queries, ops.EnsureExercisesExist, opts, files...,
 			)
 		},
 	})

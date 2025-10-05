@@ -8,8 +8,6 @@ type (
 		PositionData []Vec2[Meter, Meter] // The position data for the set
 	}
 
-	BarPathFlag int
-
 	// A tagged union that either contains a [RawTimeSeriesData] struct or a
 	// path to a video file.
 	//
@@ -22,12 +20,6 @@ type (
 		videoPath string
 		posData   RawTimeSeriesData
 	}
-)
-
-const (
-	NoBarPathData = iota
-	VideoBarPathData
-	TimeSeriesBarPathData
 )
 
 // Returns a [BarPathVariant] initialized with a video path as the data source.

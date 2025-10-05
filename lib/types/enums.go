@@ -26,4 +26,10 @@ type (
 	//	FourthOrder = 4
 	// )
 	ApproximationError int32
+
+	// ENUM(Create, EnsureExists)
+	CreateFuncType int32
+
+	// ENUM(NoBarPathData, VideoBarPathData, TimeSeriesBarPathData)
+	BarPathFlag int
 )

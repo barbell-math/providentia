@@ -9,9 +9,10 @@ import (
 )
 
 type (
-	PhysicsJob   struct{} // Used to identify a physics job
-	VideoJob     struct{} // Used to identify a video job
-	CSVLoaderJob struct{} // Used to identify a csv loader job
+	PhysicsJob        struct{} // Used to identify a physics job
+	VideoJob          struct{} // Used to identify a video job
+	CSVLoaderJob      struct{} // Used to identify a csv loader job
+	GeneralPurposeJob struct{} // Used to identify a general purpose job
 
 	// The state the rest of providentia will use. Almost all functions
 	// available for external use from this library will require this state to
@@ -22,6 +23,7 @@ type (
 		PhysicsJobQueue   *sbjobqueue.JobQueue[PhysicsJob]
 		VideoJobQueue     *sbjobqueue.JobQueue[VideoJob]
 		CSVLoaderJobQueue *sbjobqueue.JobQueue[CSVLoaderJob]
+		GPJobQueue        *sbjobqueue.JobQueue[GeneralPurposeJob]
 
 		Global GlobalConf
 	}
@@ -36,4 +38,5 @@ var (
 	InvalidPhysicsJobQueueErr   = errors.New("Invalid physics job queue")
 	InvalidVideoJobQueue        = errors.New("Invalid video job queue")
 	InvalidCSVLoaderJobQueueErr = errors.New("Invalid csv loader job queue")
+	InvalidGPJobQueueErr        = errors.New("Invalid general purpose loader job queue")
 )

@@ -48,6 +48,11 @@ func ConfDefaults() *types.Conf {
 			MaxNumWorkers:  uint32(runtime.NumCPU()),
 			MaxJobsPerPoll: 1,
 		},
+		GeneralPurposeJobQueue: sbjobqueue.Opts{
+			QueueLen:       10,
+			MaxNumWorkers:  uint32(runtime.NumCPU()),
+			MaxJobsPerPoll: 1,
+		},
 	}
 }
 
@@ -90,6 +95,9 @@ func ConfDefaultRequiredArgs() []string {
 //   - <longArgStart>.CSVLoaderJobQueue.QueueLen
 //   - <longArgStart>.CSVLoaderJobQueue.MaxNumWorkers
 //   - <longArgStart>.CSVLoaderJobQueue.MaxJobsPerPoll
+//   - <longArgStart>.GeneralPurposeJobQueue.QueueLen
+//   - <longArgStart>.GeneralPurposeJobQueue.MaxNumWorkers
+//   - <longArgStart>.GeneralPurposeJobQueue.MaxJobsPerPoll
 func ConfParser(
 	fs *flag.FlagSet,
 	val *types.Conf,
@@ -138,6 +146,10 @@ func ConfParser(
 	jobQueueArguments(
 		fs, startStr, "CSVLoader",
 		&val.CSVLoaderJobQueue, &_default.CSVLoaderJobQueue,
+	)
+	jobQueueArguments(
+		fs, startStr, "GeneralPurposeJobQueue",
+		&val.GeneralPurposeJobQueue, &_default.GeneralPurposeJobQueue,
 	)
 }
 
@@ -212,6 +224,11 @@ func ConfToState(
 	}
 	if state.CSVLoaderJobQueue, err = sbjobqueue.NewJobQueue[types.CSVLoaderJob](
 		&c.CSVLoaderJobQueue,
+	); err != nil {
+		return
+	}
+	if state.GPJobQueue, err = sbjobqueue.NewJobQueue[types.GeneralPurposeJob](
+		&c.GeneralPurposeJobQueue,
 	); err != nil {
 		return
 	}

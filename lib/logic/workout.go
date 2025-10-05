@@ -142,6 +142,7 @@ func CreateWorkoutsFromCSV(
 			return ops.CreateWorkoutsFromCSV(
 				ctxt, state, queries,
 				barPathCalcParams, barTrackerCalcParams,
+				ops.CreateWorkouts,
 				opts, files...,
 			)
 		},

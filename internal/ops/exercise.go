@@ -139,10 +139,11 @@ func validateExercises(exercises []types.Exercise) (opErr error) {
 	return
 }
 
-func CreateExercisesFromCSV(
+func UploadExercisesFromCSV(
 	ctxt context.Context,
 	state *types.State,
 	queries *dal.SyncQueries,
+	creator createFunc[types.Exercise],
 	opts sbcsv.Opts,
 	files ...string,
 ) (opErr error) {
@@ -168,7 +169,7 @@ func CreateExercisesFromCSV(
 				B:         batch,
 				FileChunk: chunk,
 				Opts:      &opts,
-				WriteFunc: CreateExercises,
+				WriteFunc: creator,
 			})
 		}
 	}

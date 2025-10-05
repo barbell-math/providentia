@@ -141,10 +141,11 @@ func validateClients(clients []types.Client) (opErr error) {
 	return
 }
 
-func CreateClientsFromCSV(
+func UploadClientsFromCSV(
 	ctxt context.Context,
 	state *types.State,
 	queries *dal.SyncQueries,
+	creator createFunc[types.Client],
 	opts sbcsv.Opts,
 	files ...string,
 ) (opErr error) {
@@ -170,7 +171,7 @@ func CreateClientsFromCSV(
 				B:         batch,
 				FileChunk: chunk,
 				Opts:      &opts,
-				WriteFunc: CreateClients,
+				WriteFunc: creator,
 			})
 		}
 	}

@@ -105,6 +105,201 @@ func (x *ApproximationError) AppendText(b []byte) ([]byte, error) {
 }
 
 const (
+	// NoBarPathData is a BarPathFlag of type NoBarPathData.
+	NoBarPathData BarPathFlag = iota
+	// VideoBarPathData is a BarPathFlag of type VideoBarPathData.
+	VideoBarPathData
+	// TimeSeriesBarPathData is a BarPathFlag of type TimeSeriesBarPathData.
+	TimeSeriesBarPathData
+)
+
+var ErrInvalidBarPathFlag = fmt.Errorf("not a valid BarPathFlag, try [%s]", strings.Join(_BarPathFlagNames, ", "))
+
+const _BarPathFlagName = "NoBarPathDataVideoBarPathDataTimeSeriesBarPathData"
+
+var _BarPathFlagNames = []string{
+	_BarPathFlagName[0:13],
+	_BarPathFlagName[13:29],
+	_BarPathFlagName[29:50],
+}
+
+// BarPathFlagNames returns a list of possible string values of BarPathFlag.
+func BarPathFlagNames() []string {
+	tmp := make([]string, len(_BarPathFlagNames))
+	copy(tmp, _BarPathFlagNames)
+	return tmp
+}
+
+// BarPathFlagValues returns a list of the values for BarPathFlag
+func BarPathFlagValues() []BarPathFlag {
+	return []BarPathFlag{
+		NoBarPathData,
+		VideoBarPathData,
+		TimeSeriesBarPathData,
+	}
+}
+
+var _BarPathFlagMap = map[BarPathFlag]string{
+	NoBarPathData:         _BarPathFlagName[0:13],
+	VideoBarPathData:      _BarPathFlagName[13:29],
+	TimeSeriesBarPathData: _BarPathFlagName[29:50],
+}
+
+// String implements the Stringer interface.
+func (x BarPathFlag) String() string {
+	if str, ok := _BarPathFlagMap[x]; ok {
+		return str
+	}
+	return fmt.Sprintf("BarPathFlag(%d)", x)
+}
+
+// IsValid provides a quick way to determine if the typed value is
+// part of the allowed enumerated values
+func (x BarPathFlag) IsValid() bool {
+	_, ok := _BarPathFlagMap[x]
+	return ok
+}
+
+var _BarPathFlagValue = map[string]BarPathFlag{
+	_BarPathFlagName[0:13]:                   NoBarPathData,
+	strings.ToLower(_BarPathFlagName[0:13]):  NoBarPathData,
+	_BarPathFlagName[13:29]:                  VideoBarPathData,
+	strings.ToLower(_BarPathFlagName[13:29]): VideoBarPathData,
+	_BarPathFlagName[29:50]:                  TimeSeriesBarPathData,
+	strings.ToLower(_BarPathFlagName[29:50]): TimeSeriesBarPathData,
+}
+
+// ParseBarPathFlag attempts to convert a string to a BarPathFlag.
+func ParseBarPathFlag(name string) (BarPathFlag, error) {
+	if x, ok := _BarPathFlagValue[name]; ok {
+		return x, nil
+	}
+	// Case insensitive parse, do a separate lookup to prevent unnecessary cost of lowercasing a string if we don't need to.
+	if x, ok := _BarPathFlagValue[strings.ToLower(name)]; ok {
+		return x, nil
+	}
+	return BarPathFlag(0), fmt.Errorf("%s is %w", name, ErrInvalidBarPathFlag)
+}
+
+// MarshalText implements the text marshaller method.
+func (x BarPathFlag) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
+}
+
+// UnmarshalText implements the text unmarshaller method.
+func (x *BarPathFlag) UnmarshalText(text []byte) error {
+	name := string(text)
+	tmp, err := ParseBarPathFlag(name)
+	if err != nil {
+		return err
+	}
+	*x = tmp
+	return nil
+}
+
+// AppendText appends the textual representation of itself to the end of b
+// (allocating a larger slice if necessary) and returns the updated slice.
+//
+// Implementations must not retain b, nor mutate any bytes within b[:len(b)].
+func (x *BarPathFlag) AppendText(b []byte) ([]byte, error) {
+	return append(b, x.String()...), nil
+}
+
+const (
+	// Create is a CreateFuncType of type Create.
+	Create CreateFuncType = iota
+	// EnsureExists is a CreateFuncType of type EnsureExists.
+	EnsureExists
+)
+
+var ErrInvalidCreateFuncType = fmt.Errorf("not a valid CreateFuncType, try [%s]", strings.Join(_CreateFuncTypeNames, ", "))
+
+const _CreateFuncTypeName = "CreateEnsureExists"
+
+var _CreateFuncTypeNames = []string{
+	_CreateFuncTypeName[0:6],
+	_CreateFuncTypeName[6:18],
+}
+
+// CreateFuncTypeNames returns a list of possible string values of CreateFuncType.
+func CreateFuncTypeNames() []string {
+	tmp := make([]string, len(_CreateFuncTypeNames))
+	copy(tmp, _CreateFuncTypeNames)
+	return tmp
+}
+
+// CreateFuncTypeValues returns a list of the values for CreateFuncType
+func CreateFuncTypeValues() []CreateFuncType {
+	return []CreateFuncType{
+		Create,
+		EnsureExists,
+	}
+}
+
+var _CreateFuncTypeMap = map[CreateFuncType]string{
+	Create:       _CreateFuncTypeName[0:6],
+	EnsureExists: _CreateFuncTypeName[6:18],
+}
+
+// String implements the Stringer interface.
+func (x CreateFuncType) String() string {
+	if str, ok := _CreateFuncTypeMap[x]; ok {
+		return str
+	}
+	return fmt.Sprintf("CreateFuncType(%d)", x)
+}
+
+// IsValid provides a quick way to determine if the typed value is
+// part of the allowed enumerated values
+func (x CreateFuncType) IsValid() bool {
+	_, ok := _CreateFuncTypeMap[x]
+	return ok
+}
+
+var _CreateFuncTypeValue = map[string]CreateFuncType{
+	_CreateFuncTypeName[0:6]:                   Create,
+	strings.ToLower(_CreateFuncTypeName[0:6]):  Create,
+	_CreateFuncTypeName[6:18]:                  EnsureExists,
+	strings.ToLower(_CreateFuncTypeName[6:18]): EnsureExists,
+}
+
+// ParseCreateFuncType attempts to convert a string to a CreateFuncType.
+func ParseCreateFuncType(name string) (CreateFuncType, error) {
+	if x, ok := _CreateFuncTypeValue[name]; ok {
+		return x, nil
+	}
+	// Case insensitive parse, do a separate lookup to prevent unnecessary cost of lowercasing a string if we don't need to.
+	if x, ok := _CreateFuncTypeValue[strings.ToLower(name)]; ok {
+		return x, nil
+	}
+	return CreateFuncType(0), fmt.Errorf("%s is %w", name, ErrInvalidCreateFuncType)
+}
+
+// MarshalText implements the text marshaller method.
+func (x CreateFuncType) MarshalText() ([]byte, error) {
+	return []byte(x.String()), nil
+}
+
+// UnmarshalText implements the text unmarshaller method.
+func (x *CreateFuncType) UnmarshalText(text []byte) error {
+	name := string(text)
+	tmp, err := ParseCreateFuncType(name)
+	if err != nil {
+		return err
+	}
+	*x = tmp
+	return nil
+}
+
+// AppendText appends the textual representation of itself to the end of b
+// (allocating a larger slice if necessary) and returns the updated slice.
+//
+// Implementations must not retain b, nor mutate any bytes within b[:len(b)].
+func (x *CreateFuncType) AppendText(b []byte) ([]byte, error) {
+	return append(b, x.String()...), nil
+}
+
+const (
 	// UnknownExerciseFocus is a ExerciseFocus of type UnknownExerciseFocus.
 	UnknownExerciseFocus ExerciseFocus = iota
 	// Squat is a ExerciseFocus of type Squat.
