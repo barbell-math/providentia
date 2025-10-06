@@ -28,6 +28,8 @@ type (
 
 	CSVDataDirOptions struct {
 		sbcsv.Opts
+		*BarPathCalcHyperparams
+		*BarPathTrackerHyperparams
 		ClientCreateType      CreateFuncType
 		ClientDir             string
 		ExerciseCreateType    CreateFuncType

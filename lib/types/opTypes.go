@@ -124,6 +124,8 @@ var (
 	TimeSeriesDecreaseErr     = errors.New("Time series data must not decrease")
 	TimeSeriesNotMonotonicErr = errors.New("Time series must increase mononically")
 
+	CSVLoaderJobQueueErr = errors.New("Could not process csv loader job")
+
 	InvalidClientErr                 = errors.New("Invalid client")
 	CouldNotAddClientsErr            = errors.New("Could not add the requested clients")
 	MissingFirstNameErr              = errors.New("First name must not be empty")
@@ -172,4 +174,9 @@ var (
 	CouldNotGetNumHyperparamsErr        = errors.New("Could not get num hyperparams")
 	CouldNotFindRequestedHyperparamsErr = errors.New("Could not find requested hyperparams")
 	CouldNotDeleteHyperparamsErr        = errors.New("Could not delete requester hyperparams")
+
+	InvalidDataDirOptsErr = errors.New("Invalid data dir options")
+	DataDirErr            = errors.New("Malformed data dir")
+	DirInDataDirErr       = errors.New("Data dir contained a directory but shouldn't")
+	UnknownFileErr        = errors.New("Unknown file in data dir")
 )

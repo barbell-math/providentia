@@ -100,6 +100,7 @@ func CreateExercisesFromCSV(
 	})
 }
 
+// TODO - doc, test
 func EnsureExercisesExistFromCSV(
 	ctxt context.Context,
 	opts sbcsv.Opts,

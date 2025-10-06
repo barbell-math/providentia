@@ -42,6 +42,6 @@ type (
 		// benefit from parallel execution but do not warrent an entirely
 		// separate job queue.
 		// Refer to: http://code.barbellmath.net/barbell-math/smoothbrain-jobQueue#Opts
-		GeneralPurposeJobQueue sbjobqueue.Opts
+		GPJobQueue sbjobqueue.Opts
 	}
 )

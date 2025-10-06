@@ -6,6 +6,7 @@ import (
 
 	"code.barbellmath.net/barbell-math/providentia/internal/db/migrations"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
+	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
 	sbtest "code.barbellmath.net/barbell-math/smoothbrain-test"
 )
 
@@ -208,7 +209,7 @@ func hyperparamsCreateCSVRead(t *testing.T) {
 		Version:         2,
 		MinNumSamples:   2,
 		TimeDeltaEps:    1,
-		ApproxErr:       types.SecondOrder,
+		ApproxErr:       types.FourthOrder,
 		NearZeroFilter:  1,
 		SmootherWeight1: 0.1,
 		SmootherWeight2: 0.2,
@@ -228,10 +229,14 @@ func hyperparamsCreateCSVRead(t *testing.T) {
 		MaxFileSize: 2,
 	}}
 
-	err := CreateHyperparams(ctxt, calcParams...)
+	err := CreateHyperparamsFromCSV[types.BarPathCalcHyperparams](
+		ctxt, sbcsv.Opts{}, "./testData/hyperparamData/1.barPathCalc.csv",
+	)
 	sbtest.Nil(t, err)
 
-	err = CreateHyperparams(ctxt, trackParams...)
+	err = CreateHyperparamsFromCSV[types.BarPathTrackerHyperparams](
+		ctxt, sbcsv.Opts{}, "./testData/hyperparamData/2.barPathTracker.csv",
+	)
 	sbtest.Nil(t, err)
 
 	res, err := ReadNumHyperparams(ctxt)

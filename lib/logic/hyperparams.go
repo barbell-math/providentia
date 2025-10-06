@@ -101,8 +101,26 @@ func CreateHyperparamsFromCSV[T types.Hyperparams](
 	}
 	return runOp(ctxt, opCalls{
 		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			return ops.CreateHyperparamsFromCSV[T](
-				ctxt, state, queries, opts, files...,
+			return ops.UploadHyperparamsFromCSV[T](
+				ctxt, state, queries, ops.CreateHyperparams[T], opts, files...,
+			)
+		},
+	})
+}
+
+// TODO - docs,test
+func EnsureHyperparamsExistFromCSV[T types.Hyperparams](
+	ctxt context.Context,
+	opts sbcsv.Opts,
+	files ...string,
+) (opErr error) {
+	if len(files) == 0 {
+		return
+	}
+	return runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			return ops.UploadHyperparamsFromCSV[T](
+				ctxt, state, queries, ops.EnsureHyperparamsExist[T], opts, files...,
 			)
 		},
 	})

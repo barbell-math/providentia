@@ -73,14 +73,14 @@ func (w *CSVLoader[T]) Run(ctxt context.Context) (opErr error) {
 	case *[]types.RawWorkout:
 		if w.ClientName == "" {
 			opErr = sberr.Wrap(
-				types.InvalidCSVLoaderJobQueueErr,
+				types.CSVLoaderJobQueueErr,
 				"ClientName must not be empty when parsing workout data",
 			)
 			return
 		}
 		if opErr = sbcsv.LoadBytes(w.FileChunk, &sbcsv.LoadOpts{
 			Opts:          *w.Opts,
-			RequestedCols: sbcsv.ReqColsForStruct[types.RawWorkout](),
+			RequestedCols: sbcsv.ReqColsForStruct[rawTrainingLog](),
 			Op: func(
 				o *sbcsv.Opts,
 				rowIdx int,
@@ -104,7 +104,7 @@ func (w *CSVLoader[T]) Run(ctxt context.Context) (opErr error) {
 					Session:       rawData.Session,
 					DatePerformed: rawData.DatePerformed,
 				}
-				if len((*typedParams)) == 0 || (*typedParams)[len((*typedParams))-1].WorkoutID == iterID {
+				if len((*typedParams)) == 0 || (*typedParams)[len((*typedParams))-1].WorkoutID != iterID {
 					(*typedParams) = append((*typedParams), types.RawWorkout{WorkoutID: iterID})
 				}
 				(*typedParams)[len((*typedParams))-1].Exercises = append(
@@ -122,7 +122,7 @@ func (w *CSVLoader[T]) Run(ctxt context.Context) (opErr error) {
 				return nil
 			},
 		}); opErr != nil {
-			return sberr.AppendError(types.InvalidCSVLoaderJobQueueErr, opErr)
+			return sberr.AppendError(types.CSVLoaderJobQueueErr, opErr)
 		}
 	default:
 		if opErr = sbcsv.LoadBytes(w.FileChunk, &sbcsv.LoadOpts{
@@ -130,12 +130,12 @@ func (w *CSVLoader[T]) Run(ctxt context.Context) (opErr error) {
 			RequestedCols: sbcsv.ReqColsForStruct[T](),
 			Op:            sbcsv.RowToStructOp(&params),
 		}); opErr != nil {
-			return sberr.AppendError(types.InvalidCSVLoaderJobQueueErr, opErr)
+			return sberr.AppendError(types.CSVLoaderJobQueueErr, opErr)
 		}
 	}
 
 	if opErr = w.WriteFunc(ctxt, w.S, w.Q, params...); opErr != nil {
-		return sberr.AppendError(types.InvalidCSVLoaderJobQueueErr, opErr)
+		return sberr.AppendError(types.CSVLoaderJobQueueErr, opErr)
 	}
 
 	return

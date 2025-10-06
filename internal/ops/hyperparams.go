@@ -249,10 +249,11 @@ func setVersionTo[T types.Hyperparams](v *T, version int32) {
 	}
 }
 
-func CreateHyperparamsFromCSV[T types.Hyperparams](
+func UploadHyperparamsFromCSV[T types.Hyperparams](
 	ctxt context.Context,
 	state *types.State,
 	queries *dal.SyncQueries,
+	creator createFunc[T],
 	opts sbcsv.Opts,
 	files ...string,
 ) (opErr error) {
@@ -278,7 +279,7 @@ func CreateHyperparamsFromCSV[T types.Hyperparams](
 				B:         batch,
 				FileChunk: chunk,
 				Opts:      &opts,
-				WriteFunc: CreateHyperparams[T],
+				WriteFunc: creator,
 			})
 		}
 	}

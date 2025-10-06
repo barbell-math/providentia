@@ -139,7 +139,30 @@ func CreateWorkoutsFromCSV(
 	}
 	return runOp(ctxt, opCalls{
 		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			return ops.CreateWorkoutsFromCSV(
+			return ops.UploadWorkoutsFromCSV(
+				ctxt, state, queries,
+				barPathCalcParams, barTrackerCalcParams,
+				ops.CreateWorkouts,
+				opts, files...,
+			)
+		},
+	})
+}
+
+// TODO - test, doc
+func EnsureWorkoutsExistFromCSV(
+	ctxt context.Context,
+	barPathCalcParams *types.BarPathCalcHyperparams,
+	barTrackerCalcParams *types.BarPathTrackerHyperparams,
+	opts sbcsv.Opts,
+	files ...string,
+) (opErr error) {
+	if len(files) == 0 {
+		return
+	}
+	return runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			return ops.UploadWorkoutsFromCSV(
 				ctxt, state, queries,
 				barPathCalcParams, barTrackerCalcParams,
 				ops.CreateWorkouts,

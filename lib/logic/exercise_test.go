@@ -347,7 +347,7 @@ func exerciseCreateCSVRead(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	err := CreateExercisesFromCSV(
-		ctxt, sbcsv.Opts{}, "./testData/simpleData/exercises.csv",
+		ctxt, sbcsv.Opts{}, "./testData/exerciseData/exercises.csv",
 	)
 	sbtest.Nil(t, err)
 

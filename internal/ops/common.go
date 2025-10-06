@@ -26,7 +26,26 @@ type (
 		barTrackerCalcParams *types.BarPathTrackerHyperparams,
 		values ...types.RawWorkout,
 	) (opErr error)
+
+	hyperparamCreators struct {
+		barPathCalc    createFunc[types.BarPathCalcHyperparams]
+		barPathTracker createFunc[types.BarPathTrackerHyperparams]
+	}
 )
+
+func NewHyperparamCreators(createType types.CreateFuncType) hyperparamCreators {
+	creators := hyperparamCreators{
+		barPathCalc:    CreateHyperparams[types.BarPathCalcHyperparams],
+		barPathTracker: CreateHyperparams[types.BarPathTrackerHyperparams],
+	}
+	if createType == types.EnsureExists {
+		creators = hyperparamCreators{
+			barPathCalc:    EnsureHyperparamsExist[types.BarPathCalcHyperparams],
+			barPathTracker: EnsureHyperparamsExist[types.BarPathTrackerHyperparams],
+		}
+	}
+	return creators
+}
 
 func batchIndexes[S ~[]E, E any](s S, step int) iter.Seq2[int, int] {
 	return func(yield func(int, int) bool) {

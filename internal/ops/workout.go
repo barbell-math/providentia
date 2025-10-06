@@ -398,7 +398,7 @@ func validateWorkout(params createSingleWorkoutParams) (opErr error) {
 	return
 }
 
-func CreateWorkoutsFromCSV(
+func UploadWorkoutsFromCSV(
 	ctxt context.Context,
 	state *types.State,
 	queries *dal.SyncQueries,
@@ -420,7 +420,7 @@ func CreateWorkoutsFromCSV(
 		if fileChunks, opErr = sbcsv.ChunkFile(
 			file, sbcsv.ChunkFileOpts{
 				NumRowSamples:      2,
-				MinChunkRows:       1e1,
+				MinChunkRows:       1e3,
 				MaxChunkRows:       math.MaxInt,
 				RequestedNumChunks: runtime.NumCPU(),
 			},
