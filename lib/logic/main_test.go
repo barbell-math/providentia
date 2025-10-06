@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	sbargp "code.barbellmath.net/barbell-math/smoothbrain-argparse"
 	sbjobqueue "code.barbellmath.net/barbell-math/smoothbrain-jobQueue"
+	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -43,7 +45,8 @@ func TestMain(m *testing.M) {
 	TestDBPool.Close()
 }
 
-func resetApp(ctxtIn context.Context) (context.Context, func()) {
+func resetApp(t *testing.T, ctxtIn context.Context) (context.Context, func()) {
+	start := time.Now()
 	sql := fmt.Sprintf("DROP DATABASE IF EXISTS provlib_tests WITH (FORCE);")
 	_, err := TestDBPool.Exec(ctxtIn, sql)
 	if err != nil {
@@ -55,6 +58,8 @@ func resetApp(ctxtIn context.Context) (context.Context, func()) {
 	if err != nil {
 		panic(err)
 	}
+	end := time.Now()
+	t.Logf("Time to reset database: %fs", end.Sub(start).Seconds())
 
 	return testAppMain(ctxtIn, "-conf", "../../bs/testsDB.toml")
 }
@@ -73,6 +78,8 @@ func testAppMain(
 	testCtxt context.Context,
 	args ...string,
 ) (context.Context, func()) {
+	start := time.Now()
+
 	var conf types.Conf
 	if err := sbargp.Parse(&conf, args, sbargp.ParserOpts[types.Conf]{
 		ProgName: "testApp",
@@ -106,6 +113,12 @@ func testAppMain(
 	if err := RunMigrations(provLifetime); err != nil {
 		panic(err)
 	}
+
+	end := time.Now()
+	state.Log.Log(
+		appLifetime, sblog.VLevel(4),
+		"Time to setup app", "Seconds", end.Sub(start).Seconds(),
+	)
 
 	// Normally there would be a defer function call rather than returning a
 	// function

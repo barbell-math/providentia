@@ -261,7 +261,7 @@ func UploadHyperparamsFromCSV[T types.Hyperparams](
 	batch, _ := sbjobqueue.BatchWithContext(ctxt)
 
 	for _, file := range files {
-		var fileChunks [][]byte
+		var fileChunks []sbcsv.FileChunk
 		if fileChunks, opErr = sbcsv.ChunkFile(
 			file, sbcsv.ChunkFileOpts{
 				NumRowSamples:      2,

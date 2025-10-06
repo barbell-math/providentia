@@ -6,7 +6,7 @@ Host = "localhost"
 Port = 5432
 
 [ Logging ]
-Verbosity = 3
+Verbosity = 4
 SaveTo = "../../bs/logs"
 Name = "runningTest"
 

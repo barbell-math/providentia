@@ -20,7 +20,7 @@ func TestHyperparams(t *testing.T) {
 }
 
 func hyperparamsFailingNoWrites(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	t.Run("invalidBarPathCalc", hyperparamsInvalidBarPathCalc(ctxt))
@@ -116,7 +116,7 @@ func hyperparamsInvalidBarPathTracker(ctxt context.Context) func(t *testing.T) {
 }
 
 func hyperparamsCreateRead(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	calcParams := []types.BarPathCalcHyperparams{{
@@ -191,7 +191,7 @@ func hyperparamsCreateRead(t *testing.T) {
 }
 
 func hyperparamsCreateCSVRead(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	calcParams := []types.BarPathCalcHyperparams{{
@@ -280,7 +280,7 @@ func hyperparamsCreateCSVRead(t *testing.T) {
 }
 
 func hyperparamsEnsureRead(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	calcParams := []types.BarPathCalcHyperparams{{
@@ -374,7 +374,7 @@ func hyperparamsEnsureRead(t *testing.T) {
 }
 
 func hyperparamsCreateFind(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	calcParams := []types.BarPathCalcHyperparams{{
@@ -470,7 +470,7 @@ func hyperparamsCreateFind(t *testing.T) {
 }
 
 func hyperparamsCreateDeleteRead(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	calcParams := []types.BarPathCalcHyperparams{{

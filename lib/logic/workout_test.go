@@ -27,7 +27,7 @@ func TestWorkout(t *testing.T) {
 }
 
 func workoutFailingNoWrites(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	err := CreateClients(ctxt, types.Client{
@@ -445,7 +445,7 @@ func workoutSetFractionalSetsAndExercisesLen(
 }
 
 func workoutDuplicateWorkout(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	err := CreateClients(ctxt, types.Client{
@@ -527,7 +527,7 @@ func workoutDuplicateWorkout(t *testing.T) {
 }
 
 func workoutCreateReadNoPhysicsData(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	err := CreateClients(ctxt, types.Client{
@@ -607,7 +607,7 @@ func workoutCreateReadNoPhysicsData(t *testing.T) {
 }
 
 func workoutEnsureReadNoPhysicsData(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	err := CreateClients(ctxt, types.Client{
@@ -702,7 +702,7 @@ func workoutEnsureReadNoPhysicsData(t *testing.T) {
 }
 
 func workoutCreateFindNoPhysicsData(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	err := CreateClients(ctxt, types.Client{
@@ -787,7 +787,7 @@ func workoutCreateFindNoPhysicsData(t *testing.T) {
 }
 
 func workoutCreateReadTimeSeriesPhysicsData(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	err := CreateClients(ctxt, types.Client{
@@ -933,7 +933,7 @@ func workoutCreateReadTimeSeriesPhysicsData(t *testing.T) {
 }
 
 func workoutCreateReadDateRange(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	err := CreateClients(ctxt, types.Client{
@@ -1102,7 +1102,7 @@ func workoutCreateReadDateRange(t *testing.T) {
 // TODO - workoutAddUpdateGet
 
 func workoutCreateDeleteGet(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	err := CreateClients(ctxt, types.Client{
@@ -1284,7 +1284,7 @@ func workoutCreateDeleteGet(t *testing.T) {
 }
 
 func workoutCreateDeleteGetDateRange(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	err := CreateClients(ctxt, types.Client{

@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"math"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -27,8 +28,9 @@ type (
 		B          *sbjobqueue.Batch
 		S          *types.State
 		Q          *dal.SyncQueries
+		FileDir    string
 		ClientName string
-		FileChunk  []byte
+		FileChunk  sbcsv.FileChunk
 		Opts       *sbcsv.Opts
 		WriteFunc  func(
 			ctxt context.Context,
@@ -78,7 +80,7 @@ func (w *CSVLoader[T]) Run(ctxt context.Context) (opErr error) {
 			)
 			return
 		}
-		if opErr = sbcsv.LoadBytes(w.FileChunk, &sbcsv.LoadOpts{
+		if opErr = sbcsv.LoadReader(&w.FileChunk, &sbcsv.LoadOpts{
 			Opts:          *w.Opts,
 			RequestedCols: sbcsv.ReqColsForStruct[rawTrainingLog](),
 			Op: func(
@@ -92,11 +94,15 @@ func (w *CSVLoader[T]) Run(ctxt context.Context) (opErr error) {
 					return err
 				}
 
-				variants, err := w.parseWorkoutDataDir(
-					rawData.DataDir, int(math.Ceil(rawData.Sets)),
-				)
-				if err != nil {
-					return err
+				var variants []types.BarPathVariant
+				if rawData.DataDir != "" {
+					variants, err = w.parseWorkoutDataDir(
+						path.Join(w.FileDir, rawData.DataDir),
+						int(math.Ceil(rawData.Sets)),
+					)
+					if err != nil {
+						return err
+					}
 				}
 
 				iterID := types.WorkoutID{
@@ -125,7 +131,7 @@ func (w *CSVLoader[T]) Run(ctxt context.Context) (opErr error) {
 			return sberr.AppendError(types.CSVLoaderJobQueueErr, opErr)
 		}
 	default:
-		if opErr = sbcsv.LoadBytes(w.FileChunk, &sbcsv.LoadOpts{
+		if opErr = sbcsv.LoadReader(&w.FileChunk, &sbcsv.LoadOpts{
 			Opts:          *w.Opts,
 			RequestedCols: sbcsv.ReqColsForStruct[T](),
 			Op:            sbcsv.RowToStructOp(&params),
@@ -161,6 +167,9 @@ func (w *CSVLoader[T]) parseWorkoutDataDir(
 
 	res = make([]types.BarPathVariant, numSets)
 	if parseErr = filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if path == dir {
+			return nil
+		}
 		if d.IsDir() {
 			return sberr.Wrap(
 				types.InvalidDataDirErr,
@@ -205,12 +214,11 @@ func (w *CSVLoader[T]) parseWorkoutDataDir(
 					err,
 				)
 			}
-			res[setNum] = tsData
+			res[setNum-1] = tsData
 		}
 
 		return err
 	}); parseErr != nil {
-		parseErr = sberr.AppendError(types.InvalidDataDirErr, parseErr)
 		return
 	}
 
@@ -259,9 +267,7 @@ func (w *CSVLoader[T]) loadTimeSeriesCSVData(
 			return nil
 		},
 	}); err != nil {
-		return types.BarPathVariant{}, sberr.AppendError(
-			types.InvalidDataDirErr, err,
-		)
+		return types.BarPathVariant{}, err
 	}
 
 	return types.BarPathTimeSeriesData(rawTimeSeriesData), nil

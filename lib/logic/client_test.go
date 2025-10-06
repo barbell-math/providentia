@@ -23,7 +23,7 @@ func TestClient(t *testing.T) {
 }
 
 func clientFailingNoWrites(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 	t.Run("missingFirstName", clientMissingFirstName(ctxt))
 	t.Run("missingLastName", clientMissingLastName(ctxt))
@@ -80,7 +80,7 @@ func clientInvalidEmail(ctxt context.Context) func(t *testing.T) {
 }
 
 func clientDuplicateEmail(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	clients := make([]types.Client, 13)
@@ -104,7 +104,7 @@ func clientDuplicateEmail(t *testing.T) {
 }
 
 func clientTransactionRollback(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	clients := make([]types.Client, 13)
@@ -134,7 +134,7 @@ func clientTransactionRollback(t *testing.T) {
 }
 
 func clientCreateRead(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	clients := make([]types.Client, 13)
@@ -165,7 +165,7 @@ func clientCreateRead(t *testing.T) {
 }
 
 func clientEnsureRead(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	clients := make([]types.Client, 13)
@@ -207,7 +207,7 @@ func clientEnsureRead(t *testing.T) {
 }
 
 func clientCreateFind(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	clients := make([]types.Client, 13)
@@ -255,7 +255,7 @@ func clientCreateFind(t *testing.T) {
 }
 
 func clientCreateUpdateRead(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	clients := make([]types.Client, 13)
@@ -301,7 +301,7 @@ func clientCreateUpdateRead(t *testing.T) {
 }
 
 func clientCreateDeleteRead(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	clients := make([]types.Client, 13)
@@ -352,7 +352,7 @@ func clientCreateDeleteRead(t *testing.T) {
 }
 
 func clientCreateCSVRead(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	err := CreateClientsFromCSV(

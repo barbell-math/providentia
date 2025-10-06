@@ -412,7 +412,7 @@ func UploadWorkoutsFromCSV(
 	batch, _ := sbjobqueue.BatchWithContext(ctxt)
 
 	for _, file := range files {
-		var fileChunks [][]byte
+		var fileChunks []sbcsv.FileChunk
 		clientName := strings.TrimSuffix(path.Base(file), path.Ext(file))
 		// MinChunkRows is set kinda low so that other job queues have a greater
 		// chance of being filled up. Can help loading data with sparse physics
@@ -434,6 +434,7 @@ func UploadWorkoutsFromCSV(
 				B:          batch,
 				ClientName: clientName,
 				FileChunk:  chunk,
+				FileDir:    path.Dir(file),
 				Opts:       &opts,
 				WriteFunc: workoutCreateFuncToCreateFunc(
 					creator, barPathCalcParams, barTrackerCalcParams,
@@ -460,7 +461,11 @@ func ReadClientTotalNumTrainingLogEntries(
 		)
 		return
 	}
-	state.Log.Log(ctxt, sblog.VLevel(3), "Read total num exercises for client")
+	state.Log.Log(
+		ctxt, sblog.VLevel(3),
+		"Read total num exercises for client",
+		"Client", clientEmail,
+	)
 	return
 }
 

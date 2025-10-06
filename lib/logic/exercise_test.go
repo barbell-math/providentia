@@ -25,7 +25,7 @@ func TestExercise(t *testing.T) {
 }
 
 func exerciseFailingNoWrites(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 	t.Run("missingName", exerciseMissingName(ctxt))
 	t.Run("invalidFocusID", exerciseInvalidFocusID(ctxt))
@@ -72,7 +72,7 @@ func exerciseInvalidKindID(ctxt context.Context) func(t *testing.T) {
 }
 
 func exerciseDuplicateName(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	exercises := make([]types.Exercise, 13)
@@ -96,7 +96,7 @@ func exerciseDuplicateName(t *testing.T) {
 }
 
 func exerciseTransactionRollback(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	exercises := make([]types.Exercise, 13)
@@ -126,7 +126,7 @@ func exerciseTransactionRollback(t *testing.T) {
 }
 
 func exerciseCreateRead(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	exercises := make([]types.Exercise, 13)
@@ -157,7 +157,7 @@ func exerciseCreateRead(t *testing.T) {
 }
 
 func exerciseEnsureRead(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	exercises := make([]types.Exercise, 13)
@@ -199,7 +199,7 @@ func exerciseEnsureRead(t *testing.T) {
 }
 
 func exerciseCreateFind(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	exercises := make([]types.Exercise, 13)
@@ -246,7 +246,7 @@ func exerciseCreateFind(t *testing.T) {
 }
 
 func exerciseCreateUpdateRead(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	exercises := make([]types.Exercise, 13)
@@ -290,7 +290,7 @@ func exerciseCreateUpdateRead(t *testing.T) {
 }
 
 func exerciseCreateDeleteRead(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	exercises := make([]types.Exercise, 13)
@@ -343,7 +343,7 @@ func exerciseCreateDeleteRead(t *testing.T) {
 }
 
 func exerciseCreateCSVRead(t *testing.T) {
-	ctxt, cleanup := resetApp(context.Background())
+	ctxt, cleanup := resetApp(t,context.Background())
 	t.Cleanup(cleanup)
 
 	err := CreateExercisesFromCSV(

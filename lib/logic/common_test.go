@@ -16,7 +16,7 @@ func TestCancelation(t *testing.T) {
 	)
 	defer cancel()
 
-	ctxt, cleanup := resetApp(timeoutCtxt)
+	ctxt, cleanup := resetApp(t,timeoutCtxt)
 	t.Cleanup(cleanup)
 
 	err := runOp(ctxt, opCalls{
