@@ -33,28 +33,6 @@ type (
 	}
 )
 
-// An ugly hack that is required to get the [CreateWorkouts] and
-// [EnsureWorkoutsExist] funcs to match the [createFunc] signature. It would be
-// nice to remove this...
-func workoutCreateFuncToCreateFunc(
-	creator workoutCreateFunc,
-	barPathCalcParams *types.BarPathCalcHyperparams,
-	barTrackerCalcParams *types.BarPathTrackerHyperparams,
-) createFunc[types.RawWorkout] {
-	return func(
-		ctxt context.Context,
-		state *types.State,
-		queries *dal.SyncQueries,
-		data ...types.RawWorkout,
-	) (opErr error) {
-		return creator(
-			ctxt, state, queries,
-			barPathCalcParams, barTrackerCalcParams,
-			data...,
-		)
-	}
-}
-
 func CreateWorkouts(
 	ctxt context.Context,
 	state *types.State,
@@ -438,6 +416,28 @@ func UploadWorkoutsFromCSV(
 	}
 
 	return batch.Wait()
+}
+
+// An ugly hack that is required to get the [CreateWorkouts] and
+// [EnsureWorkoutsExist] funcs to match the [createFunc] signature. It would be
+// nice to remove this...
+func workoutCreateFuncToCreateFunc(
+	creator workoutCreateFunc,
+	barPathCalcParams *types.BarPathCalcHyperparams,
+	barTrackerCalcParams *types.BarPathTrackerHyperparams,
+) createFunc[types.RawWorkout] {
+	return func(
+		ctxt context.Context,
+		state *types.State,
+		queries *dal.SyncQueries,
+		data ...types.RawWorkout,
+	) (opErr error) {
+		return creator(
+			ctxt, state, queries,
+			barPathCalcParams, barTrackerCalcParams,
+			data...,
+		)
+	}
 }
 
 func ReadClientTotalNumTrainingLogEntries(

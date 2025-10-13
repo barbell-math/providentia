@@ -74,16 +74,15 @@ func ConfDefaults() *types.Conf {
 			RequestedNumChunks: runtime.NumCPU(),
 		},
 		WorkoutCSVFileChunks: sbcsv.ChunkFileOpts{
-			// TODO - revert to proper values once split on workout boundary works!!!
-			NumRowSamples: 10, //2,
+			NumRowSamples: 2,
 			// MinChunkRows is set kinda low so that other job queues (physics,
 			// and video mainly) have a greater chance of being filled up. Can
 			// help loading data with sparse physics data, which will be the
 			// more typical use case, but won't speed up loading data with dense
 			// physics data.
-			MinChunkRows:       5,  //1e2,
-			MaxChunkRows:       5,  //math.MaxInt,
-			RequestedNumChunks: 10, //runtime.NumCPU(),
+			MinChunkRows:       1e2,
+			MaxChunkRows:       math.MaxInt,
+			RequestedNumChunks: runtime.NumCPU(),
 		},
 	}
 }
