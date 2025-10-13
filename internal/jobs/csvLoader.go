@@ -2,12 +2,14 @@ package jobs
 
 import (
 	"context"
+	"io"
 	"io/fs"
 	"math"
 	"os"
 	"path"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"time"
 
@@ -30,7 +32,7 @@ type (
 		Q          *dal.SyncQueries
 		FileDir    string
 		ClientName string
-		FileChunk  sbcsv.FileChunk
+		FileChunk  io.Reader
 		Opts       *sbcsv.Opts
 		WriteFunc  func(
 			ctxt context.Context,
@@ -56,12 +58,68 @@ type (
 		XPosition float64
 		YPosition float64
 	}
+
+	WorkoutFileChunk struct {
+		Headers    []byte
+		FullFile   []byte
+		StartIdx   int
+		EndIdx     int
+		Started    bool
+		Stop       bool
+		ReachedEnd bool
+		readPos    int
+	}
 )
 
 var (
 	setDataFileRe         = `^Set([0-9]+).(csv|mp4)$`
 	compiledSetDataFileRe = regexp.MustCompile(setDataFileRe)
 )
+
+func NewWorkoutFileChunk(
+	headers []byte,
+	fullFile []byte,
+	startIdx int,
+	endIdx int,
+) *WorkoutFileChunk {
+	return &WorkoutFileChunk{
+		Headers:    headers,
+		FullFile:   fullFile,
+		StartIdx:   startIdx,
+		EndIdx:     endIdx,
+		Started:    (startIdx == 0),
+		ReachedEnd: false,
+		Stop:       false,
+	}
+}
+
+func (f *WorkoutFileChunk) Read(buf []byte) (n int, err error) {
+	if f.Stop || f.readPos >= len(f.Headers)+len(f.FullFile[f.StartIdx:]) {
+		err = io.EOF
+		return
+	}
+	f.ReachedEnd = (f.readPos+f.StartIdx-len(f.Headers) > f.EndIdx)
+	if f.readPos < len(f.Headers) {
+		headersN := copy(buf, f.Headers[f.readPos:])
+		f.readPos += headersN
+		n += headersN
+	}
+	if n < len(buf) && f.readPos < len(f.Headers)+len(f.FullFile[f.StartIdx:]) {
+		endIdx := slices.Index(
+			f.FullFile[f.StartIdx+f.readPos-len(f.Headers):],
+			'\n',
+		)
+		if endIdx == -1 {
+			endIdx = len(f.FullFile)
+		} else {
+			endIdx += f.StartIdx + f.readPos - len(f.Headers) + 1
+		}
+		dataN := copy(buf[n:], f.FullFile[f.StartIdx+f.readPos-len(f.Headers):endIdx])
+		f.readPos += dataN
+		n += dataN
+	}
+	return
+}
 
 func (w *CSVLoader[T]) JobType(_ types.CSVLoaderJob) {}
 
@@ -80,7 +138,19 @@ func (w *CSVLoader[T]) Run(ctxt context.Context) (opErr error) {
 			)
 			return
 		}
-		if opErr = sbcsv.LoadReader(&w.FileChunk, &sbcsv.LoadOpts{
+		fileChunk, ok := w.FileChunk.(*WorkoutFileChunk)
+		if !ok {
+			opErr = sberr.Wrap(
+				types.CSVLoaderJobQueueErr,
+				"Workouts must be chunked with WorkoutFileChunk due to workout boundaries",
+			)
+			return
+		}
+
+		firstWorkoutIDSet, lastWorkoutIDSet := fileChunk.StartIdx == 0, false
+		prevWorkoutID, lastWorkoutID := types.WorkoutID{}, types.WorkoutID{}
+
+		if opErr = sbcsv.LoadReader(w.FileChunk, &sbcsv.LoadOpts{
 			Opts:          *w.Opts,
 			RequestedCols: sbcsv.ReqColsForStruct[rawTrainingLog](),
 			Op: func(
@@ -94,6 +164,37 @@ func (w *CSVLoader[T]) Run(ctxt context.Context) (opErr error) {
 					return err
 				}
 
+				iterID := types.WorkoutID{
+					ClientEmail:   w.ClientName,
+					Session:       rawData.Session,
+					DatePerformed: rawData.DatePerformed,
+				}
+
+				fileChunk.Stop = (lastWorkoutIDSet && iterID != lastWorkoutID)
+				if fileChunk.Stop {
+					return nil
+				}
+
+				if !firstWorkoutIDSet {
+					firstWorkoutIDSet = true
+					prevWorkoutID = iterID
+				}
+				if !lastWorkoutIDSet && fileChunk.ReachedEnd {
+					lastWorkoutIDSet = true
+					lastWorkoutID = iterID
+				}
+				if iterID != prevWorkoutID {
+					fileChunk.Started = true
+					(*typedParams) = append(
+						(*typedParams),
+						types.RawWorkout{WorkoutID: iterID},
+					)
+					prevWorkoutID = iterID
+				}
+				if !fileChunk.Started {
+					return nil
+				}
+
 				var variants []types.BarPathVariant
 				if rawData.DataDir != "" {
 					variants, err = w.parseWorkoutDataDir(
@@ -105,14 +206,6 @@ func (w *CSVLoader[T]) Run(ctxt context.Context) (opErr error) {
 					}
 				}
 
-				iterID := types.WorkoutID{
-					ClientEmail:   w.ClientName,
-					Session:       rawData.Session,
-					DatePerformed: rawData.DatePerformed,
-				}
-				if len((*typedParams)) == 0 || (*typedParams)[len((*typedParams))-1].WorkoutID != iterID {
-					(*typedParams) = append((*typedParams), types.RawWorkout{WorkoutID: iterID})
-				}
 				(*typedParams)[len((*typedParams))-1].Exercises = append(
 					(*typedParams)[len((*typedParams))-1].Exercises,
 					types.RawExerciseData{
@@ -131,7 +224,7 @@ func (w *CSVLoader[T]) Run(ctxt context.Context) (opErr error) {
 			return sberr.AppendError(types.CSVLoaderJobQueueErr, opErr)
 		}
 	default:
-		if opErr = sbcsv.LoadReader(&w.FileChunk, &sbcsv.LoadOpts{
+		if opErr = sbcsv.LoadReader(w.FileChunk, &sbcsv.LoadOpts{
 			Opts:          *w.Opts,
 			RequestedCols: sbcsv.ReqColsForStruct[T](),
 			Op:            sbcsv.RowToStructOp(&params),

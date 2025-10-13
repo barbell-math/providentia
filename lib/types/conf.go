@@ -2,6 +2,7 @@ package types
 
 import (
 	sbargp "code.barbellmath.net/barbell-math/smoothbrain-argparse"
+	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
 	sbjobqueue "code.barbellmath.net/barbell-math/smoothbrain-jobQueue"
 )
 
@@ -43,5 +44,22 @@ type (
 		// separate job queue.
 		// Refer to: http://code.barbellmath.net/barbell-math/smoothbrain-jobQueue#Opts
 		GPJobQueue sbjobqueue.Opts
+
+		// Configuration for how client csv files get chunked up to allow the
+		// chunks to be processed in parallel by the CSVLoaderJobQueue.
+		// Refer to: http://code.barbellmath.net/barbell-math/smoothbrain-csv#ChunkFileOpts
+		ClientCSVFileChunks sbcsv.ChunkFileOpts
+		// Configuration for how exercise csv files get chunked up to allow the
+		// chunks to be processed in parallel by the CSVLoaderJobQueue.
+		// Refer to: http://code.barbellmath.net/barbell-math/smoothbrain-csv#ChunkFileOpts
+		ExerciseCSVFileChunks sbcsv.ChunkFileOpts
+		// Configuration for how hyperparam csv files get chunked up to allow
+		// the chunks to be processed in parallel by the CSVLoaderJobQueue.
+		// Refer to: http://code.barbellmath.net/barbell-math/smoothbrain-csv#ChunkFileOpts
+		HyperparamCSVFileChunks sbcsv.ChunkFileOpts
+		// Configuration for how workout csv files get chunked up to allow the
+		// chunks to be processed in parallel by the CSVLoaderJobQueue.
+		// Refer to: http://code.barbellmath.net/barbell-math/smoothbrain-csv#ChunkFileOpts
+		WorkoutCSVFileChunks sbcsv.ChunkFileOpts
 	}
 )

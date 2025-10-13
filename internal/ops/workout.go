@@ -7,7 +7,6 @@ import (
 	"math"
 	"os"
 	"path"
-	"runtime"
 	"slices"
 	"strings"
 	"time"
@@ -412,22 +411,17 @@ func UploadWorkoutsFromCSV(
 	batch, _ := sbjobqueue.BatchWithContext(ctxt)
 
 	for _, file := range files {
-		var fileChunks []sbcsv.FileChunk
+		var fileChunks []*jobs.WorkoutFileChunk
 		clientName := strings.TrimSuffix(path.Base(file), path.Ext(file))
-		// MinChunkRows is set kinda low so that other job queues have a greater
-		// chance of being filled up. Can help loading data with sparse physics
-		// data, won't speed up loading data with dense physics data.
 		if fileChunks, opErr = sbcsv.ChunkFile(
-			file, sbcsv.ChunkFileOpts{
-				NumRowSamples:      2,
-				MinChunkRows:       1e3,
-				MaxChunkRows:       math.MaxInt,
-				RequestedNumChunks: runtime.NumCPU(),
-			},
+			file, jobs.NewWorkoutFileChunk, state.WorkoutCSVFileChunks,
 		); opErr != nil {
 			return
 		}
 		for _, chunk := range fileChunks {
+			if chunk.EndIdx-chunk.StartIdx <= 0 {
+				continue
+			}
 			state.CSVLoaderJobQueue.Schedule(&jobs.CSVLoader[types.RawWorkout]{
 				S:          state,
 				Q:          queries,

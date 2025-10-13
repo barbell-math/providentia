@@ -3,8 +3,6 @@ package ops
 import (
 	"context"
 	"encoding/json"
-	"math"
-	"runtime"
 
 	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
 	"code.barbellmath.net/barbell-math/providentia/internal/jobs"
@@ -261,18 +259,16 @@ func UploadHyperparamsFromCSV[T types.Hyperparams](
 	batch, _ := sbjobqueue.BatchWithContext(ctxt)
 
 	for _, file := range files {
-		var fileChunks []sbcsv.FileChunk
+		var fileChunks []*sbcsv.BasicFileChunk
 		if fileChunks, opErr = sbcsv.ChunkFile(
-			file, sbcsv.ChunkFileOpts{
-				NumRowSamples:      2,
-				MinChunkRows:       1e5,
-				MaxChunkRows:       math.MaxInt,
-				RequestedNumChunks: runtime.NumCPU(),
-			},
+			file, sbcsv.NewBasicFileChunk, state.HyperparamCSVFileChunks,
 		); opErr != nil {
 			return
 		}
 		for _, chunk := range fileChunks {
+			if len(chunk.Data) == 0 {
+				continue
+			}
 			state.CSVLoaderJobQueue.Schedule(&jobs.CSVLoader[T]{
 				S:         state,
 				Q:         queries,

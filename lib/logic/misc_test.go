@@ -11,7 +11,7 @@ import (
 )
 
 func TestMiscTestUploadCSVDataDirClientBadDir(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	err := UploadCSVDataDir(ctxt, &types.CSVDataDirOptions{
@@ -23,7 +23,7 @@ func TestMiscTestUploadCSVDataDirClientBadDir(t *testing.T) {
 }
 
 func TestMiscTestUploadCSVDataDirClientBadFile(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	err := UploadCSVDataDir(ctxt, &types.CSVDataDirOptions{
@@ -35,7 +35,7 @@ func TestMiscTestUploadCSVDataDirClientBadFile(t *testing.T) {
 }
 
 func TestMiscTestUploadCSVDataDirExerciseBadDir(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	err := UploadCSVDataDir(ctxt, &types.CSVDataDirOptions{
@@ -47,7 +47,7 @@ func TestMiscTestUploadCSVDataDirExerciseBadDir(t *testing.T) {
 }
 
 func TestMiscTestUploadCSVDataDirExerciseBadFile(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	err := UploadCSVDataDir(ctxt, &types.CSVDataDirOptions{
@@ -59,7 +59,7 @@ func TestMiscTestUploadCSVDataDirExerciseBadFile(t *testing.T) {
 }
 
 func TestMiscTestUploadCSVDataDirHyperparamBadDir(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	err := UploadCSVDataDir(ctxt, &types.CSVDataDirOptions{
@@ -71,7 +71,7 @@ func TestMiscTestUploadCSVDataDirHyperparamBadDir(t *testing.T) {
 }
 
 func TestMiscTestUploadCSVDataDirHyperparamBadFile(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	err := UploadCSVDataDir(ctxt, &types.CSVDataDirOptions{
@@ -83,7 +83,7 @@ func TestMiscTestUploadCSVDataDirHyperparamBadFile(t *testing.T) {
 }
 
 func TestMiscTestUploadCSVDataDirHyperparamBadHyperparamType(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	err := UploadCSVDataDir(ctxt, &types.CSVDataDirOptions{
@@ -95,7 +95,7 @@ func TestMiscTestUploadCSVDataDirHyperparamBadHyperparamType(t *testing.T) {
 }
 
 func TestMiscTestUploadCSVDataDir(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	err := UploadCSVDataDir(ctxt, &types.CSVDataDirOptions{

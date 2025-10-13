@@ -2,8 +2,6 @@ package ops
 
 import (
 	"context"
-	"math"
-	"runtime"
 	"unsafe"
 
 	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
@@ -151,18 +149,16 @@ func UploadExercisesFromCSV(
 	batch, _ := sbjobqueue.BatchWithContext(ctxt)
 
 	for _, file := range files {
-		var fileChunks []sbcsv.FileChunk
+		var fileChunks []*sbcsv.BasicFileChunk
 		if fileChunks, opErr = sbcsv.ChunkFile(
-			file, sbcsv.ChunkFileOpts{
-				PredictedAvgRowSizeInBytes: 100,
-				MinChunkRows:               1e5,
-				MaxChunkRows:               math.MaxInt,
-				RequestedNumChunks:         runtime.NumCPU(),
-			},
+			file, sbcsv.NewBasicFileChunk, state.ExerciseCSVFileChunks,
 		); opErr != nil {
 			return
 		}
 		for _, chunk := range fileChunks {
+			if len(chunk.Data) == 0 {
+				continue
+			}
 			state.CSVLoaderJobQueue.Schedule(&jobs.CSVLoader[types.Exercise]{
 				S:         state,
 				Q:         queries,
