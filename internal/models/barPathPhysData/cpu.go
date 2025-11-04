@@ -1,7 +1,7 @@
 package barpathphysdata
 
-// #cgo CXXFLAGS: -O3 -Werror -march=native -std=c++23 -I../../../_deps/eigen  -I../../glue
-// #cgo LDFLAGS: -lstdc++
+// #cgo CXXFLAGS: -O3 -Wall -Werror -march=native -std=c++23 -I../../../_deps/eigen  -I../../clib
+// #cgo LDFLAGS: -lstdc++ -L../../clib
 // #include "cpu.h"
 import "C"
 import (

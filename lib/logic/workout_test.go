@@ -27,7 +27,7 @@ func TestWorkout(t *testing.T) {
 }
 
 func workoutFailingNoWrites(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	err := CreateClients(ctxt, types.Client{
@@ -445,7 +445,7 @@ func workoutSetFractionalSetsAndExercisesLen(
 }
 
 func workoutDuplicateWorkout(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	err := CreateClients(ctxt, types.Client{
@@ -527,7 +527,7 @@ func workoutDuplicateWorkout(t *testing.T) {
 }
 
 func workoutCreateReadNoPhysicsData(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	err := CreateClients(ctxt, types.Client{
@@ -607,7 +607,7 @@ func workoutCreateReadNoPhysicsData(t *testing.T) {
 }
 
 func workoutEnsureReadNoPhysicsData(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	err := CreateClients(ctxt, types.Client{
@@ -702,7 +702,7 @@ func workoutEnsureReadNoPhysicsData(t *testing.T) {
 }
 
 func workoutCreateFindNoPhysicsData(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	err := CreateClients(ctxt, types.Client{
@@ -787,7 +787,7 @@ func workoutCreateFindNoPhysicsData(t *testing.T) {
 }
 
 func workoutCreateReadTimeSeriesPhysicsData(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	err := CreateClients(ctxt, types.Client{
@@ -805,7 +805,7 @@ func workoutCreateReadTimeSeriesPhysicsData(t *testing.T) {
 				types.RawExerciseData{
 					Name:   "Squat",
 					Weight: 355,
-					Sets:   2,
+					Sets:   3,
 					Reps:   5,
 					Effort: 8.5,
 					BarPath: []types.BarPathVariant{
@@ -833,6 +833,7 @@ func workoutCreateReadTimeSeriesPhysicsData(t *testing.T) {
 								types.Vec2[types.Meter, types.Meter]{X: 6, Y: 6},
 							},
 						}),
+						types.BarPathVariant{},
 					},
 				},
 				types.RawExerciseData{
@@ -922,6 +923,7 @@ func workoutCreateReadTimeSeriesPhysicsData(t *testing.T) {
 	res, err := ReadWorkoutsByID(
 		ctxt, workouts[0].WorkoutID, workouts[1].WorkoutID,
 	)
+	// TODO - make sure the missing bp data is properly decoded
 	rawWorkoutEqSavedWorkout(t, workouts[:], res)
 
 	res, err = ReadWorkoutsByID(ctxt, types.WorkoutID{
@@ -933,7 +935,7 @@ func workoutCreateReadTimeSeriesPhysicsData(t *testing.T) {
 }
 
 func workoutCreateReadDateRange(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	err := CreateClients(ctxt, types.Client{
@@ -1102,7 +1104,7 @@ func workoutCreateReadDateRange(t *testing.T) {
 // TODO - workoutAddUpdateGet
 
 func workoutCreateDeleteGet(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	err := CreateClients(ctxt, types.Client{
@@ -1284,7 +1286,7 @@ func workoutCreateDeleteGet(t *testing.T) {
 }
 
 func workoutCreateDeleteGetDateRange(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	err := CreateClients(ctxt, types.Client{

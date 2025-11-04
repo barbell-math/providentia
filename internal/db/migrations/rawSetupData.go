@@ -36,7 +36,7 @@ var (
 			Version: 0,
 			Params: mustMarshalJson(types.BarPathCalcHyperparams{
 				MinNumSamples:   100,
-				TimeDeltaEps:    1e-6,
+				TimeDeltaEps:    0.02,
 				ApproxErr:       types.FourthOrder,
 				NearZeroFilter:  0.1,
 				SmootherWeight1: 0.5,

@@ -379,6 +379,39 @@ func ReadHyperparamsByVersionFor[T types.Hyperparams](
 	return
 }
 
+func ReadDefaultHyperparamsFor[T types.Hyperparams](
+	ctxt context.Context,
+	state *types.State,
+	queries *dal.SyncQueries,
+	versions ...int32,
+) (res T, opErr error) {
+	var tmp []T
+	switch typedTmp := any(&tmp).(type) {
+	case *[]types.BarPathCalcHyperparams:
+		*typedTmp, opErr = ReadHyperparamsByVersionFor[types.BarPathCalcHyperparams](
+			ctxt, state, queries, 0,
+		)
+	case *[]types.BarPathTrackerHyperparams:
+		*typedTmp, opErr = ReadHyperparamsByVersionFor[types.BarPathTrackerHyperparams](
+			ctxt, state, queries, 0,
+		)
+	}
+
+	if opErr != nil {
+		return
+	}
+	if len(tmp) != 1 {
+		opErr = sberr.Wrap(
+			types.CouldNotFindRequestedHyperparamsErr,
+			"Expected 1 result but got %d, database is not consistent with what was expected",
+			len(tmp),
+		)
+	}
+	res = tmp[0]
+
+	return
+}
+
 func FindHyperparamsByVersionFor[T types.Hyperparams](
 	ctxt context.Context,
 	state *types.State,

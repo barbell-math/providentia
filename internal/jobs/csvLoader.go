@@ -1,6 +1,7 @@
 package jobs
 
 import (
+	"bufio"
 	"context"
 	"io"
 	"io/fs"
@@ -295,7 +296,19 @@ func (w *CSVLoader[T]) parseWorkoutDataDir(
 		ext := d.Name()[idxs[4]:idxs[5]]
 		switch ext {
 		case "mp4":
-			res[setNum] = types.BarPathVideo(path)
+			res[setNum-1] = types.BarPathVideo(path)
+		case "wla":
+			tsData, err := w.loadWLACSVData(path)
+			if err != nil {
+				return sberr.AppendError(
+					sberr.Wrap(
+						types.InvalidDataDirErr,
+						"Weight lifting analysis export file malformed",
+					),
+					err,
+				)
+			}
+			res[setNum-1] = tsData
 		case "csv":
 			tsData, err := w.loadTimeSeriesCSVData(path)
 			if err != nil {
@@ -355,6 +368,72 @@ func (w *CSVLoader[T]) loadTimeSeriesCSVData(
 				rawTimeSeriesData.PositionData,
 				types.Vec2[types.Meter, types.Meter]{
 					X: types.Meter(xpos), Y: types.Meter(ypos),
+				},
+			)
+			return nil
+		},
+	}); err != nil {
+		return types.BarPathVariant{}, err
+	}
+
+	return types.BarPathTimeSeriesData(rawTimeSeriesData), nil
+}
+
+func (w *CSVLoader[T]) loadWLACSVData(
+	path string,
+) (types.BarPathVariant, error) {
+	reqCols := []sbcsv.RequestedCols{
+		{Name: "Time (s)"},
+		{Name: "displacement (horizontal, cm)"},
+		{Name: "displacement (vertical, cm)"},
+	}
+
+	f, err := os.Open(path)
+	if err != nil {
+		return types.BarPathVariant{}, err
+	}
+	sc := bufio.NewScanner(f)
+	i := 0
+	for ; i < 17 && sc.Scan(); i++ {
+		_ = sc.Text()
+	}
+	if err := sc.Err(); err != nil {
+		return types.BarPathVariant{}, err
+	}
+	if i != 17 {
+		return types.BarPathVariant{}, types.WLAFileMissingData
+	}
+
+	rawTimeSeriesData := types.RawTimeSeriesData{}
+	if err := sbcsv.LoadReader(f, &sbcsv.LoadOpts{
+		Opts:          *w.Opts,
+		RequestedCols: reqCols,
+		Op: func(
+			o *sbcsv.Opts,
+			rowIdx int,
+			row []string,
+			reqCols []sbcsv.RequestedCols,
+		) error {
+			time, err := strconv.ParseFloat(row[reqCols[0].Idx], 64)
+			if err != nil {
+				return err
+			}
+			xpos, err := strconv.ParseFloat(row[reqCols[1].Idx], 64)
+			if err != nil {
+				return err
+			}
+			ypos, err := strconv.ParseFloat(row[reqCols[2].Idx], 64)
+			if err != nil {
+				return err
+			}
+
+			rawTimeSeriesData.TimeData = append(
+				rawTimeSeriesData.TimeData, types.Second(time),
+			)
+			rawTimeSeriesData.PositionData = append(
+				rawTimeSeriesData.PositionData,
+				types.Vec2[types.Meter, types.Meter]{
+					X: types.Meter(xpos / 100), Y: types.Meter(ypos / 100),
 				},
 			)
 			return nil

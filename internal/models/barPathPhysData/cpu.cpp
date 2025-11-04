@@ -6,6 +6,7 @@
 #include "cpu.h"
 #include "../../clib/glue.h"
 #include "../../clib/common.h"
+#include "../../clib/slice.h"
 
 enum BarPathCalcErrCode_t validateSuppliedData(
 	barPathData_t* data,
@@ -16,9 +17,11 @@ enum BarPathCalcErrCode_t validateSuppliedData(
 	for (int i=1; i<data->timeLen; i++) {
 		double_t iterH=data->time[i]-data->time[i-1];
 		if (iterH<0) {
+			std::cout << i << ": " << data->time[i] << ", " << data->time[i-1] << std::endl;
 			return TimeSeriesNotIncreasingErr;
 		}
-		if (std::fabs(iterH-h) > opts->TimeDeltaEps) {
+		if (fabs(iterH-h) > opts->TimeDeltaEps) {
+			std::cout << fabs(iterH-h) << std::endl;
 			return TimeSeriesNotMonotonicErr;
 		}
 	}
@@ -26,134 +29,74 @@ enum BarPathCalcErrCode_t validateSuppliedData(
 	return NoErr;
 }
 
-// For an explanation of the formulas refer to here:
-// http://code.barbellmath.net/barbell-math/providentia/wiki/Numerical-Difference-Methods
 enum BarPathCalcErrCode_t calcDerivatives(
 	barPathData_t* data,
 	barPathCalcHyperparams_t* opts
 ) {
 	double_t h=data->time[1]-data->time[0];
+	int smearLen = 0;
 
 	switch (opts->ApproxErr) {
 	case SecondOrder:
-		for (int i=2; i<data->timeLen-2; i++) {
-			data->vel[i].X=(-data->pos[i-1].X+data->pos[i+1].X)/(2*h);
-			data->vel[i].Y=(-data->pos[i-1].Y+data->pos[i+1].Y)/(2*h);
-
-			data->acc[i].X=(
-				data->pos[i-1].X-2*data->pos[i].X+data->pos[i+1].X
-			)/(h*h);
-			data->acc[i].Y=(
-				data->pos[i-1].Y-2*data->pos[i].Y+data->pos[i+1].Y
-			)/(h*h);
-
-			data->jerk[i].X=(
-				-data->pos[i-2].X
-				+2*data->pos[i-1].X
-				-2*data->pos[i+1].X
-				+data->pos[i+2].X
-			)/(
-				2*h*h*h
-			);
-			data->jerk[i].Y=(
-				-data->pos[i-2].Y
-				+2*data->pos[i-1].Y
-				-2*data->pos[i+1].Y
-				+data->pos[i+2].Y
-			)/(
-				2*h*h*h
-			);
-		}
-
-		// Smear edges to the ends of the results rather than computing forward and
-		// backward difference formulas. Running those calculations would provide
-		// little benefit while significantly increasing complexity and maintenance
-		for (int i=0; i<2 && i<data->timeLen; i++) {
-			data->vel[i]=data->vel[2];
-			data->acc[i]=data->acc[2];
-			data->jerk[i]=data->jerk[2];
-		}
-		for (int i=data->timeLen-2; i<data->timeLen; i++) {
-			data->vel[i]=data->vel[data->timeLen-3];
-			data->acc[i]=data->acc[data->timeLen-3];
-			data->jerk[i]=data->jerk[data->timeLen-3];
-		}
-
-		return NoErr;
+		smearLen = 2;
+		Math::calcFirstThreeDerivatives<5>(
+			Slice<Vec2>(data->pos, data->timeLen),
+			Slice<Vec2>(data->vel, data->timeLen),
+			Slice<Vec2>(data->acc, data->timeLen),
+			Slice<Vec2>(data->jerk, data->timeLen),
+			h
+		);
+		break;
 	case FourthOrder:
-		for (int i=3; i<data->timeLen-3; i++) {
-			data->vel[i].X=(
-				data->pos[i-2].X
-				-8*data->pos[i-1].X
-				+8*data->pos[i+1].X
-				-data->pos[i+2].X
-			)/(12*h);
-			data->vel[i].Y=(
-				data->pos[i-2].Y
-				-8*data->pos[i-1].Y
-				+8*data->pos[i+1].Y
-				-data->pos[i+2].Y
-			)/(12*h);
-
-			data->acc[i].X=(
-				-data->pos[i-2].X
-				+16*data->pos[i-1].X
-				-30*data->pos[i].X
-				+16*data->pos[i+1].X
-				-data->pos[i+2].X
-			)/(
-				12*h*h
-			);
-			data->acc[i].Y=(
-				-data->pos[i-2].Y
-				+16*data->pos[i-1].Y
-				-30*data->pos[i].Y
-				+16*data->pos[i+1].Y
-				-data->pos[i+2].Y
-			)/(
-				12*h*h
-			);
-
-			data->jerk[i].X=(
-				data->pos[i-3].X
-				-8*data->pos[i-2].X
-				+13*data->pos[i-1].X
-				-13*data->pos[i+1].X
-				+8*data->pos[i+2].X
-				-data->pos[i+3].X
-			)/(
-				8*h*h*h
-			);
-			data->jerk[i].Y=(
-				data->pos[i-3].Y
-				-8*data->pos[i-2].Y
-				+13*data->pos[i-1].Y
-				-13*data->pos[i+1].Y
-				+8*data->pos[i+2].Y
-				-data->pos[i+3].Y
-			)/(
-				8*h*h*h
-			);
-		}
-
-		// Smear edges to the ends of the results rather than computing forward and
-		// backward difference formulas. Running those calculations would provide
-		// little benefit while significantly increasing complexity and maintenance
-		for (int i=0; i<3 && i<data->timeLen; i++) {
-			data->vel[i]=data->vel[3];
-			data->acc[i]=data->acc[3];
-			data->jerk[i]=data->jerk[3];
-		}
-		for (int i=data->timeLen-3; i<data->timeLen; i++) {
-			data->vel[i]=data->vel[data->timeLen-4];
-			data->acc[i]=data->acc[data->timeLen-4];
-			data->jerk[i]=data->jerk[data->timeLen-4];
-		}
-
-		return NoErr;
+		smearLen = 3;
+		Math::calcFirstThreeDerivatives<7>(
+			Slice<Vec2>(data->pos, data->timeLen),
+			Slice<Vec2>(data->vel, data->timeLen),
+			Slice<Vec2>(data->acc, data->timeLen),
+			Slice<Vec2>(data->jerk, data->timeLen),
+			h
+		);
+		break;
 	default:
 		return InvalidApproximationErrErr;
 	}
+
+	// Smear edges to the ends of the results rather than computing forward and
+	// backward difference formulas. Running those calculations would provide
+	// little benefit while significantly increasing complexity and maintenance
+	for (int i=0; i<smearLen && i<data->timeLen; i++) {
+		data->vel[i]=data->vel[smearLen];
+		data->acc[i]=data->acc[smearLen];
+		data->jerk[i]=data->jerk[smearLen];
+	}
+	for (int i=data->timeLen-smearLen; i<data->timeLen; i++) {
+		data->vel[i]=data->vel[data->timeLen-smearLen-1];
+		data->acc[i]=data->acc[data->timeLen-smearLen-1];
+		data->jerk[i]=data->jerk[data->timeLen-smearLen-1];
+	}
+
+	return NoErr;
+}
+
+void smootherFunc(
+	Array<Vec2, 5> window,
+	double_t wTot,
+	barPathCalcHyperparams_t* opts
+) {
+	window[2].X=(
+		window[0].X*opts->SmootherWeight1+
+		window[1].X*opts->SmootherWeight2+
+		window[2].X*opts->SmootherWeight3+
+		window[3].X*opts->SmootherWeight4+
+		window[4].X*opts->SmootherWeight5
+	)/(wTot);
+	window[2].Y=(
+		window[0].Y*opts->SmootherWeight1+
+		window[1].Y*opts->SmootherWeight2+
+		window[2].Y*opts->SmootherWeight3+
+		window[3].Y*opts->SmootherWeight4+
+		window[4].Y*opts->SmootherWeight5
+	)/(wTot);
 }
 
 enum BarPathCalcErrCode_t runSmoother(
@@ -167,56 +110,17 @@ enum BarPathCalcErrCode_t runSmoother(
 		opts->SmootherWeight4+
 		opts->SmootherWeight5
 	);
-	for (int i=2; wTot>0 && i<data->timeLen-2; i++) {
-		data->vel[i].X=(
-			data->vel[i-2].X*opts->SmootherWeight1+
-			data->vel[i-1].X*opts->SmootherWeight2+
-			data->vel[i].X*opts->SmootherWeight3+
-			data->vel[i+1].X*opts->SmootherWeight4+
-			data->vel[i+2].X*opts->SmootherWeight5
-		)/(wTot);
-		data->vel[i].Y=(
-			data->vel[i-2].Y*opts->SmootherWeight1+
-			data->vel[i-1].Y*opts->SmootherWeight2+
-			data->vel[i].Y*opts->SmootherWeight3+
-			data->vel[i+1].Y*opts->SmootherWeight4+
-			data->vel[i+2].Y*opts->SmootherWeight5
-		)/(wTot);
-
-		data->acc[i].X=(
-			data->acc[i-2].X*opts->SmootherWeight1+
-			data->acc[i-1].X*opts->SmootherWeight2+
-			data->acc[i].X*opts->SmootherWeight3+
-			data->acc[i+1].X*opts->SmootherWeight4+
-			data->acc[i+2].X*opts->SmootherWeight5
-		)/(wTot);
-		data->acc[i].Y=(
-			data->acc[i-2].Y*opts->SmootherWeight1+
-			data->acc[i-1].Y*opts->SmootherWeight2+
-			data->acc[i].Y*opts->SmootherWeight3+
-			data->acc[i+1].Y*opts->SmootherWeight4+
-			data->acc[i+2].Y*opts->SmootherWeight5
-		)/(wTot);
-
-		data->jerk[i].X=(
-			data->jerk[i-2].X*opts->SmootherWeight1+
-			data->jerk[i-1].X*opts->SmootherWeight2+
-			data->jerk[i].X*opts->SmootherWeight3+
-			data->jerk[i+1].X*opts->SmootherWeight4+
-			data->jerk[i+2].X*opts->SmootherWeight5
-		)/(wTot);
-		data->jerk[i].Y=(
-			data->jerk[i-2].Y*opts->SmootherWeight1+
-			data->jerk[i-1].Y*opts->SmootherWeight2+
-			data->jerk[i].Y*opts->SmootherWeight3+
-			data->jerk[i+1].Y*opts->SmootherWeight4+
-			data->jerk[i+2].Y*opts->SmootherWeight5
-		)/(wTot);
+	Slice<Vec2> vel = Slice<Vec2>(data->vel, data->timeLen);
+	Slice<Vec2> acc = Slice<Vec2>(data->acc, data->timeLen);
+	Slice<Vec2> jerk = Slice<Vec2>(data->jerk, data->timeLen);
+	for (int i=0; wTot>0 && i<data->timeLen-4; i++) {
+		smootherFunc(Array<Vec2, 5>(vel,i), wTot, opts);
+		smootherFunc(Array<Vec2, 5>(acc,i), wTot, opts);
+		smootherFunc(Array<Vec2, 5>(jerk,i), wTot, opts);
 	}
 
 	return NoErr;
 }
-
 
 // For an explanation of some of these formulas:
 // http://code.barbellmath.net/barbell-math/providentia/wiki/Bar-Path-Calcs
@@ -249,9 +153,9 @@ enum BarPathCalcErrCode_t calcRepSplits(
 	for (int i=1; i<data->timeLen-1; i++) {
 		if (std::signbit(data->vel[i].Y)!=std::signbit(data->vel[i-1].Y)) {
 			TimestampedVal localMin=TimestampedVal{
-				.idx = i,
-				.time = data->time[i],
-				.value=-std::fabs(data->pos[i].Y),
+				.Idx = i,
+				.Time = data->time[i],
+				.Value=-fabs(data->pos[i].Y),
 			};
 			if (centersAdded<data->reps) {
 				repCenters[centersAdded]=localMin;
@@ -260,7 +164,7 @@ enum BarPathCalcErrCode_t calcRepSplits(
 					TimestampedVal::sortByValue
 				);
 				centersAdded++;
-			} else if (localMin.value<repCenters[0].value) {
+			} else if (localMin.Value<repCenters[0].Value) {
 				std::pop_heap(
 					repCenters.begin(), repCenters.end(),
 					TimestampedVal::sortByValue
@@ -275,23 +179,23 @@ enum BarPathCalcErrCode_t calcRepSplits(
 	}
 	std::sort(repCenters.begin(), repCenters.end(), TimestampedVal::sortByTime);
 
-	for (int i=0; i<repCenters.size(); i++) {
+	for (size_t i=0; i<repCenters.size(); i++) {
 		TimestampedVal& iterRep=repCenters[i];
 
-		for (int j=iterRep.idx+2; j<data->timeLen; j++) {
+		for (int j=iterRep.Idx+2; j<data->timeLen; j++) {
 			if (
 				std::signbit(data->vel[j].Y)!=std::signbit(data->vel[j-1].Y) &&
-				std::fabs(data->pos[i].Y)<opts->NearZeroFilter
+				fabs(data->pos[i].Y)<opts->NearZeroFilter
 			) {
 				data->repSplit[i].EndIdx=j;
 				break;
 			}
 		}
 
-		for (int j=iterRep.idx-2; j>=0; j--) {
+		for (int j=iterRep.Idx-2; j>=0; j--) {
 			if (
 				std::signbit(data->vel[j].Y)!=std::signbit(data->vel[j+1].Y) &&
-				std::fabs(data->pos[i].Y)<opts->NearZeroFilter
+				fabs(data->pos[i].Y)<opts->NearZeroFilter
 			) {
 				data->repSplit[i].StartIdx=j;
 				break;
@@ -310,25 +214,38 @@ enum BarPathCalcErrCode_t calcRepSplits(
 	return NoErr;
 }
 
+void setPointInTimeMinMax(
+	PointInTime *curMin,
+	PointInTime *curMax,
+	PointInTime val
+) {
+	if (curMin->Value>val.Value) {
+		*curMin=val;
+	}
+	if (curMax->Value<val.Value) {
+		*curMax=val;
+	}
+}
+
 enum BarPathCalcErrCode_t calcRepStats(
 	barPathData_t* data,
 	barPathCalcHyperparams_t* opts
 ) {
 	for (int i=0; i<data->reps; i++) {
-		data->minVel[i].Value=std::numeric_limits<double_t>::infinity();
-		data->maxVel[i].Value=-std::numeric_limits<double_t>::infinity();
-		data->minAcc[i].Value=std::numeric_limits<double_t>::infinity();
-		data->maxAcc[i].Value=-std::numeric_limits<double_t>::infinity();
-		data->minForce[i].Value=std::numeric_limits<double_t>::infinity();
-		data->maxForce[i].Value=-std::numeric_limits<double_t>::infinity();
-		data->minImpulse[i].Value=std::numeric_limits<double_t>::infinity();
-		data->maxImpulse[i].Value=-std::numeric_limits<double_t>::infinity();
+		data->minVel[i].Value=INFINITY;
+		data->maxVel[i].Value=-INFINITY;
+		data->minAcc[i].Value=INFINITY;
+		data->maxAcc[i].Value=-INFINITY;
+		data->minForce[i].Value=INFINITY;
+		data->maxForce[i].Value=-INFINITY;
+		data->minImpulse[i].Value=INFINITY;
+		data->maxImpulse[i].Value=-INFINITY;
 		data->avgWork[i]=0;
-		data->minWork[i].Value=std::numeric_limits<double_t>::infinity();
-		data->maxWork[i].Value=-std::numeric_limits<double_t>::infinity();
-		data->avgPower[i]=-1;
-		data->minPower[i].Value=std::numeric_limits<double_t>::infinity();
-		data->maxPower[i].Value=-std::numeric_limits<double_t>::infinity();
+		data->minWork[i].Value=INFINITY;
+		data->maxWork[i].Value=-INFINITY;
+		data->avgPower[i]=-1;	// todo - wtf???
+		data->minPower[i].Value=INFINITY;
+		data->maxPower[i].Value=-INFINITY;
 		int avgCntr=0;
 
 		for (
@@ -336,78 +253,52 @@ enum BarPathCalcErrCode_t calcRepStats(
 			j<data->repSplit[i].EndIdx && j<data->timeLen;
 			j++
 		) {
-			float velMag=Vec2::mag(data->vel[j].X, data->vel[j].Y);
-			if (data->minVel[i].Value>velMag) {
-				data->minVel[i]=velPointInTime_t{
-					.Time=data->time[j], .Value=velMag,
-				};
-			}
-			if (data->maxVel[i].Value<velMag) {
-				data->maxVel[i]=velPointInTime_t{
-					.Time=data->time[j], .Value=velMag,
-				};
-			}
+			setPointInTimeMinMax(
+				(PointInTime*)(&data->minVel[i]),
+				(PointInTime*)(&data->maxVel[i]),
+				PointInTime{
+					.Time=data->time[j], .Value=Math::mag(*(Vec2*)(&data->vel[j]))
+				}
+			);
+			setPointInTimeMinMax(
+				(PointInTime*)(&data->minAcc[i]),
+				(PointInTime*)(&data->maxAcc[i]),
+				PointInTime{
+					.Time=data->time[j], .Value=Math::mag(*(Vec2*)(&data->acc[j]))
+				}
+			);
+			setPointInTimeMinMax(
+				(PointInTime*)(&data->minForce[i]),
+				(PointInTime*)(&data->maxForce[i]),
+				PointInTime{
+					.Time=data->time[j], .Value=Math::mag(*(Vec2*)(&data->force[j]))
+				}
+			);
+			setPointInTimeMinMax(
+				(PointInTime*)(&data->minImpulse[i]),
+				(PointInTime*)(&data->maxImpulse[i]),
+				PointInTime{
+					.Time=data->time[j], .Value=Math::mag(*(Vec2*)(&data->impulse[j]))
+				}
+			);
+			setPointInTimeMinMax(
+				(PointInTime*)(&data->minPower[i]),
+				(PointInTime*)(&data->maxPower[i]),
+				PointInTime{
+					.Time=data->time[j], .Value=data->power[j],
+				}
+			);
+			setPointInTimeMinMax(
+				(PointInTime*)(&data->minWork[i]),
+				(PointInTime*)(&data->maxWork[i]),
+				PointInTime{
+					.Time=data->time[j], .Value=data->work[j],
+				}
+			);
 			
-			float accMag=Vec2::mag(data->acc[j].X, data->acc[j].Y);
-			if (data->minAcc[i].Value>accMag) {
-				data->minAcc[i]=accPointInTime_t{
-					.Time=data->time[j], .Value=accMag,
-				};
-			}
-			if (data->maxAcc[i].Value<accMag) {
-				data->maxAcc[i]=accPointInTime_t{
-					.Time=data->time[j], .Value=accMag,
-				};
-			}
-			
-			float forceMag=Vec2::mag(data->force[j].X, data->force[j].Y);
-			if (data->minForce[i].Value>forceMag) {
-				data->minForce[i]=newtonPointInTime_t{
-					.Time=data->time[j], .Value=forceMag,
-				};
-			}
-			if (data->maxForce[i].Value<forceMag) {
-				data->maxForce[i]=newtonPointInTime_t{
-					.Time=data->time[j], .Value=forceMag,
-				};
-			}
-
-			float impulseMag=Vec2::mag(data->impulse[j].X, data->impulse[j].Y);
-			if (data->minImpulse[i].Value>impulseMag) {
-				data->minImpulse[i]=newtonSecPointInTime_t{
-					.Time=data->time[j], .Value=impulseMag,
-				};
-			}
-			if (data->maxImpulse[i].Value<impulseMag) {
-				data->maxImpulse[i]=newtonSecPointInTime_t{
-					.Time=data->time[j], .Value=impulseMag,
-				};
-			}
 
 			data->avgPower[i]+=data->power[j];
-			if (data->minPower[i].Value>data->power[j]) {
-				data->minPower[i]=wattPointInTime_t{
-					.Time=data->time[j], .Value=data->power[j],
-				};
-			}
-			if (data->maxPower[i].Value<data->power[j]) {
-				data->maxPower[i]=wattPointInTime_t{
-					.Time=data->time[j], .Value=data->power[j],
-				};
-			}
-
 			data->avgWork[i]+=data->work[j];
-			if (data->minWork[i].Value>data->work[j]) {
-				data->minWork[i]=joulePointInTime_t{
-					.Time=data->time[j], .Value=data->work[j],
-				};
-			}
-			if (data->maxWork[i].Value<data->work[j]) {
-				data->maxWork[i]=joulePointInTime_t{
-					.Time=data->time[j], .Value=data->work[j],
-				};
-			}
-
 			avgCntr++;
 		}
 

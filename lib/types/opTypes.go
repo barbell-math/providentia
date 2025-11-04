@@ -125,6 +125,7 @@ var (
 	TimeSeriesNotMonotonicErr = errors.New("Time series must increase mononically")
 
 	CSVLoaderJobQueueErr = errors.New("Could not process csv loader job")
+	WLAFileMissingData   = errors.New("No data found?")
 
 	InvalidClientErr                 = errors.New("Invalid client")
 	CouldNotAddClientsErr            = errors.New("Could not add the requested clients")

@@ -162,7 +162,7 @@ func ReadNumHyperparamsFor[T types.Hyperparams](
 
 // Gets the hyperparameters associated with the supplied hyperparam type and
 // versions if they exist. If they do not exist an error will be returned. The
-// order of the returned hyperparams may not match the order of the supplied
+// order of the returned hyperparams will match the order of the supplied
 // hyperparams.
 //
 // The context must have a [types.State] variable.
@@ -180,6 +180,26 @@ func ReadHyperparamsByVersionFor[T types.Hyperparams](
 			res, err = ops.ReadHyperparamsByVersionFor[T](
 				ctxt, state, queries, versions...,
 			)
+			return
+		},
+	})
+	return
+}
+
+// Gets the default hyperparameters associated with the supplied hyperparam type
+// if they exist. If they do not exist an error will be returned. If the
+// returned result is not consistent with what the providentia library expects
+// an error will be returned.
+//
+// The context must have a [types.State].variable.
+//
+// No changes will be made to the database.
+func ReadDefaultHyperparamsFor[T types.Hyperparams](
+	ctxt context.Context,
+) (res T, opErr error) {
+	opErr = runOp(ctxt, opCalls{
+		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
+			res, err = ops.ReadDefaultHyperparamsFor[T](ctxt, state, queries)
 			return
 		},
 	})

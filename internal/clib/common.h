@@ -2,26 +2,33 @@
 #define CGO_GLUE_COMMON
 
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+namespace Funcs {
+inline void panic(const char* message) {
+	printf("PANIC: %s\n", message);
+	abort();
+}
+}
 
 struct TimestampedVal {
-	int idx;
-	double_t time;
-	double_t value;
+	int Idx;
+	double_t Time;
+	double_t Value;
 
 	static bool sortByTime(const TimestampedVal& a, const TimestampedVal& b) {
-		return a.time<b.time;
+		return a.Time<b.Time;
 	}
 
 	static bool sortByValue(const TimestampedVal& a, const TimestampedVal& b) {
-		return a.value<b.value;
+		return a.Value<b.Value;
 	}
 };
 
-struct Vec2 {
-	static float mag(double_t x, double_t y) {
-		return sqrtf(x*x+y*y);
-	}
+struct PointInTime {
+	double_t Time;
+	double_t Value;
 };
-
 
 #endif

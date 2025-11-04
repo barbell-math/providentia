@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"fmt"
 
 	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
 	barpathphysdata "code.barbellmath.net/barbell-math/providentia/internal/models/barPathPhysData"
@@ -54,11 +55,16 @@ func (p *Physics) Run(ctxt context.Context) error {
 		} else if rawData, ok := set.VideoData(); ok {
 			physData.Path[i] = rawData
 			// TODO - run video model
+		} else {
+			// TODO - delete?
+			physData.Time[i] = []types.Second{0}
+			physData.Position[i] = []types.Vec2[types.Meter, types.Meter]{}
 		}
 	}
 
 	var id int64
 	var err error
+	fmt.Println(physData.Time)
 	id, err = dal.Query1x2(dal.Q.CreatePhysicsData, p.Q, ctxt, physData)
 	if err != nil {
 		return sberr.AppendError(types.PhysicsJobQueueErr, err)
