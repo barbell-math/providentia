@@ -6,9 +6,21 @@ import (
 	barpathphysdata "code.barbellmath.net/barbell-math/providentia/internal/models/barPathPhysData"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	sbcgoglue "code.barbellmath.net/barbell-math/smoothbrain-cgoGlue"
+	sbcgotest "code.barbellmath.net/barbell-math/smoothbrain-cgoTest"
 )
 
 func main() {
+	sbcgotest.Generate(&sbcgotest.Opts{
+		ExitOnErr:       true,
+		SearchPath:      []string{"tests"},
+		OutputPath:      "tests",
+		HeaderGuardName: "CLIB",
+		CXXFlags:        []string{"-Wall", "-march=native", "-std=c++23"},
+		LDFlags:         []string{"-lstdc++"},
+		AddAssertHeader: true,
+		GoPackage:       "tests",
+	})
+
 	g := sbcgoglue.New(sbcgoglue.Opts{
 		ExitOnErr: true,
 		Rename: map[string]string{

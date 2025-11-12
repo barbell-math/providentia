@@ -6,7 +6,6 @@
 #include "cpu.h"
 #include "../../clib/glue.h"
 #include "../../clib/common.h"
-#include "../../clib/slice.h"
 
 enum BarPathCalcErrCode_t validateSuppliedData(
 	barPathData_t* data,
@@ -39,21 +38,21 @@ enum BarPathCalcErrCode_t calcDerivatives(
 	switch (opts->ApproxErr) {
 	case SecondOrder:
 		smearLen = 2;
-		Math::calcFirstThreeDerivatives<5>(
-			Slice<Vec2>(data->pos, data->timeLen),
-			Slice<Vec2>(data->vel, data->timeLen),
-			Slice<Vec2>(data->acc, data->timeLen),
-			Slice<Vec2>(data->jerk, data->timeLen),
+		Math::CalcFirstThreeDerivatives<Math::SecondFirstOrderApprox>(
+			Slice<Vec2>((Vec2*)data->pos, data->timeLen),
+			Slice<Vec2>((Vec2*)data->vel, data->timeLen),
+			Slice<Vec2>((Vec2*)data->acc, data->timeLen),
+			Slice<Vec2>((Vec2*)data->jerk, data->timeLen),
 			h
 		);
 		break;
 	case FourthOrder:
 		smearLen = 3;
-		Math::calcFirstThreeDerivatives<7>(
-			Slice<Vec2>(data->pos, data->timeLen),
-			Slice<Vec2>(data->vel, data->timeLen),
-			Slice<Vec2>(data->acc, data->timeLen),
-			Slice<Vec2>(data->jerk, data->timeLen),
+		Math::CalcFirstThreeDerivatives<Math::FourthOrderApprox>(
+			Slice<Vec2>((Vec2*)data->pos, data->timeLen),
+			Slice<Vec2>((Vec2*)data->vel, data->timeLen),
+			Slice<Vec2>((Vec2*)data->acc, data->timeLen),
+			Slice<Vec2>((Vec2*)data->jerk, data->timeLen),
 			h
 		);
 		break;
@@ -78,46 +77,33 @@ enum BarPathCalcErrCode_t calcDerivatives(
 	return NoErr;
 }
 
-void smootherFunc(
-	Array<Vec2, 5> window,
-	double_t wTot,
-	barPathCalcHyperparams_t* opts
-) {
-	window[2].X=(
-		window[0].X*opts->SmootherWeight1+
-		window[1].X*opts->SmootherWeight2+
-		window[2].X*opts->SmootherWeight3+
-		window[3].X*opts->SmootherWeight4+
-		window[4].X*opts->SmootherWeight5
-	)/(wTot);
-	window[2].Y=(
-		window[0].Y*opts->SmootherWeight1+
-		window[1].Y*opts->SmootherWeight2+
-		window[2].Y*opts->SmootherWeight3+
-		window[3].Y*opts->SmootherWeight4+
-		window[4].Y*opts->SmootherWeight5
-	)/(wTot);
-}
-
 enum BarPathCalcErrCode_t runSmoother(
 	barPathData_t* data,
 	barPathCalcHyperparams_t* opts
 ) {
-	float_t wTot=(
-		opts->SmootherWeight1+
-		opts->SmootherWeight2+
-		opts->SmootherWeight3+
-		opts->SmootherWeight4+
-		opts->SmootherWeight5
+	Vec2 _tmps[3]={};
+	double _weights[5]={
+		opts->SmootherWeight1,
+		opts->SmootherWeight2,
+		opts->SmootherWeight3,
+		opts->SmootherWeight4,
+		opts->SmootherWeight5,
+	};
+	Math::RollingWeightedAverage(
+		Slice<Vec2>((Vec2*)data->vel, data->timeLen),
+		FixedSlice<double, 5>(_weights),
+		FixedRing<Vec2, 3>(_tmps)
 	);
-	Slice<Vec2> vel = Slice<Vec2>(data->vel, data->timeLen);
-	Slice<Vec2> acc = Slice<Vec2>(data->acc, data->timeLen);
-	Slice<Vec2> jerk = Slice<Vec2>(data->jerk, data->timeLen);
-	for (int i=0; wTot>0 && i<data->timeLen-4; i++) {
-		smootherFunc(Array<Vec2, 5>(vel,i), wTot, opts);
-		smootherFunc(Array<Vec2, 5>(acc,i), wTot, opts);
-		smootherFunc(Array<Vec2, 5>(jerk,i), wTot, opts);
-	}
+	Math::RollingWeightedAverage(
+		Slice<Vec2>((Vec2*)data->acc, data->timeLen),
+		FixedSlice<double, 5>(_weights),
+		FixedRing<Vec2, 3>(_tmps)
+	);
+	Math::RollingWeightedAverage(
+		Slice<Vec2>((Vec2*)data->jerk, data->timeLen),
+		FixedSlice<double, 5>(_weights),
+		FixedRing<Vec2, 3>(_tmps)
+	);
 
 	return NoErr;
 }
@@ -257,28 +243,28 @@ enum BarPathCalcErrCode_t calcRepStats(
 				(PointInTime*)(&data->minVel[i]),
 				(PointInTime*)(&data->maxVel[i]),
 				PointInTime{
-					.Time=data->time[j], .Value=Math::mag(*(Vec2*)(&data->vel[j]))
+					.Time=data->time[j], .Value=Math::Mag(*(Vec2*)(&data->vel[j]))
 				}
 			);
 			setPointInTimeMinMax(
 				(PointInTime*)(&data->minAcc[i]),
 				(PointInTime*)(&data->maxAcc[i]),
 				PointInTime{
-					.Time=data->time[j], .Value=Math::mag(*(Vec2*)(&data->acc[j]))
+					.Time=data->time[j], .Value=Math::Mag(*(Vec2*)(&data->acc[j]))
 				}
 			);
 			setPointInTimeMinMax(
 				(PointInTime*)(&data->minForce[i]),
 				(PointInTime*)(&data->maxForce[i]),
 				PointInTime{
-					.Time=data->time[j], .Value=Math::mag(*(Vec2*)(&data->force[j]))
+					.Time=data->time[j], .Value=Math::Mag(*(Vec2*)(&data->force[j]))
 				}
 			);
 			setPointInTimeMinMax(
 				(PointInTime*)(&data->minImpulse[i]),
 				(PointInTime*)(&data->maxImpulse[i]),
 				PointInTime{
-					.Time=data->time[j], .Value=Math::mag(*(Vec2*)(&data->impulse[j]))
+					.Time=data->time[j], .Value=Math::Mag(*(Vec2*)(&data->impulse[j]))
 				}
 			);
 			setPointInTimeMinMax(

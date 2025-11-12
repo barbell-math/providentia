@@ -14,9 +14,11 @@ func main() {
 	)
 	sbbs.RegisterSqlcTargets()
 	sbbs.RegisterGoEnumTargets()
-	sbbs.RegisterCommonGoCmdTargets(sbbs.AllGoTargets().SetEnvVars(map[string]string{
-		"CC": "clang-18",
-	}))
+	sbbs.RegisterCommonGoCmdTargets(sbbs.AllGoTargets().
+		SetEnvVars(map[string]string{
+			"CC": "clang-21",
+		}),
+	)
 	sbbs.RegisterMergegateTarget(sbbs.NewMergegateTargets().
 		SetPreStages(
 			sbbs.TargetAsStage("install.goenum"),
