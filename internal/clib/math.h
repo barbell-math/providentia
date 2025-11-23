@@ -89,7 +89,9 @@ inline Vec2 ThirdDerivative(FixedSlice<Vec2, 7> data, double h) {
 	return res;
 }
 
+// Can be passed as N to [CalcFirstThreeDerivatives]
 constexpr size_t SecondFirstOrderApprox = 5;
+// Can be passed as N to [CalcFirstThreeDerivatives]
 constexpr size_t FourthOrderApprox = 7;
 
 // Calculates the first three derivatives of data, placing the results in first,
@@ -101,7 +103,7 @@ constexpr size_t FourthOrderApprox = 7;
 // All three derivatives will be calculated using data to avoid accumulating
 // error.
 template <size_t N>
-inline void CalcFirstThreeDerivatives(
+void CalcFirstThreeDerivatives(
 	Slice<Vec2> data,
 	Slice<Vec2> first,
 	Slice<Vec2> second,
@@ -114,8 +116,24 @@ inline void CalcFirstThreeDerivatives(
 		second[middleIdx] = Math::SecondDerivative(FixedSlice<Vec2, N-2>(data,i+1), h);
 		third[middleIdx] = Math::ThirdDerivative(FixedSlice<Vec2, N>(data,i), h);
 	}
+	
+	// Smear edges to the ends of the results rather than computing forward and
+	// backward difference formulas. Running those calculations would provide
+	// little benefit while significantly increasing complexity and maintenance
+	for (size_t i=0; i<N/2 && i<data.Len(); i++) {
+		first[i]=first[N/2];
+		second[i]=second[N/2];
+		third[i]=third[N/2];
+	}
+	for (size_t i=data.Len()-N/2; i<data.Len(); i++) {
+		first[i]=first[data.Len()-N/2-1];
+		second[i]=second[data.Len()-N/2-1];
+		third[i]=third[data.Len()-N/2-1];
+	}
 }
 
+// Calculates the weighted average of the supplied data using the supplied
+// weights. If the sum of all the weights is 0 a zero-valued Vec2 is returned.
 template <size_t N>
 inline Vec2 WeightedAverage(
 	FixedSlice<Vec2, N> data,
@@ -125,12 +143,15 @@ inline Vec2 WeightedAverage(
 	for (size_t i=0; i<N; i++) {
 		wTot+=weights[i];
 	}
-	if (wTot==0) {
-		return Vec2{};
-	}
 	return WeightedAverage(data, weights, wTot);
 }
 
+// Calculates the weighted average of the supplied data using the supplied
+// weights. `wTot` represents the sum of all the weights. No check is performed
+// that `wTot` and `weights` match. This function is mainly used in a scenario
+// where a weighted average is calculated many times with the same weights,
+// allowing for improved performance if `wTot` is cached. If the sum of all the
+// weights is 0 a zero-valued Vec2 is returned.
 template <size_t N>
 inline Vec2 WeightedAverage(
 	FixedSlice<Vec2, N> data,
@@ -150,8 +171,11 @@ inline Vec2 WeightedAverage(
 	return rv;
 }
 
+// Calculates a centered rolling weighted average. The weights are slid across
+// the data in a window like fassion and the center data point is updated to be
+// the calculated average.
 template <size_t N>
-void RollingWeightedAverage(
+void CenteredRollingWeightedAverage(
 	Slice<Vec2> data,
 	FixedSlice<double, N> weights,
 	FixedRing<Vec2, N/2+1> tmps
@@ -177,6 +201,14 @@ void RollingWeightedAverage(
 		data[offset+i]=tmps[i];
 	}
 }
+
+// void Minimums(
+// 	Slice<Vec2> data,
+// ) {
+// 
+// }
+//
+// void Roots(minimum) [2]size_t
 
 };
 

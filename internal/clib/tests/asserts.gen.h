@@ -1,6 +1,7 @@
 #ifndef CLIB_TESTS_ASSERT
 #define CLIB_TESTS_ASSERT
 
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <iomanip>
@@ -15,6 +16,23 @@
 			__FILE__, \
 			__LINE__, \
 			"The supplied values were not equal but were expected to be.", \
+			STRINGIFY(l), \
+			STRINGIFY(r), \
+			l, \
+			r \
+		); \
+		return false; \
+	}
+
+// Tests the supplied values are within eps of each other. If not then false
+// will be returned. This macro is expected to be put in a function that returns
+// a boolean.
+#define EPS(l, r, eps) \
+	if (!Require::WithinEps(l, r, eps)) { \
+		Require::PrintErr( \
+			__FILE__, \
+			__LINE__, \
+			"The supplied values were not within eps of each other but were expected to be.", \
 			STRINGIFY(l), \
 			STRINGIFY(r), \
 			l, \
@@ -71,6 +89,11 @@ void PrintErr(
 template <typename T>
 inline bool Eq(T l, T r) {
 	return l==r;
+}
+
+template <typename T>
+inline bool WithinEps(T l, T r, T eps) {
+	return abs(l-r)<eps;
 }
 
 };

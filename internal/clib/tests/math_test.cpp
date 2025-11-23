@@ -179,7 +179,7 @@ extern "C" bool TestWeightedAverageVec2WeightProvided(void) {
 	return true;
 }
 
-extern "C" bool TestRollingWeightedAverageVec2WeightsSumToZero(void) {
+extern "C" bool TestCenteredRollingWeightedAverageVec2WeightsSumToZero(void) {
 	Vec2 data[5]={
 		Vec2{.X=0, .Y=0},
 		Vec2{.X=1, .Y=1},
@@ -189,7 +189,7 @@ extern "C" bool TestRollingWeightedAverageVec2WeightsSumToZero(void) {
 	};
 	Vec2 tmps[2]={};
 	double weights[3]={1,-2,1};
-	Math::RollingWeightedAverage(
+	Math::CenteredRollingWeightedAverage(
 		Slice<Vec2>(data, 5),
 		FixedSlice<double, 3>(weights),
 		FixedRing<Vec2, 2>(tmps)
@@ -209,7 +209,7 @@ extern "C" bool TestRollingWeightedAverageVec2WeightsSumToZero(void) {
 	return true;
 }
 
-extern "C" bool TestRollingWeightedAverageVec2(void) {
+extern "C" bool TestCenteredRollingWeightedAverageVec2(void) {
 	Vec2 data[7]={
 		Vec2{.X=0, .Y=0},
 		Vec2{.X=1, .Y=1},
@@ -221,7 +221,7 @@ extern "C" bool TestRollingWeightedAverageVec2(void) {
 	};
 	Vec2 tmps[2]={};
 	double weights[3]={1,2,1};
-	Math::RollingWeightedAverage(
+	Math::CenteredRollingWeightedAverage(
 		Slice<Vec2>(data, 7),
 		FixedSlice<double, 3>(weights),
 		FixedRing<Vec2, 2>(tmps)

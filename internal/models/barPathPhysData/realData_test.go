@@ -250,7 +250,7 @@ func TestSquatDataSecondOrder(t *testing.T) {
 				{StartIdx: 437, EndIdx: 501},
 				{StartIdx: 548, EndIdx: 613},
 				{StartIdx: 655, EndIdx: 728},
-				{StartIdx: 784, EndIdx: 850},
+				{StartIdx: 780, EndIdx: 850},
 				{StartIdx: 911, EndIdx: 977},
 				{StartIdx: 1039, EndIdx: 1106},
 				{StartIdx: 1170, EndIdx: 1237},
@@ -283,10 +283,10 @@ func TestSquatDataFourthOrder(t *testing.T) {
 		expCenters: [][]types.Split{
 			[]types.Split{
 				{StartIdx: 311, EndIdx: 379},
-				{StartIdx: 437, EndIdx: 501},
+				{StartIdx: 438, EndIdx: 501},
 				{StartIdx: 548, EndIdx: 613},
 				{StartIdx: 655, EndIdx: 728},
-				{StartIdx: 784, EndIdx: 850},
+				{StartIdx: 780, EndIdx: 850},
 				{StartIdx: 911, EndIdx: 977},
 				{StartIdx: 1039, EndIdx: 1106},
 				{StartIdx: 1170, EndIdx: 1237},

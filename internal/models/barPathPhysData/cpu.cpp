@@ -33,11 +33,9 @@ enum BarPathCalcErrCode_t calcDerivatives(
 	barPathCalcHyperparams_t* opts
 ) {
 	double_t h=data->time[1]-data->time[0];
-	int smearLen = 0;
 
 	switch (opts->ApproxErr) {
 	case SecondOrder:
-		smearLen = 2;
 		Math::CalcFirstThreeDerivatives<Math::SecondFirstOrderApprox>(
 			Slice<Vec2>((Vec2*)data->pos, data->timeLen),
 			Slice<Vec2>((Vec2*)data->vel, data->timeLen),
@@ -47,7 +45,6 @@ enum BarPathCalcErrCode_t calcDerivatives(
 		);
 		break;
 	case FourthOrder:
-		smearLen = 3;
 		Math::CalcFirstThreeDerivatives<Math::FourthOrderApprox>(
 			Slice<Vec2>((Vec2*)data->pos, data->timeLen),
 			Slice<Vec2>((Vec2*)data->vel, data->timeLen),
@@ -58,20 +55,6 @@ enum BarPathCalcErrCode_t calcDerivatives(
 		break;
 	default:
 		return InvalidApproximationErrErr;
-	}
-
-	// Smear edges to the ends of the results rather than computing forward and
-	// backward difference formulas. Running those calculations would provide
-	// little benefit while significantly increasing complexity and maintenance
-	for (int i=0; i<smearLen && i<data->timeLen; i++) {
-		data->vel[i]=data->vel[smearLen];
-		data->acc[i]=data->acc[smearLen];
-		data->jerk[i]=data->jerk[smearLen];
-	}
-	for (int i=data->timeLen-smearLen; i<data->timeLen; i++) {
-		data->vel[i]=data->vel[data->timeLen-smearLen-1];
-		data->acc[i]=data->acc[data->timeLen-smearLen-1];
-		data->jerk[i]=data->jerk[data->timeLen-smearLen-1];
 	}
 
 	return NoErr;
