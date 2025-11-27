@@ -140,14 +140,14 @@ func runCgoTests(t *testing.T) {
 		}
 	})
 
-	t.Run("RollingWeightedAverageVec2WeightsSumToZero", func(t *testing.T) {
-		if !C.TestRollingWeightedAverageVec2WeightsSumToZero() {
+	t.Run("CenteredRollingWeightedAverageVec2WeightsSumToZero", func(t *testing.T) {
+		if !C.TestCenteredRollingWeightedAverageVec2WeightsSumToZero() {
 			t.Fatal()
 		}
 	})
 
-	t.Run("RollingWeightedAverageVec2", func(t *testing.T) {
-		if !C.TestRollingWeightedAverageVec2() {
+	t.Run("CenteredRollingWeightedAverageVec2", func(t *testing.T) {
+		if !C.TestCenteredRollingWeightedAverageVec2() {
 			t.Fatal()
 		}
 	})

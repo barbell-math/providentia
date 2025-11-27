@@ -133,20 +133,6 @@ void CalcFirstThreeDerivatives(
 }
 
 // Calculates the weighted average of the supplied data using the supplied
-// weights. If the sum of all the weights is 0 a zero-valued Vec2 is returned.
-template <size_t N>
-inline Vec2 WeightedAverage(
-	FixedSlice<Vec2, N> data,
-	FixedSlice<double, N> weights
-) {
-	double wTot=0;
-	for (size_t i=0; i<N; i++) {
-		wTot+=weights[i];
-	}
-	return WeightedAverage(data, weights, wTot);
-}
-
-// Calculates the weighted average of the supplied data using the supplied
 // weights. `wTot` represents the sum of all the weights. No check is performed
 // that `wTot` and `weights` match. This function is mainly used in a scenario
 // where a weighted average is calculated many times with the same weights,
@@ -169,6 +155,20 @@ inline Vec2 WeightedAverage(
 	rv.X/=wTot;
 	rv.Y/=wTot;
 	return rv;
+}
+
+// Calculates the weighted average of the supplied data using the supplied
+// weights. If the sum of all the weights is 0 a zero-valued Vec2 is returned.
+template <size_t N>
+inline Vec2 WeightedAverage(
+	FixedSlice<Vec2, N> data,
+	FixedSlice<double, N> weights
+) {
+	double wTot=0;
+	for (size_t i=0; i<N; i++) {
+		wTot+=weights[i];
+	}
+	return WeightedAverage(data, weights, wTot);
 }
 
 // Calculates a centered rolling weighted average. The weights are slid across

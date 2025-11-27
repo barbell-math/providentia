@@ -72,17 +72,17 @@ enum BarPathCalcErrCode_t runSmoother(
 		opts->SmootherWeight4,
 		opts->SmootherWeight5,
 	};
-	Math::RollingWeightedAverage(
+	Math::CenteredRollingWeightedAverage(
 		Slice<Vec2>((Vec2*)data->vel, data->timeLen),
 		FixedSlice<double, 5>(_weights),
 		FixedRing<Vec2, 3>(_tmps)
 	);
-	Math::RollingWeightedAverage(
+	Math::CenteredRollingWeightedAverage(
 		Slice<Vec2>((Vec2*)data->acc, data->timeLen),
 		FixedSlice<double, 5>(_weights),
 		FixedRing<Vec2, 3>(_tmps)
 	);
-	Math::RollingWeightedAverage(
+	Math::CenteredRollingWeightedAverage(
 		Slice<Vec2>((Vec2*)data->jerk, data->timeLen),
 		FixedSlice<double, 5>(_weights),
 		FixedRing<Vec2, 3>(_tmps)

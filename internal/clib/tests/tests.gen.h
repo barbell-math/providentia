@@ -57,9 +57,9 @@ bool TestWeightedAverageVec2(void);
 
 bool TestWeightedAverageVec2WeightProvided(void);
 
-bool TestRollingWeightedAverageVec2WeightsSumToZero(void);
+bool TestCenteredRollingWeightedAverageVec2WeightsSumToZero(void);
 
-bool TestRollingWeightedAverageVec2(void);
+bool TestCenteredRollingWeightedAverageVec2(void);
 
 
 #ifdef __cplusplus
