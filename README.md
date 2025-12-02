@@ -6,7 +6,7 @@
 ## Dependencies
 
 1. postgres
-1. clang-18
+1. clang-21
 
 ## Helpful Developer Cmds
 

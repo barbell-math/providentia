@@ -29,8 +29,8 @@ inline double Mag(Vec2 v) {
 // http://code.barbellmath.net/barbell-math/providentia/wiki/Numerical-Difference-Methods
 
 // Calculates the first derivative of data using numerical differentiation
-// and places the result in res. h controls the delta between consecutive
-// points. The accuracy of res will be proportional to h^2.
+// returning the result. h controls the delta between consecutive points. The
+// accuracy of res will be proportional to h^2.
 inline Vec2 FirstDerivative(FixedSlice<Vec2, 3> data, double h) {
 	Vec2 res{};
 	res.X=(-data[0].X+data[2].X)/(2*h);
@@ -38,8 +38,8 @@ inline Vec2 FirstDerivative(FixedSlice<Vec2, 3> data, double h) {
 	return res;
 }
 // Calculates the first derivative of data using numerical differentiation
-// and places the result in res. h controls the delta between consecutive
-// points. The accuracy of res will be proportional to h^4.
+// returning the result. h controls the delta between consecutive points. The
+// accuracy of res will be proportional to h^4.
 inline Vec2 FirstDerivative(FixedSlice<Vec2, 5> data, double h) {
 	Vec2 res{};
 	res.X=(data[0].X -8*data[1].X +8*data[3].X -data[4].X)/(12*h);
@@ -48,8 +48,8 @@ inline Vec2 FirstDerivative(FixedSlice<Vec2, 5> data, double h) {
 }
 
 // Calculates the second derivative of data using numerical differentiation
-// and places the result in res. h controls the delta between consecutive
-// points. The accuracy of res will be proportional to h^2.
+// returning the result. h controls the delta between consecutive points. The
+// accuracy of res will be proportional to h^2.
 inline Vec2 SecondDerivative(FixedSlice<Vec2, 3> data, double h) {
 	Vec2 res{};
 	res.X=(data[0].X-2*data[1].X+data[2].X)/(h*h);
@@ -57,8 +57,8 @@ inline Vec2 SecondDerivative(FixedSlice<Vec2, 3> data, double h) {
 	return res;
 }
 // Calculates the second derivative of data using numerical differentiation
-// and places the result in res. h controls the delta between consecutive
-// points. The accuracy of res will be proportional to h^4.
+// returning the result. h controls the delta between consecutive points. The
+// accuracy of res will be proportional to h^4.
 inline Vec2 SecondDerivative(FixedSlice<Vec2, 5> data, double h) {
 	Vec2 res{};
 	res.X=(-data[0].X +16*data[1].X -30*data[2].X +16*data[3].X -data[4].X)/(12*h*h);
@@ -67,8 +67,8 @@ inline Vec2 SecondDerivative(FixedSlice<Vec2, 5> data, double h) {
 }
 
 // Calculates the third derivative of data using numerical differentiation
-// and places the result in res. h controls the delta between consecutive
-// points. The accuracy of res will be proportional to h^2.
+// returning the result. h controls the delta between consecutive points. The
+// accuracy of res will be proportional to h^2.
 inline Vec2 ThirdDerivative(FixedSlice<Vec2, 5> data, double h) {
 	Vec2 res{};
 	res.X=(-data[0].X +2*data[1].X -2*data[3].X +data[4].X)/(2*h*h*h);
@@ -76,8 +76,8 @@ inline Vec2 ThirdDerivative(FixedSlice<Vec2, 5> data, double h) {
 	return res;
 }
 // Calculates the third derivative of data using numerical differentiation
-// and places the result in res. h controls the delta between consecutive
-// points. The accuracy of res will be proportional to h^4.
+// returning the result. h controls the delta between consecutive points. The
+// accuracy of res will be proportional to h^4.
 inline Vec2 ThirdDerivative(FixedSlice<Vec2, 7> data, double h) {
 	Vec2 res{};
 	res.X=(
@@ -202,10 +202,26 @@ void CenteredRollingWeightedAverage(
 	}
 }
 
-// void Minimums(
+// size_t Minimums(
 // 	Slice<Vec2> data,
+// 	Slice<size_t> mins,
+// 	bool(*operator>)(Vec2 l, Vec2 r) gt
 // ) {
+// 	size_t numMins=0;
+// 	mins.Fill(Vec2{
+// 		.X=std::numeric_limits<double>::infinity(),
+// 		.Y=std::numeric_limits<double>::infinity(),
+// 	});
 // 
+// 	for (size_t i=1; i<data.Len()-1; i++) {
+// 		if (!gt(data[0], data[1]) || !gt(data[2], data[1])) {
+// 			continue;
+// 		}
+// 		if (lt()) {
+// 
+// 		}
+// 	}
+// 	return 0;
 // }
 //
 // void Roots(minimum) [2]size_t

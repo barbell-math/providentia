@@ -8,13 +8,13 @@
 #include "common.h"
 #include "errors.h"
 
-template <typename  T>
+template <typename T>
 struct Slice {
 	T *data;
 	size_t len;
 
 	Slice(size_t len) {
-		this->data=calloc(len, sizeof(T));	// TODO - need better allocation strat
+		this->data=calloc(len, sizeof(T));
 		if (this->data==nullptr) {
 			throw Err::OOM{ .Desc="Could not calloc slice" };
 		}
@@ -42,6 +42,13 @@ struct Slice {
 			throw Err::StartAfterEnd<size_t>{ .Start=start, .End=end };
 		}
 		return Slice<T>(&this->data[start], end-start);
+	}
+
+	void Zero() { memset(this->data, 0, this->len); }
+	void Fill(T val) {
+		for (size_t i=0; i<this->len; i++) {
+			this->data[i]=val;
+		}
 	}
 
 	void Free() {
@@ -121,6 +128,51 @@ struct FixedRing {
 		this->curIdx=0;
 		this->data=nullptr;
 	}
+};
+
+namespace Heap {
+
+template <typename T, typename OP>
+void heapHelper(Slice<T> s, size_t curIdx, OP op) {
+	size_t largest=curIdx;
+	size_t left=2*curIdx+1;
+	size_t right=2*curIdx+2;
+
+	if (left<s.Len() && op(s[left], s[largest])) {
+		largest=left;
+	}
+	if (right<s.Len() && op(s[right], s[largest])) {
+		largest=right;
+	}
+
+	if (largest!=curIdx) {
+		T tmp=s[curIdx];
+		s[curIdx]=s[largest];
+		s[largest]=tmp;
+		heapHelper(s, largest, op);
+	}
+}
+
+template <typename T>
+void Max(Slice<T> s) {
+	int startNode=(s.Len()/2)-1;
+	auto op=[](T a, T b) { return a>b; };
+	for (size_t i=startNode; i>0; i--) {
+		heapHelper<T>(s, i, op);
+	}
+	heapHelper<T>(s, 0, op);
+}
+
+template <typename T>
+void Min(Slice<T> s) {
+	int startNode=(s.Len()/2)-1;
+	auto op=[](T a, T b) { return a<b; };
+	for (size_t i=startNode; i>0; i--) {
+		heapHelper<T>(s, i, op);
+	}
+	heapHelper<T>(s, 0, op);
+}
+
 };
 
 template <typename T>

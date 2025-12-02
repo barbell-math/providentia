@@ -92,6 +92,18 @@ func runCgoTests(t *testing.T) {
 		}
 	})
 
+	t.Run("MaxHeap", func(t *testing.T) {
+		if !C.TestMaxHeap() {
+			t.Fatal()
+		}
+	})
+
+	t.Run("MinHeap", func(t *testing.T) {
+		if !C.TestMinHeap() {
+			t.Fatal()
+		}
+	})
+
 	t.Run("FirstDerivativeVec2SecondOrder", func(t *testing.T) {
 		if !C.TestFirstDerivativeVec2SecondOrder() {
 			t.Fatal()

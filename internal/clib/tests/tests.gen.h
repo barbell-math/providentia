@@ -41,6 +41,10 @@ bool TestFixedRingSubSliceConstructor(void);
 
 bool TestFixedRingPut(void);
 
+bool TestMaxHeap(void);
+
+bool TestMinHeap(void);
+
 bool TestFirstDerivativeVec2SecondOrder(void);
 
 bool TestFirstDerivativeVec2FourthOrder(void);
