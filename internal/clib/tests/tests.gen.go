@@ -92,6 +92,12 @@ func runCgoTests(t *testing.T) {
 		}
 	})
 
+	t.Run("AssociatedSlicesConstructor", func(t *testing.T) {
+		if !C.TestAssociatedSlicesConstructor() {
+			t.Fatal()
+		}
+	})
+
 	t.Run("MaxHeap", func(t *testing.T) {
 		if !C.TestMaxHeap() {
 			t.Fatal()
@@ -140,26 +146,38 @@ func runCgoTests(t *testing.T) {
 		}
 	})
 
-	t.Run("WeightedAverageVec2", func(t *testing.T) {
-		if !C.TestWeightedAverageVec2() {
+	t.Run("WeightedAvgVec2", func(t *testing.T) {
+		if !C.TestWeightedAvgVec2() {
 			t.Fatal()
 		}
 	})
 
-	t.Run("WeightedAverageVec2WeightProvided", func(t *testing.T) {
-		if !C.TestWeightedAverageVec2WeightProvided() {
+	t.Run("WeightedAvgVec2WeightProvided", func(t *testing.T) {
+		if !C.TestWeightedAvgVec2WeightProvided() {
 			t.Fatal()
 		}
 	})
 
-	t.Run("CenteredRollingWeightedAverageVec2WeightsSumToZero", func(t *testing.T) {
-		if !C.TestCenteredRollingWeightedAverageVec2WeightsSumToZero() {
+	t.Run("CenteredRollingWeightedAvgVec2WeightsSumToZero", func(t *testing.T) {
+		if !C.TestCenteredRollingWeightedAvgVec2WeightsSumToZero() {
 			t.Fatal()
 		}
 	})
 
-	t.Run("CenteredRollingWeightedAverageVec2", func(t *testing.T) {
-		if !C.TestCenteredRollingWeightedAverageVec2() {
+	t.Run("CenteredRollingWeightedAvgVec2", func(t *testing.T) {
+		if !C.TestCenteredRollingWeightedAvgVec2() {
+			t.Fatal()
+		}
+	})
+
+	t.Run("NSmallestMinimumsMoreExpectedThanPresent", func(t *testing.T) {
+		if !C.TestNSmallestMinimumsMoreExpectedThanPresent() {
+			t.Fatal()
+		}
+	})
+
+	t.Run("NSmallestMinimumsMorePresentThanExpected", func(t *testing.T) {
+		if !C.TestNSmallestMinimumsMorePresentThanExpected() {
 			t.Fatal()
 		}
 	})

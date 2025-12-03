@@ -41,6 +41,8 @@ bool TestFixedRingSubSliceConstructor(void);
 
 bool TestFixedRingPut(void);
 
+bool TestAssociatedSlicesConstructor(void);
+
 bool TestMaxHeap(void);
 
 bool TestMinHeap(void);
@@ -57,13 +59,17 @@ bool TestThirdDerivativeVec2SecondOrder(void);
 
 bool TestThirdDerivativeVec2FourthOrder(void);
 
-bool TestWeightedAverageVec2(void);
+bool TestWeightedAvgVec2(void);
 
-bool TestWeightedAverageVec2WeightProvided(void);
+bool TestWeightedAvgVec2WeightProvided(void);
 
-bool TestCenteredRollingWeightedAverageVec2WeightsSumToZero(void);
+bool TestCenteredRollingWeightedAvgVec2WeightsSumToZero(void);
 
-bool TestCenteredRollingWeightedAverageVec2(void);
+bool TestCenteredRollingWeightedAvgVec2(void);
+
+bool TestNSmallestMinimumsMoreExpectedThanPresent(void);
+
+bool TestNSmallestMinimumsMorePresentThanExpected(void);
 
 
 #ifdef __cplusplus

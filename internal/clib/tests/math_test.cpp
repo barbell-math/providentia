@@ -143,7 +143,7 @@ extern "C" bool TestThirdDerivativeVec2FourthOrder(void) {
 	return true;
 }
 
-extern "C" bool TestWeightedAverageVec2(void) {
+extern "C" bool TestWeightedAvgVec2(void) {
 	Vec2 data[5]={
 		Vec2{.X=0, .Y=0},
 		Vec2{.X=1, .Y=1},
@@ -152,7 +152,7 @@ extern "C" bool TestWeightedAverageVec2(void) {
 		Vec2{.X=0, .Y=0},
 	};
 	double weights[5]={0,1,2,1,0};
-	Vec2 avg=Math::WeightedAverage(
+	Vec2 avg=Math::WeightedAvg(
 		FixedSlice<Vec2, 5>(data), FixedSlice<double, 5>(weights)
 	);
 	EQ(avg.X, 1.5)
@@ -161,7 +161,7 @@ extern "C" bool TestWeightedAverageVec2(void) {
 	return true;
 }
 
-extern "C" bool TestWeightedAverageVec2WeightProvided(void) {
+extern "C" bool TestWeightedAvgVec2WeightProvided(void) {
 	Vec2 data[5]={
 		Vec2{.X=0, .Y=0},
 		Vec2{.X=1, .Y=1},
@@ -170,7 +170,7 @@ extern "C" bool TestWeightedAverageVec2WeightProvided(void) {
 		Vec2{.X=0, .Y=0},
 	};
 	double weights[5]={0,1,2,1,0};
-	Vec2 avg=Math::WeightedAverage(
+	Vec2 avg=Math::WeightedAvg(
 		FixedSlice<Vec2, 5>(data), FixedSlice<double, 5>(weights), 4
 	);
 	EQ(avg.X, 1.5)
@@ -179,7 +179,7 @@ extern "C" bool TestWeightedAverageVec2WeightProvided(void) {
 	return true;
 }
 
-extern "C" bool TestCenteredRollingWeightedAverageVec2WeightsSumToZero(void) {
+extern "C" bool TestCenteredRollingWeightedAvgVec2WeightsSumToZero(void) {
 	Vec2 data[5]={
 		Vec2{.X=0, .Y=0},
 		Vec2{.X=1, .Y=1},
@@ -189,7 +189,7 @@ extern "C" bool TestCenteredRollingWeightedAverageVec2WeightsSumToZero(void) {
 	};
 	Vec2 tmps[2]={};
 	double weights[3]={1,-2,1};
-	Math::CenteredRollingWeightedAverage(
+	Math::CenteredRollingWeightedAvg(
 		Slice<Vec2>(data, 5),
 		FixedSlice<double, 3>(weights),
 		FixedRing<Vec2, 2>(tmps)
@@ -209,7 +209,7 @@ extern "C" bool TestCenteredRollingWeightedAverageVec2WeightsSumToZero(void) {
 	return true;
 }
 
-extern "C" bool TestCenteredRollingWeightedAverageVec2(void) {
+extern "C" bool TestCenteredRollingWeightedAvgVec2(void) {
 	Vec2 data[7]={
 		Vec2{.X=0, .Y=0},
 		Vec2{.X=1, .Y=1},
@@ -221,7 +221,7 @@ extern "C" bool TestCenteredRollingWeightedAverageVec2(void) {
 	};
 	Vec2 tmps[2]={};
 	double weights[3]={1,2,1};
-	Math::CenteredRollingWeightedAverage(
+	Math::CenteredRollingWeightedAvg(
 		Slice<Vec2>(data, 7),
 		FixedSlice<double, 3>(weights),
 		FixedRing<Vec2, 2>(tmps)
@@ -241,6 +241,69 @@ extern "C" bool TestCenteredRollingWeightedAverageVec2(void) {
 	EQ(data[5].Y, 1.0)
 	EQ(data[6].X, 2.0)
 	EQ(data[6].Y, 2.0)
+
+	return true;
+}
+
+extern "C" bool TestNSmallestMinimumsMoreExpectedThanPresent(void) {
+	Vec2YOps data[11]={
+		(Vec2YOps)Vec2{.X=0, .Y=0},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=2, .Y=2},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=0, .Y=0},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=2, .Y=2},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=0, .Y=0},
+		(Vec2YOps)Vec2{.X=1, .Y=-1},
+		(Vec2YOps)Vec2{.X=2, .Y=-2},
+	};
+	size_t results[2]={};
+	size_t numMins = Math::NSmallestMinimums(
+		Slice<Vec2YOps>(data, 11),
+		Slice<size_t>(results, 2),
+		(Vec2YOps)Vec2{
+			.X=std::numeric_limits<double>::infinity(),
+			.Y=std::numeric_limits<double>::infinity(),
+		}
+	);
+
+	EQ(numMins, (size_t)1);
+	EQ(results[0], (size_t)4);
+	EQ(results[1], (size_t)0);
+
+	return true;
+}
+
+extern "C" bool TestNSmallestMinimumsMorePresentThanExpected(void) {
+	Vec2YOps data[12]={
+		(Vec2YOps)Vec2{.X=0, .Y=2},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=2, .Y=-1},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=0, .Y=2},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=2, .Y=0},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=0, .Y=2},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=2, .Y=-2},
+		(Vec2YOps)Vec2{.X=2, .Y=1},
+	};
+	size_t results[2]={};
+	size_t numMins = Math::NSmallestMinimums(
+		Slice<Vec2YOps>(data, 12),
+		Slice<size_t>(results, 2),
+		(Vec2YOps)Vec2{
+			.X=std::numeric_limits<double>::infinity(),
+			.Y=std::numeric_limits<double>::infinity(),
+		}
+	);
+
+	EQ(numMins, (size_t)2);
+	EQ(results[0], (size_t)2);
+	EQ(results[1], (size_t)10);
 
 	return true;
 }

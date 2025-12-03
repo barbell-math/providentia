@@ -10,12 +10,54 @@
 struct Vec2 {
 	double X;
 	double Y;
+
+	friend std::ostream& operator<<(std::ostream& os, Vec2 v) {
+		os << "Vec2{X: " << v.X << ", Y: " << v.Y << "}";
+	    return os;
+	}
 };
 
-std::ostream& operator<<(std::ostream& os, Vec2 v) {
-	os << "Vec2{X: " << v.X << ", Y: " << v.Y << "}";
-    return os;
-}
+struct Vec2XOps : Vec2 {
+	friend bool operator>(const Vec2XOps l, const Vec2XOps r) {
+		return l.X > r.X;
+	}
+	friend bool operator<(const Vec2XOps l, const Vec2XOps r) {
+		return l.X < r.X;
+	}
+	friend bool operator>=(const Vec2XOps l, const Vec2XOps r) {
+		return l.X >= r.X;
+	}
+	friend bool operator<=(const Vec2XOps l, const Vec2XOps r) {
+		return l.X <= r.X;
+	}
+	friend bool operator!=(const Vec2XOps l, const Vec2XOps r) {
+		return l.X != r.X;
+	}
+	friend bool operator==(const Vec2XOps l, const Vec2XOps r) {
+		return l.X == r.X;
+	}
+};
+
+struct Vec2YOps : Vec2 {
+	friend bool operator>(const Vec2YOps l, const Vec2YOps r) {
+		return l.Y > r.Y;
+	}
+	friend bool operator<(const Vec2YOps l, const Vec2YOps r) {
+		return l.Y < r.Y;
+	}
+	friend bool operator>=(const Vec2YOps l, const Vec2YOps r) {
+		return l.Y >= r.Y;
+	}
+	friend bool operator<=(const Vec2YOps l, const Vec2YOps r) {
+		return l.Y <= r.Y;
+	}
+	friend bool operator!=(const Vec2YOps l, const Vec2YOps r) {
+		return l.Y != r.Y;
+	}
+	friend bool operator==(const Vec2YOps l, const Vec2YOps r) {
+		return l.Y == r.Y;
+	}
+};
 
 namespace Math {
 
@@ -139,7 +181,7 @@ void CalcFirstThreeDerivatives(
 // allowing for improved performance if `wTot` is cached. If the sum of all the
 // weights is 0 a zero-valued Vec2 is returned.
 template <size_t N>
-inline Vec2 WeightedAverage(
+inline Vec2 WeightedAvg(
 	FixedSlice<Vec2, N> data,
 	FixedSlice<double, N> weights,
 	double wTot
@@ -160,7 +202,7 @@ inline Vec2 WeightedAverage(
 // Calculates the weighted average of the supplied data using the supplied
 // weights. If the sum of all the weights is 0 a zero-valued Vec2 is returned.
 template <size_t N>
-inline Vec2 WeightedAverage(
+inline Vec2 WeightedAvg(
 	FixedSlice<Vec2, N> data,
 	FixedSlice<double, N> weights
 ) {
@@ -168,14 +210,14 @@ inline Vec2 WeightedAverage(
 	for (size_t i=0; i<N; i++) {
 		wTot+=weights[i];
 	}
-	return WeightedAverage(data, weights, wTot);
+	return WeightedAvg(data, weights, wTot);
 }
 
 // Calculates a centered rolling weighted average. The weights are slid across
 // the data in a window like fassion and the center data point is updated to be
 // the calculated average.
 template <size_t N>
-void CenteredRollingWeightedAverage(
+void CenteredRollingWeightedAvg(
 	Slice<Vec2> data,
 	FixedSlice<double, N> weights,
 	FixedRing<Vec2, N/2+1> tmps
@@ -192,9 +234,7 @@ void CenteredRollingWeightedAverage(
 		if (i>=N/2+1) {
 			data[i-1]=tmps[0];
 		}
-		tmps.Put(Math::WeightedAverage(
-			FixedSlice<Vec2, N>(data,i), weights, wTot
-		));
+		tmps.Put(Math::WeightedAvg(FixedSlice<Vec2, N>(data,i), weights, wTot));
 	}
 	size_t offset = data.Len()-weights.Len();
 	for (size_t i=0; i<tmps.Len(); i++) {
@@ -202,29 +242,54 @@ void CenteredRollingWeightedAverage(
 	}
 }
 
-// size_t Minimums(
-// 	Slice<Vec2> data,
-// 	Slice<size_t> mins,
-// 	bool(*operator>)(Vec2 l, Vec2 r) gt
-// ) {
-// 	size_t numMins=0;
-// 	mins.Fill(Vec2{
-// 		.X=std::numeric_limits<double>::infinity(),
-// 		.Y=std::numeric_limits<double>::infinity(),
-// 	});
-// 
-// 	for (size_t i=1; i<data.Len()-1; i++) {
-// 		if (!gt(data[0], data[1]) || !gt(data[2], data[1])) {
-// 			continue;
-// 		}
-// 		if (lt()) {
-// 
-// 		}
-// 	}
-// 	return 0;
-// }
+// Finds the N smallest minimums in the supplied data, returning the number of
+// minimums that were found (capped at `mins.Len()`). The `mins` slice will be
+// populated with the indexes of the minimums in `data`. A minimum is defined to
+// be any point that is less than its immediate left and right neighbors. This
+// is intended to be used with real-world data and should not be used to find
+// the minimum of an equation.
 //
-// void Roots(minimum) [2]size_t
+// The type T must have the standard comparison operators defined.
+//
+// `maxVal` must be the largest value possible for the type T. If it is not and
+// there are minimums larger than `maxVal` then those minimums will not be
+// found. This could act as a filter to find the N smallest minimums less than
+// `maxVal` if desired.
+//
+// If there are less than `mins.Len()` minimums found then the first N values
+// in mins will be populated where N=the return value. The indexes in `mins` are
+// are not sorted by there associated minimum values in any way.
+template <typename T>
+size_t NSmallestMinimums(Slice<T> data, Slice<size_t> mins, const T& maxVal) {
+	size_t numMins=0;
+	Slice<T> tmpVals(mins.Len());
+	tmpVals.Fill(maxVal);
+	AssociatedSlices<T, size_t> heap(tmpVals, mins);
+
+	for (size_t i=1; i<data.Len()-1; i++) {
+		if (data[i]>=data[i-1] || data[i]>=data[i+1]) {
+			continue;
+		}
+		if (data[i]<heap[0].First) {
+			heap[0].First=data[i];
+			heap[0].Second=i;
+			Heap::Max<
+				AssociatedSlices<T, size_t>,
+				typename AssociatedSlices<T, size_t>::Elems
+			>(heap);
+			numMins++;
+			i++;
+		}
+	}
+
+	tmpVals.Free();
+	if (numMins<mins.Len()) { mins.Reverse(); }
+	return std::min(numMins, mins.Len());
+}
+
+// size_t LeftRoot(Slice<T> data, start idx)
+// size_t RightRoot(Slice<T> data, start idx)
+// [2]size_t Roots(Slice<T> data, start idx)
 
 };
 

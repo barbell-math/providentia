@@ -14,7 +14,7 @@ struct Slice {
 	size_t len;
 
 	Slice(size_t len) {
-		this->data=calloc(len, sizeof(T));
+		this->data=(T*)calloc(len, sizeof(T));
 		if (this->data==nullptr) {
 			throw Err::OOM{ .Desc="Could not calloc slice" };
 		}
@@ -50,11 +50,28 @@ struct Slice {
 			this->data[i]=val;
 		}
 	}
+	void Reverse() {
+		for (size_t i=0; i<this->len/2; i++) {
+			std::swap(this->data[i], this->data[this->len-i-1]);
+		}
+	}
 
 	void Free() {
-		Free(this->data);
+		free(this->data);
 		this->len=0;
 		this->data=nullptr;
+	}
+
+	friend std::ostream& operator<<(std::ostream& os, Slice<T> s) {
+		os << "Slice[";
+		for (size_t i=0; i<s.Len(); i++) {
+			os << s[i];
+			if (i+1<s.Len()) {
+				os << ", ";
+			}
+		}
+		os << "]";
+	    return os;
 	}
 };
 
@@ -93,8 +110,20 @@ struct FixedSlice {
 	}
 
 	void Free() {
-		Free(this->data);
+		free(this->data);
 		this->data=nullptr;
+	}
+
+	friend std::ostream& operator<<(std::ostream& os, FixedSlice<T, N> s) {
+		os << "FixedSlice(" << s.Len() << ")[";
+		for (size_t i=0; i<s.Len(); i++) {
+			os << s[i];
+			if (i+1<s.Len()) {
+				os << ", ";
+			}
+		}
+		os << "]";
+	    return os;
 	}
 };
 
@@ -124,94 +153,157 @@ struct FixedRing {
 	void Put(T v) { this->data[(++this->curIdx)%N]=v; }
 
 	void Free() {
-		Free(this->data);
+		free(this->data);
 		this->curIdx=0;
 		this->data=nullptr;
+	}
+
+	friend std::ostream& operator<<(std::ostream& os, FixedRing<T, N> s) {
+		os << "FixedRing(" << s.Len() << ")[";
+		for (size_t i=0; i<s.Len(); i++) {
+			os << s[i];
+			if (i+1<s.Len()) {
+				os << ", ";
+			}
+		}
+		os << "]";
+	    return os;
+	}
+};
+
+template <typename T, typename U>
+struct AssociatedSlices {
+	Slice<T> first;
+	Slice<U> second;
+
+	struct Elems {
+		T& First;
+		U& Second;
+
+		Elems& operator=(const Elems& other) {
+			this->First=other.First;
+			this->Second=other.Second;
+			return *this;
+		}
+
+		friend void swap(Elems l, Elems r) { 
+			std::swap(l.First, r.First);
+			std::swap(l.Second, r.Second);
+		}
+
+		friend bool operator>(const Elems l, const Elems r) {
+			if (l.First>r.First) { return true; }
+			if (l.First==r.First && l.Second>r.Second) { return true; }
+			return false;
+		}
+		friend bool operator<(const Elems l, const Elems r) {
+			if (l.First<r.First) { return true; }
+			if (l.First==r.First && l.Second<r.Second) { return true; }
+			return false;
+		}
+		friend bool operator>=(const Elems l, const Elems r) {
+			if (l.First>r.First) { return true; }
+			if (l.First==r.First && l.Second>=r.Second) { return true; }
+			return false;
+		}
+		friend bool operator<=(const Elems l, const Elems r) {
+			if (l.First<r.First) { return true; }
+			if (l.First==r.First && l.Second<=r.Second) { return true; }
+			return false;
+		}
+		friend bool operator!=(const Elems l, const Elems r) {
+			return l.First != r.First && l.Second!=r.Second;
+		}
+		friend bool operator==(const Elems l, const Elems r) {
+			return l.First == r.First && l.Second==r.Second;
+		}
+
+		friend std::ostream& operator<<(std::ostream& os, Elems e) {
+			os << "{First: " << e.First << ", Second: " << e.Second << "}";
+			return os;
+		}
+	};
+
+	AssociatedSlices(Slice<T> one, Slice<U> two): first(one), second(two) {
+		if (one.Len()!=two.Len()) {
+			throw Err::ValuesDidNotMatch{
+				.Desc="Associated slice lengths must match",
+				.First=one.Len(), .Second=two.Len(),
+			};
+		}
+	}
+
+	inline size_t Len() { return first.Len(); }
+
+	Elems operator[](size_t idx) {
+		if (idx>=first.Len()) {
+			throw Err::IndexOutOfBounds{ .Len=first.Len(), .Idx=idx };
+		}
+		return Elems{ .First=this->first[idx], .Second=this->second[idx], };
+	}
+
+	friend std::ostream& operator<<(std::ostream& os, AssociatedSlices<T, U> a) {
+		os << "AssociatedSlices(" << a.first.Len() << ")[";
+		for (size_t i=0; i<a.first.Len(); i++) {
+			os << a[i];
+			if (i+1<a.first.Len()) {
+				os << ", ";
+			}
+		}
+		os << "]";
+	    return os;
 	}
 };
 
 namespace Heap {
 
-template <typename T, typename OP>
-void heapHelper(Slice<T> s, size_t curIdx, OP op) {
+template <typename T, typename U>
+void heapHelper(T s, size_t curIdx, bool(*cmp)(U l, U r)) {
 	size_t largest=curIdx;
 	size_t left=2*curIdx+1;
 	size_t right=2*curIdx+2;
 
-	if (left<s.Len() && op(s[left], s[largest])) {
+	if (left<s.Len() && cmp(s[left], s[largest])) {
 		largest=left;
 	}
-	if (right<s.Len() && op(s[right], s[largest])) {
+	if (right<s.Len() && cmp(s[right], s[largest])) {
 		largest=right;
 	}
 
 	if (largest!=curIdx) {
-		T tmp=s[curIdx];
-		s[curIdx]=s[largest];
-		s[largest]=tmp;
-		heapHelper(s, largest, op);
+		using std::swap;
+		swap(s[curIdx], s[largest]);
+		heapHelper<T, U>(s, largest, cmp);
 	}
 }
 
-template <typename T>
-void Max(Slice<T> s) {
+template <typename T, typename U>
+void Max(T s) {
 	int startNode=(s.Len()/2)-1;
-	auto op=[](T a, T b) { return a>b; };
+	auto op=[](U a, U b) { return a>b; };
 	for (size_t i=startNode; i>0; i--) {
-		heapHelper<T>(s, i, op);
+		heapHelper<T, U>(s, i, op);
 	}
-	heapHelper<T>(s, 0, op);
+	heapHelper<T, U>(s, 0, op);
+}
+
+template <typename T, typename U>
+void Min(T s) {
+	int startNode=(s.Len()/2)-1;
+	auto op=[](U a, U b) { return a<b; };
+	for (size_t i=startNode; i>0; i--) {
+		heapHelper<T, U>(s, i, op);
+	}
+	heapHelper<T, U>(s, 0, op);
 }
 
 template <typename T>
-void Min(Slice<T> s) {
-	int startNode=(s.Len()/2)-1;
-	auto op=[](T a, T b) { return a<b; };
-	for (size_t i=startNode; i>0; i--) {
-		heapHelper<T>(s, i, op);
-	}
-	heapHelper<T>(s, 0, op);
-}
+void Max(Slice<T> s) { Max<Slice<T>, T>(s); }
+
+template <typename T>
+void Min(Slice<T> s) { Min<Slice<T>, T>(s); }
+
 
 };
-
-template <typename T>
-std::ostream& operator<<(std::ostream& os, Slice<T> s) {
-	os << "Slice[";
-	for (size_t i=0; i<s.Len(); i++) {
-		os << s[i];
-		if (i+1<s.Len()) {
-			os << ", ";
-		}
-	}
-	os << "]";
-    return os;
-}
-
-template <typename T, size_t N>
-std::ostream& operator<<(std::ostream& os, FixedSlice<T, N> s) {
-	os << "FixedSlice(" << s.Len() << ")[";
-	for (size_t i=0; i<s.Len(); i++) {
-		os << s[i];
-		if (i+1<s.Len()) {
-			os << ", ";
-		}
-	}
-	os << "]";
-    return os;
-}
-
-template <typename T, size_t N>
-std::ostream& operator<<(std::ostream& os, FixedRing<T, N> s) {
-	os << "FixedRing(" << s.Len() << ")[";
-	for (size_t i=0; i<s.Len(); i++) {
-		os << s[i];
-		if (i+1<s.Len()) {
-			os << ", ";
-		}
-	}
-	os << "]";
-    return os;
-}
 
 #endif

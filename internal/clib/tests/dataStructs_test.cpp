@@ -346,6 +346,33 @@ extern "C" bool TestFixedRingPut(void) {
 	return true;
 }
 
+extern "C" bool TestAssociatedSlicesConstructor(void) {
+	double data[10]={};
+	int data2[10]={};
+	for (int i=0; i<10; i++) {
+		data[i]=i;
+		data2[i]=i;
+	}
+	
+	Slice<double> s1(data, 10);
+	Slice<int> s2(data2, 10);
+	AssociatedSlices<double, int> a(s1, s2);
+
+	for (int i=0; i<10; i++) {
+		EQ(a[i].First, (double)i);
+		EQ(a[i].Second, i);
+		EQ(&a[i].First, &data[i]);
+		EQ(&a[i].Second, &data2[i]);
+	}
+
+	a[0].First=10;
+	a[0].Second=10;
+	EQ(a[0].First, data[0]);
+	EQ(a[0].Second, data2[0]);
+
+	return true;
+}
+
 extern "C" bool TestMaxHeap(void) {
 	double data[10]={};
 	for (int i=0; i<10; i++) {
@@ -354,7 +381,7 @@ extern "C" bool TestMaxHeap(void) {
 	
 	Slice<double> s(data, 10);
 	Heap::Max(s);
-
+	
 	double tmp[10]={9, 8, 6, 7, 4, 5, 2, 0, 3, 1};
 	for (int i=0; i<10; i++) {
 		EQ(data[i], tmp[i]);

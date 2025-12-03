@@ -10,6 +10,14 @@ struct OOM {
 	const char *Desc;
 };
 
+template <typename T>
+struct ValuesDidNotMatch {
+	const char *Msg = "Values were expected to match";
+	const char *Desc;
+	const T First;
+	const T Second;
+};
+
 struct IndexOutOfBounds {
 	const char *Msg = "Index out of bounds";
 	const size_t Len;
