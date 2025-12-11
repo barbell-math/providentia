@@ -214,7 +214,7 @@ inline Vec2 WeightedAvg(
 }
 
 // Calculates a centered rolling weighted average. The weights are slid across
-// the data in a window like fassion and the center data point is updated to be
+// the data in a window like fashion and the center data point is updated to be
 // the calculated average.
 template <size_t N>
 void CenteredRollingWeightedAvg(
@@ -274,16 +274,16 @@ size_t NSmallestMinimums(
 	tmpVals.Fill(maxVal);
 	AssociatedSlices<T, size_t> heap(tmpVals, mins);
 
-	for (size_t i=radius; i<data.Len()-radius; i++) {
+	for (size_t i=radius; i<data.Len()-radius; ) {
 		for (size_t j=i-radius+1; j<=i; j++) {
 			if (data[j]>=data[j-1]) {
-				i+=(j-(i-radius)-1);
+				i+=j-(i-radius);
 				goto outerLoopEnd;
 			}
 		}
 		for (size_t j=i+1; j<i+radius+1; j++) {
 			if (data[j]<=data[j-1]) {
-				i=j-1;
+				i=j;
 				goto outerLoopEnd;
 			}
 		}
@@ -296,7 +296,7 @@ size_t NSmallestMinimums(
 				typename AssociatedSlices<T, size_t>::Elems
 			>(heap);
 			numMins++;
-			i+=radius;
+			i+=radius+1;
 		}
 
 	outerLoopEnd:
@@ -307,9 +307,50 @@ size_t NSmallestMinimums(
 	return std::min(numMins, mins.Len());
 }
 
+// TODO - finish
 template <typename T>
-size_t NLargestMaximum(Slice<T> data, Slice<size_t> maxes, const T& minVal) {
-	return 0;
+size_t NLargestMaximums(
+	Slice<T> data,
+	Slice<size_t> maxes,
+	const T& minVal,
+	const size_t radius=1
+) {
+	size_t numMaxes=0;
+	Slice<T> tmpVals(maxes.Len());
+	tmpVals.Fill(minVal);
+	AssociatedSlices<T, size_t> heap(tmpVals, maxes);
+
+	for (size_t i=radius; i<data.Len()-radius; ) {
+		for (size_t j=i-radius+1; j<=i; j++) {
+			if (data[j]<=data[j-1]) {
+				i+=j-(i-radius);
+				goto outerLoopEnd;
+			}
+		}
+		for (size_t j=i+1; j<i+radius+1; j++) {
+			if (data[j]>=data[j-1]) {
+				i=j;
+				goto outerLoopEnd;
+			}
+		}
+
+		if (data[i]>heap[0].First) {
+			heap[0].First=data[i];
+			heap[0].Second=i;
+			Heap::Min<
+				AssociatedSlices<T, size_t>,
+				typename AssociatedSlices<T, size_t>::Elems
+			>(heap);
+			numMaxes++;
+			i+=radius+1;
+		}
+
+	outerLoopEnd:
+	}
+
+	tmpVals.Free();
+	if (numMaxes<maxes.Len()) { maxes.Reverse(); }
+	return std::min(numMaxes, maxes.Len());
 }
 
 // TODO

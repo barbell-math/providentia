@@ -2,8 +2,8 @@
 #include <stdbool.h>
 #include "./tests.gen.h"
 #include "./asserts.gen.h"
-#include "../dataStructs.h"
-#include "../errors.h"
+#include "./dataStructs.h"
+#include "./errors.h"
 
 extern "C" bool TestSlicePointerConstructor(void) {
 	double data[3]={};

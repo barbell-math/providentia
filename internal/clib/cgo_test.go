@@ -1,4 +1,4 @@
-package tests
+package clib
 
 import "testing"
 

@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include "./tests.gen.h"
 #include "./asserts.gen.h"
-#include "../math.h"
+#include "./math.h"
 
 extern "C" bool TestFirstDerivativeVec2SecondOrder(void) {
 	Vec2 data[3]={};

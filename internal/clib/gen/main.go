@@ -12,13 +12,13 @@ import (
 func main() {
 	sbcgotest.Generate(&sbcgotest.Opts{
 		ExitOnErr:       true,
-		SearchPath:      []string{"tests"},
-		OutputPath:      "tests",
+		SearchPath:      []string{"."},
+		OutputPath:      ".",
 		HeaderGuardName: "CLIB",
 		CXXFlags:        []string{"-Wall", "-march=native", "-std=c++23"},
 		LDFlags:         []string{"-lstdc++"},
 		AddAssertHeader: true,
-		GoPackage:       "tests",
+		GoPackage:       "clib",
 	})
 
 	g := sbcgoglue.New(sbcgoglue.Opts{
