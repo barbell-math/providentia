@@ -307,3 +307,36 @@ extern "C" bool TestNSmallestMinimumsMorePresentThanExpected(void) {
 
 	return true;
 }
+
+extern "C" bool TestNSmallestMinimumsLargerWindow(void) {
+	Vec2YOps data[12]={
+		(Vec2YOps)Vec2{.X=0, .Y=2},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=2, .Y=-1},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=0, .Y=2},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=2, .Y=0},
+		(Vec2YOps)Vec2{.X=1, .Y=-1},
+		(Vec2YOps)Vec2{.X=0, .Y=0},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=2, .Y=2},
+		(Vec2YOps)Vec2{.X=2, .Y=1},
+	};
+	size_t results[2]={};
+	size_t numMins = Math::NSmallestMinimums(
+		Slice<Vec2YOps>(data, 12),
+		Slice<size_t>(results, 2),
+		(Vec2YOps)Vec2{
+			.X=std::numeric_limits<double>::infinity(),
+			.Y=std::numeric_limits<double>::infinity(),
+		},
+		3
+	);
+
+	EQ(numMins, (size_t)1);
+	EQ(results[0], (size_t)7);
+	EQ(results[1], (size_t)0);
+
+	return true;
+}

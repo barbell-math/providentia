@@ -244,10 +244,13 @@ void CenteredRollingWeightedAvg(
 
 // Finds the N smallest minimums in the supplied data, returning the number of
 // minimums that were found (capped at `mins.Len()`). The `mins` slice will be
-// populated with the indexes of the minimums in `data`. A minimum is defined to
-// be any point that is less than its immediate left and right neighbors. This
-// is intended to be used with real-world data and should not be used to find
-// the minimum of an equation.
+// populated with the indexes of the minimums in `data`. This is intended to be
+// used with real-world data and should not be used to solve for the minimum of
+// an equation.
+//
+// A minimum is defined to be any point that has `radius` num neighbors on both
+// sides that are all decreasing up to the central point. `radius` can be set
+// higher to filter out irrelevant minimums in noisy data.
 //
 // The type T must have the standard comparison operators defined.
 //
@@ -260,16 +263,31 @@ void CenteredRollingWeightedAvg(
 // in mins will be populated where N=the return value. The indexes in `mins` are
 // are not sorted by there associated minimum values in any way.
 template <typename T>
-size_t NSmallestMinimums(Slice<T> data, Slice<size_t> mins, const T& maxVal) {
+size_t NSmallestMinimums(
+	Slice<T> data,
+	Slice<size_t> mins,
+	const T& maxVal,
+	const size_t radius=1
+) {
 	size_t numMins=0;
 	Slice<T> tmpVals(mins.Len());
 	tmpVals.Fill(maxVal);
 	AssociatedSlices<T, size_t> heap(tmpVals, mins);
 
-	for (size_t i=1; i<data.Len()-1; i++) {
-		if (data[i]>=data[i-1] || data[i]>=data[i+1]) {
-			continue;
+	for (size_t i=radius; i<data.Len()-radius; i++) {
+		for (size_t j=i-radius+1; j<=i; j++) {
+			if (data[j]>=data[j-1]) {
+				i+=(j-(i-radius)-1);
+				goto outerLoopEnd;
+			}
 		}
+		for (size_t j=i+1; j<i+radius+1; j++) {
+			if (data[j]<=data[j-1]) {
+				i=j-1;
+				goto outerLoopEnd;
+			}
+		}
+
 		if (data[i]<heap[0].First) {
 			heap[0].First=data[i];
 			heap[0].Second=i;
@@ -278,8 +296,10 @@ size_t NSmallestMinimums(Slice<T> data, Slice<size_t> mins, const T& maxVal) {
 				typename AssociatedSlices<T, size_t>::Elems
 			>(heap);
 			numMins++;
-			i++;
+			i+=radius;
 		}
+
+	outerLoopEnd:
 	}
 
 	tmpVals.Free();
@@ -287,6 +307,12 @@ size_t NSmallestMinimums(Slice<T> data, Slice<size_t> mins, const T& maxVal) {
 	return std::min(numMins, mins.Len());
 }
 
+template <typename T>
+size_t NLargestMaximum(Slice<T> data, Slice<size_t> maxes, const T& minVal) {
+	return 0;
+}
+
+// TODO
 // size_t LeftRoot(Slice<T> data, start idx)
 // size_t RightRoot(Slice<T> data, start idx)
 // [2]size_t Roots(Slice<T> data, start idx)

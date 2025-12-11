@@ -71,6 +71,8 @@ bool TestNSmallestMinimumsMoreExpectedThanPresent(void);
 
 bool TestNSmallestMinimumsMorePresentThanExpected(void);
 
+bool TestNSmallestMinimumsLargerWindow(void);
+
 
 #ifdef __cplusplus
 }

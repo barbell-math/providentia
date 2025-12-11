@@ -182,4 +182,10 @@ func runCgoTests(t *testing.T) {
 		}
 	})
 
+	t.Run("NSmallestMinimumsLargerWindow", func(t *testing.T) {
+		if !C.TestNSmallestMinimumsLargerWindow() {
+			t.Fatal()
+		}
+	})
+
 }
