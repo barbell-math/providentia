@@ -188,4 +188,22 @@ func runCgoTests(t *testing.T) {
 		}
 	})
 
+	t.Run("NLargestMaximumsMoreExpectedThanPresent", func(t *testing.T) {
+		if !C.TestNLargestMaximumsMoreExpectedThanPresent() {
+			t.Fatal()
+		}
+	})
+
+	t.Run("NLargestMaximumssMorePresentThanExpected", func(t *testing.T) {
+		if !C.TestNLargestMaximumssMorePresentThanExpected() {
+			t.Fatal()
+		}
+	})
+
+	t.Run("NLargestMaximumsLargerWindow", func(t *testing.T) {
+		if !C.TestNLargestMaximumsLargerWindow() {
+			t.Fatal()
+		}
+	})
+
 }

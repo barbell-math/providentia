@@ -340,3 +340,99 @@ extern "C" bool TestNSmallestMinimumsLargerWindow(void) {
 
 	return true;
 }
+
+extern "C" bool TestNLargestMaximumsMoreExpectedThanPresent(void) {
+	Vec2YOps data[11]={
+		(Vec2YOps)Vec2{.X=0, .Y=2},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=2, .Y=0},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=0, .Y=2},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=2, .Y=0},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=0, .Y=2},
+		(Vec2YOps)Vec2{.X=1, .Y=3},
+		(Vec2YOps)Vec2{.X=2, .Y=4},
+	};
+	size_t results[2]={};
+	size_t numMaxes = Math::NLargestMaximums(
+		Slice<Vec2YOps>(data, 11),
+		Slice<size_t>(results, 2),
+		(Vec2YOps)Vec2{
+			.X=-1*std::numeric_limits<double>::infinity(),
+			.Y=-1*std::numeric_limits<double>::infinity(),
+		}
+	);
+
+	EQ(numMaxes, (size_t)1);
+	EQ(results[0], (size_t)4);
+	EQ(results[1], (size_t)0);
+
+	return true;
+}
+
+extern "C" bool TestNLargestMaximumssMorePresentThanExpected(void) {
+	Vec2YOps data[12]={
+		(Vec2YOps)Vec2{.X=0, .Y=0},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=2, .Y=3},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=0, .Y=0},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=2, .Y=2},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=0, .Y=0},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=2, .Y=4},
+		(Vec2YOps)Vec2{.X=2, .Y=1},
+	};
+	size_t results[2]={};
+	size_t numMaxes = Math::NLargestMaximums(
+		Slice<Vec2YOps>(data, 12),
+		Slice<size_t>(results, 2),
+		(Vec2YOps)Vec2{
+			.X=-1*std::numeric_limits<double>::infinity(),
+			.Y=-1*std::numeric_limits<double>::infinity(),
+		}
+	);
+
+	EQ(numMaxes, (size_t)2);
+	EQ(results[0], (size_t)2);
+	EQ(results[1], (size_t)10);
+
+	return true;
+}
+
+extern "C" bool TestNLargestMaximumsLargerWindow(void) {
+	Vec2YOps data[12]={
+		(Vec2YOps)Vec2{.X=0, .Y=0},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=2, .Y=2},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=0, .Y=0},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=2, .Y=2},
+		(Vec2YOps)Vec2{.X=1, .Y=3},
+		(Vec2YOps)Vec2{.X=0, .Y=2},
+		(Vec2YOps)Vec2{.X=1, .Y=1},
+		(Vec2YOps)Vec2{.X=2, .Y=0},
+		(Vec2YOps)Vec2{.X=2, .Y=0},
+	};
+	size_t results[2]={};
+	size_t numMaxes = Math::NLargestMaximums(
+		Slice<Vec2YOps>(data, 12),
+		Slice<size_t>(results, 2),
+		(Vec2YOps)Vec2{
+			.X=-1*std::numeric_limits<double>::infinity(),
+			.Y=-1*std::numeric_limits<double>::infinity(),
+		},
+		3
+	);
+
+	EQ(numMaxes, (size_t)1);
+	EQ(results[0], (size_t)7);
+	EQ(results[1], (size_t)0);
+
+	return true;
+}

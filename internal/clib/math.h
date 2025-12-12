@@ -260,8 +260,8 @@ void CenteredRollingWeightedAvg(
 // `maxVal` if desired.
 //
 // If there are less than `mins.Len()` minimums found then the first N values
-// in mins will be populated where N=the return value. The indexes in `mins` are
-// are not sorted by there associated minimum values in any way.
+// in `mins` will be populated where N=the return value. The indexes in `mins`
+// are are not sorted by there associated minimum values in any way.
 template <typename T>
 size_t NSmallestMinimums(
 	Slice<T> data,
@@ -296,8 +296,8 @@ size_t NSmallestMinimums(
 				typename AssociatedSlices<T, size_t>::Elems
 			>(heap);
 			numMins++;
-			i+=radius+1;
 		}
+		i+=radius+1;
 
 	outerLoopEnd:
 	}
@@ -307,7 +307,26 @@ size_t NSmallestMinimums(
 	return std::min(numMins, mins.Len());
 }
 
-// TODO - finish
+// Finds the N largest maximums in the supplied data, returning the number of
+// maximums that were found (capped at `mins.Len()`). The `maxes` slice will be
+// populated with the indexes of the maximums in `data`. This is intended to be
+// used with real-world data and should not be used to solve for the maximum of
+// an equation.
+//
+// A maximum is defined to be any point that has `radius` num neighbors on both
+// sides that are all increasing up to the central point. `radius` can be set
+// higher to filter out irrelevant maximums in noisy data.
+//
+// The type T must have the standard comparison operators defined.
+//
+// `minVal` must be the smallest value possible for the type T. If it is not and
+// there are maximums smaller than `minVal` then those maximums will not be
+// found. This could act as a filter to find the N largest maximums greater than
+// `minVal` if desired.
+//
+// If there are less than `mins.Len()` maximums found then the first N values
+// in `maxes` will be populated where N=the return value. The indexes in `maxes`
+// are are not sorted by there associated maximum values in any way.
 template <typename T>
 size_t NLargestMaximums(
 	Slice<T> data,
@@ -342,8 +361,8 @@ size_t NLargestMaximums(
 				typename AssociatedSlices<T, size_t>::Elems
 			>(heap);
 			numMaxes++;
-			i+=radius+1;
 		}
+		i+=radius+1;
 
 	outerLoopEnd:
 	}
