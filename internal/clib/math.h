@@ -153,7 +153,7 @@ inline Vec2 ThirdDerivative(FixedSlice<Vec2, 7> data, double h) {
 }
 
 // Can be passed as N to [CalcFirstThreeDerivatives]
-constexpr size_t SecondFirstOrderApprox = 5;
+constexpr size_t SecondOrderApprox = 5;
 // Can be passed as N to [CalcFirstThreeDerivatives]
 constexpr size_t FourthOrderApprox = 7;
 

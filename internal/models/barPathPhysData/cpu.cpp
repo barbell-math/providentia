@@ -57,7 +57,7 @@ enum BarPathCalcErrCode_t calcDerivatives(
 
 	switch (opts->ApproxErr) {
 	case SecondOrder:
-		Math::CalcFirstThreeDerivatives<Math::SecondFirstOrderApprox>(
+		Math::CalcFirstThreeDerivatives<Math::SecondOrderApprox>(
 			Slice<Math::Vec2>((Math::Vec2*)data->pos, data->timeLen),
 			Slice<Math::Vec2>((Math::Vec2*)data->vel, data->timeLen),
 			Slice<Math::Vec2>((Math::Vec2*)data->acc, data->timeLen),
