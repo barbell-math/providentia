@@ -102,6 +102,35 @@ extern "C" bool TestSliceSubslice(void) {
 	return true;
 }
 
+extern "C" bool TestSliceIterator(void) {
+	double data[3]={};
+	for (int i=0; i<3; i++) {
+		data[i]=i;
+	}
+
+	Slice<double> s(data, 3);
+
+	size_t i=0;
+	for (double& it : s) {
+		EQ(data[i], s[i]);
+		EQ(&data[i], &s[i]);
+		EQ(it, s[i]);
+		i++;
+	}
+	EQ(i, s.Len());
+
+	i=0;
+	for (const double& it : s) {
+		EQ(data[i], s[i]);
+		EQ(&data[i], &s[i]);
+		EQ(it, s[i]);
+		i++;
+	}
+	EQ(i, s.Len());
+
+	return true;
+}
+
 extern "C" bool TestFixedSlicePointerConstructor(void) {
 	double data[3]={};
 	for (int i=0; i<3; i++) {
@@ -248,6 +277,35 @@ extern "C" bool TestFixedSliceSubslice(void) {
 	return true;
 }
 
+extern "C" bool TestFixedSliceIterator(void) {
+	double data[3]={};
+	for (int i=0; i<3; i++) {
+		data[i]=i;
+	}
+
+	FixedSlice<double, 3> s(data);
+
+	size_t i=0;
+	for (double& it : s) {
+		EQ(data[i], s[i]);
+		EQ(&data[i], &s[i]);
+		EQ(it, s[i]);
+		i++;
+	}
+	EQ(i, s.Len());
+
+	i=0;
+	for (const double& it : s) {
+		EQ(data[i], s[i]);
+		EQ(&data[i], &s[i]);
+		EQ(it, s[i]);
+		i++;
+	}
+	EQ(i, s.Len());
+
+	return true;
+}
+
 extern "C" bool TestFixedRingPointerConstructor(void) {
 	double data[3]={};
 	for (int i=0; i<3; i++) {
@@ -346,6 +404,35 @@ extern "C" bool TestFixedRingPut(void) {
 	return true;
 }
 
+extern "C" bool TestFixedRingIterator(void) {
+	double data[3]={};
+	for (int i=0; i<3; i++) {
+		data[i]=i;
+	}
+
+	FixedRing<double, 3> r(data);
+
+	size_t i=0;
+	for (double& it : r) {
+		EQ(data[i], r[i]);
+		EQ(&data[i], &r[i]);
+		EQ(it, r[i]);
+		i++;
+	}
+	EQ(i, r.Len());
+
+	i=0;
+	for (const double& it : r) {
+		EQ(data[i], r[i]);
+		EQ(&data[i], &r[i]);
+		EQ(it, r[i]);
+		i++;
+	}
+	EQ(i, r.Len());
+
+	return true;
+}
+
 extern "C" bool TestAssociatedSlicesConstructor(void) {
 	double data[10]={};
 	int data2[10]={};
@@ -369,42 +456,6 @@ extern "C" bool TestAssociatedSlicesConstructor(void) {
 	a[0].Second=10;
 	EQ(a[0].First, data[0]);
 	EQ(a[0].Second, data2[0]);
-
-	return true;
-}
-
-extern "C" bool TestMaxHeap(void) {
-	double data[10]={};
-	for (int i=0; i<10; i++) {
-		data[i]=i;
-	}
-	
-	Slice<double> s(data, 10);
-	Heap::Max(s);
-	
-	double tmp[10]={9, 8, 6, 7, 4, 5, 2, 0, 3, 1};
-	for (int i=0; i<10; i++) {
-		EQ(data[i], tmp[i]);
-		EQ(s[i], tmp[i]);
-	}
-
-	return true;
-}
-
-extern "C" bool TestMinHeap(void) {
-	double data[10]={};
-	for (int i=0; i<10; i++) {
-		data[i]=10-i;
-	}
-	
-	Slice<double> s(data, 10);
-	Heap::Min(s);
-
-	double tmp[10]={1, 2, 4, 3, 6, 5, 8, 10, 7, 9};
-	for (int i=0; i<10; i++) {
-		EQ(data[i], tmp[i]);
-		EQ(s[i], tmp[i]);
-	}
 
 	return true;
 }

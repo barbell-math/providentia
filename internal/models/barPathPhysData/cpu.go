@@ -240,7 +240,7 @@ func Calc(
 	pinner.Pin(baseData.minPower)
 	pinner.Pin(baseData.maxPower)
 
-	err := C.calcBarPathPhysData(
+	err := C.CalcBarPathPhysData(
 		(*C.barPathData_t)(unsafe.Pointer(&baseData)),
 		(*C.barPathCalcHyperparams_t)(unsafe.Pointer(barPathCalcParams)),
 	)

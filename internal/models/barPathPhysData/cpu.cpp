@@ -7,6 +7,29 @@
 #include "../../clib/glue.h"
 #include "../../clib/common.h"
 
+namespace BarPathCalc {
+
+struct AbsVec2YOps : Math::Vec2 {
+	friend bool operator>(const AbsVec2YOps l, const AbsVec2YOps r) {
+		return fabs(l.Y) > fabs(r.Y);
+	}
+	friend bool operator<(const AbsVec2YOps l, const AbsVec2YOps r) {
+		return fabs(l.Y) < fabs(r.Y);
+	}
+	friend bool operator>=(const AbsVec2YOps l, const AbsVec2YOps r) {
+		return fabs(l.Y) >= fabs(r.Y);
+	}
+	friend bool operator<=(const AbsVec2YOps l, const AbsVec2YOps r) {
+		return fabs(l.Y) <= fabs(r.Y);
+	}
+	friend bool operator!=(const AbsVec2YOps l, const AbsVec2YOps r) {
+		return fabs(l.Y) != fabs(r.Y);
+	}
+	friend bool operator==(const AbsVec2YOps l, const AbsVec2YOps r) {
+		return fabs(l.Y) == fabs(r.Y);
+	}
+};
+
 enum BarPathCalcErrCode_t validateSuppliedData(
 	barPathData_t* data,
 	barPathCalcHyperparams_t* opts
@@ -16,11 +39,9 @@ enum BarPathCalcErrCode_t validateSuppliedData(
 	for (int i=1; i<data->timeLen; i++) {
 		double_t iterH=data->time[i]-data->time[i-1];
 		if (iterH<0) {
-			std::cout << i << ": " << data->time[i] << ", " << data->time[i-1] << std::endl;
 			return TimeSeriesNotIncreasingErr;
 		}
 		if (fabs(iterH-h) > opts->TimeDeltaEps) {
-			std::cout << fabs(iterH-h) << std::endl;
 			return TimeSeriesNotMonotonicErr;
 		}
 	}
@@ -37,19 +58,19 @@ enum BarPathCalcErrCode_t calcDerivatives(
 	switch (opts->ApproxErr) {
 	case SecondOrder:
 		Math::CalcFirstThreeDerivatives<Math::SecondFirstOrderApprox>(
-			Slice<Vec2>((Vec2*)data->pos, data->timeLen),
-			Slice<Vec2>((Vec2*)data->vel, data->timeLen),
-			Slice<Vec2>((Vec2*)data->acc, data->timeLen),
-			Slice<Vec2>((Vec2*)data->jerk, data->timeLen),
+			Slice<Math::Vec2>((Math::Vec2*)data->pos, data->timeLen),
+			Slice<Math::Vec2>((Math::Vec2*)data->vel, data->timeLen),
+			Slice<Math::Vec2>((Math::Vec2*)data->acc, data->timeLen),
+			Slice<Math::Vec2>((Math::Vec2*)data->jerk, data->timeLen),
 			h
 		);
 		break;
 	case FourthOrder:
 		Math::CalcFirstThreeDerivatives<Math::FourthOrderApprox>(
-			Slice<Vec2>((Vec2*)data->pos, data->timeLen),
-			Slice<Vec2>((Vec2*)data->vel, data->timeLen),
-			Slice<Vec2>((Vec2*)data->acc, data->timeLen),
-			Slice<Vec2>((Vec2*)data->jerk, data->timeLen),
+			Slice<Math::Vec2>((Math::Vec2*)data->pos, data->timeLen),
+			Slice<Math::Vec2>((Math::Vec2*)data->vel, data->timeLen),
+			Slice<Math::Vec2>((Math::Vec2*)data->acc, data->timeLen),
+			Slice<Math::Vec2>((Math::Vec2*)data->jerk, data->timeLen),
 			h
 		);
 		break;
@@ -64,7 +85,7 @@ enum BarPathCalcErrCode_t runSmoother(
 	barPathData_t* data,
 	barPathCalcHyperparams_t* opts
 ) {
-	Vec2 _tmps[3]={};
+	Math::Vec2 _tmps[3]={};
 	double _weights[5]={
 		opts->SmootherWeight1,
 		opts->SmootherWeight2,
@@ -73,41 +94,40 @@ enum BarPathCalcErrCode_t runSmoother(
 		opts->SmootherWeight5,
 	};
 	Math::CenteredRollingWeightedAvg(
-		Slice<Vec2>((Vec2*)data->vel, data->timeLen),
+		Slice<Math::Vec2>((Math::Vec2*)data->vel, data->timeLen),
 		FixedSlice<double, 5>(_weights),
-		FixedRing<Vec2, 3>(_tmps)
+		FixedRing<Math::Vec2, 3>(_tmps)
 	);
 	Math::CenteredRollingWeightedAvg(
-		Slice<Vec2>((Vec2*)data->acc, data->timeLen),
+		Slice<Math::Vec2>((Math::Vec2*)data->acc, data->timeLen),
 		FixedSlice<double, 5>(_weights),
-		FixedRing<Vec2, 3>(_tmps)
+		FixedRing<Math::Vec2, 3>(_tmps)
 	);
 	Math::CenteredRollingWeightedAvg(
-		Slice<Vec2>((Vec2*)data->jerk, data->timeLen),
+		Slice<Math::Vec2>((Math::Vec2*)data->jerk, data->timeLen),
 		FixedSlice<double, 5>(_weights),
-		FixedRing<Vec2, 3>(_tmps)
+		FixedRing<Math::Vec2, 3>(_tmps)
 	);
 
 	return NoErr;
 }
 
-// For an explanation of some of these formulas:
-// http://code.barbellmath.net/barbell-math/providentia/wiki/Bar-Path-Calcs
 enum BarPathCalcErrCode_t calcHigherOrderData(
 	barPathData_t* data,
 	barPathCalcHyperparams_t* opts
 ) {
+	Slice<Math::Vec2> vel((Math::Vec2*)data->vel, data->timeLen);
+	Slice<Math::Vec2> acc((Math::Vec2*)data->acc, data->timeLen);
+	Slice<Math::Vec2> force((Math::Vec2*)data->force, data->timeLen);
+	Slice<Math::Vec2> impulse((Math::Vec2*)data->impulse, data->timeLen);
+
 	for (int i=0; i<data->timeLen; i++) {
-		data->force[i].X=data->mass*data->acc[i].X;
-		data->force[i].Y=data->mass*data->acc[i].Y;
-		data->power[i]=(
-			data->force[i].X*data->vel[i].X + data->force[i].Y*data->vel[i].Y
-		);
-		data->impulse[i].X = data->mass*data->vel[i].X;
-		data->impulse[i].Y = data->mass*data->vel[i].Y;
-		data->work[i]=(data->mass/2) * (
-			data->vel[i].X*data->vel[i].X + data->vel[i].Y*data->vel[i].Y
-		);
+		// For an explanation of some of these formulas:
+		// http://code.barbellmath.net/barbell-math/providentia/wiki/Bar-Path-Calcs
+		force[i]=acc[i]*data->mass;
+		impulse[i]=vel[i]*data->mass;
+		data->power[i]=vel[i].Dot(force[i]);
+		data->work[i]=(data->mass/2)*(vel[i].Dot(vel[i]));
 	}
 
 	return NoErr;
@@ -117,6 +137,15 @@ enum BarPathCalcErrCode_t calcRepSplits(
 	barPathData_t* data,
 	barPathCalcHyperparams_t* opts
 ) {
+	// Slice<size_t> repCenters(data->reps);
+	// size_t numMaxes = Math::NLargestMaximums(
+	// 	Slice<AbsVec2YOps>((AbsVec2YOps*)data->pos, data->timeLen),
+	// 	repCenters,
+	// 	(AbsVec2YOps)Math::Vec2{ .X=0, .Y=0, },	// zeros because abs
+	// 	3	// TODO - make this a param in opts
+	// );
+	// std::sort(repCenters.begin(), repCenters.end());
+
 	int centersAdded=0;
 	std::vector<TimestampedVal> repCenters(data->reps);
 	for (int i=1; i<data->timeLen-1; i++) {
@@ -147,6 +176,13 @@ enum BarPathCalcErrCode_t calcRepSplits(
 		}
 	}
 	std::sort(repCenters.begin(), repCenters.end(), TimestampedVal::sortByTime);
+	//
+	// std::cout << numMaxes << ", " << centersAdded << std::endl;
+	// std::cout << absMaxes << std::endl;
+	// for (size_t i=0; i<repCenters.size(); i++) {
+	// 	std::cout << repCenters[i].Idx << " ";
+	// }
+	// std::cout << std::endl;
 
 	for (size_t i=0; i<repCenters.size(); i++) {
 		TimestampedVal& iterRep=repCenters[i];
@@ -226,28 +262,28 @@ enum BarPathCalcErrCode_t calcRepStats(
 				(PointInTime*)(&data->minVel[i]),
 				(PointInTime*)(&data->maxVel[i]),
 				PointInTime{
-					.Time=data->time[j], .Value=Math::Mag(*(Vec2*)(&data->vel[j]))
+					.Time=data->time[j], .Value=Math::Mag(*(Math::Vec2*)(&data->vel[j]))
 				}
 			);
 			setPointInTimeMinMax(
 				(PointInTime*)(&data->minAcc[i]),
 				(PointInTime*)(&data->maxAcc[i]),
 				PointInTime{
-					.Time=data->time[j], .Value=Math::Mag(*(Vec2*)(&data->acc[j]))
+					.Time=data->time[j], .Value=Math::Mag(*(Math::Vec2*)(&data->acc[j]))
 				}
 			);
 			setPointInTimeMinMax(
 				(PointInTime*)(&data->minForce[i]),
 				(PointInTime*)(&data->maxForce[i]),
 				PointInTime{
-					.Time=data->time[j], .Value=Math::Mag(*(Vec2*)(&data->force[j]))
+					.Time=data->time[j], .Value=Math::Mag(*(Math::Vec2*)(&data->force[j]))
 				}
 			);
 			setPointInTimeMinMax(
 				(PointInTime*)(&data->minImpulse[i]),
 				(PointInTime*)(&data->maxImpulse[i]),
 				PointInTime{
-					.Time=data->time[j], .Value=Math::Mag(*(Vec2*)(&data->impulse[j]))
+					.Time=data->time[j], .Value=Math::Mag(*(Math::Vec2*)(&data->impulse[j]))
 				}
 			);
 			setPointInTimeMinMax(
@@ -282,7 +318,8 @@ enum BarPathCalcErrCode_t calcRepStats(
 	return NoErr;
 }
 
-extern "C" enum BarPathCalcErrCode_t calcBarPathPhysData(
+
+extern "C" enum BarPathCalcErrCode_t CalcBarPathPhysData(
 	barPathData_t* data,
 	barPathCalcHyperparams_t* opts
 ) {
@@ -318,3 +355,5 @@ extern "C" enum BarPathCalcErrCode_t calcBarPathPhysData(
 
 	return NoErr;
 }
+
+};

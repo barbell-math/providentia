@@ -1,15 +1,38 @@
 #ifndef CGO_GLUE_MATH
 #define CGO_GLUE_MATH
 
+#include <cassert>
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
+#include <algorithm>
 #include "dataStructs.h"
+#include "algo.h"
 #include "glue.h"
+
+namespace Math {
 
 struct Vec2 {
 	double X;
 	double Y;
+
+	double Dot(Vec2& other) {
+		return this->X*other.X + this->Y*other.Y;
+	}
+
+	friend Vec2 operator*(Vec2& l, double r) {
+		return Vec2{
+			.X = l.X*r,
+			.Y = l.Y*r,
+		};
+	}
+
+	friend Vec2 operator*(Vec2 l, Vec2& r) {
+		return Vec2{
+			.X = l.X*r.X,
+			.Y = l.Y*r.Y,
+		};
+	}
 
 	friend std::ostream& operator<<(std::ostream& os, Vec2 v) {
 		os << "Vec2{X: " << v.X << ", Y: " << v.Y << "}";
@@ -58,8 +81,6 @@ struct Vec2YOps : Vec2 {
 		return l.Y == r.Y;
 	}
 };
-
-namespace Math {
 
 // Operators -------------------------------------------------------------------
 inline double Mag(Vec2 v) {
@@ -269,6 +290,8 @@ size_t NSmallestMinimums(
 	const T& maxVal,
 	const size_t radius=1
 ) {
+	assert(radius>0);
+
 	size_t numMins=0;
 	Slice<T> tmpVals(mins.Len());
 	tmpVals.Fill(maxVal);
@@ -303,7 +326,7 @@ size_t NSmallestMinimums(
 	}
 
 	tmpVals.Free();
-	if (numMins<mins.Len()) { mins.Reverse(); }
+	if (numMins<mins.Len()) { std::reverse(mins.begin(), mins.end()); }
 	return std::min(numMins, mins.Len());
 }
 
@@ -334,6 +357,8 @@ size_t NLargestMaximums(
 	const T& minVal,
 	const size_t radius=1
 ) {
+	assert(radius>0);
+
 	size_t numMaxes=0;
 	Slice<T> tmpVals(maxes.Len());
 	tmpVals.Fill(minVal);
@@ -368,7 +393,7 @@ size_t NLargestMaximums(
 	}
 
 	tmpVals.Free();
-	if (numMaxes<maxes.Len()) { maxes.Reverse(); }
+	if (numMaxes<maxes.Len()) { std::reverse(maxes.begin(), maxes.end()); }
 	return std::min(numMaxes, maxes.Len());
 }
 

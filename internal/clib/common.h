@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// TODO - DELETE!!!
 struct TimestampedVal {
 	int Idx;
 	double Time;
@@ -18,6 +19,7 @@ struct TimestampedVal {
 	}
 };
 
+// TODO - DELETE!!!
 struct PointInTime {
 	double Time;
 	double Value;

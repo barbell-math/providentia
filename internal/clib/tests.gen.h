@@ -15,11 +15,17 @@ extern "C" {
 #endif
 
 
+bool TestMaxHeap(void);
+
+bool TestMinHeap(void);
+
 bool TestSlicePointerConstructor(void);
 
 bool TestSliceBracketOperator(void);
 
 bool TestSliceSubslice(void);
+
+bool TestSliceIterator(void);
 
 bool TestFixedSlicePointerConstructor(void);
 
@@ -31,6 +37,8 @@ bool TestFixedSliceBracketOperator(void);
 
 bool TestFixedSliceSubslice(void);
 
+bool TestFixedSliceIterator(void);
+
 bool TestFixedRingPointerConstructor(void);
 
 bool TestFixedRingFixedSliceConstructor(void);
@@ -41,11 +49,9 @@ bool TestFixedRingSubSliceConstructor(void);
 
 bool TestFixedRingPut(void);
 
+bool TestFixedRingIterator(void);
+
 bool TestAssociatedSlicesConstructor(void);
-
-bool TestMaxHeap(void);
-
-bool TestMinHeap(void);
 
 bool TestFirstDerivativeVec2SecondOrder(void);
 

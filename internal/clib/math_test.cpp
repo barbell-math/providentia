@@ -4,16 +4,16 @@
 #include "./math.h"
 
 extern "C" bool TestFirstDerivativeVec2SecondOrder(void) {
-	Vec2 data[3]={};
+	Math::Vec2 data[3]={};
 
 	for (int i=0; i<3; i++) {
 		data[i].X=1;
 		data[i].Y=i;
 	}
-	Vec2 res=Math::FirstDerivative(FixedSlice<Vec2, 3>(data), 1);
+	Math::Vec2 res=Math::FirstDerivative(FixedSlice<Math::Vec2,3>(data), 1);
 	EQ(res.X, 0.0)
 	EQ(res.Y, 1.0)
-	res=Math::FirstDerivative(FixedSlice<Vec2, 3>(data), 0.5);
+	res=Math::FirstDerivative(FixedSlice<Math::Vec2,3>(data), 0.5);
 	EQ(res.X, 0.0)
 	EQ(res.Y, 2.0)
 
@@ -21,7 +21,7 @@ extern "C" bool TestFirstDerivativeVec2SecondOrder(void) {
 		data[i].X=i*i;
 		data[i].Y=i*i*i;
 	}
-	res=Math::FirstDerivative(FixedSlice<Vec2, 3>(data), 1);
+	res=Math::FirstDerivative(FixedSlice<Math::Vec2,3>(data), 1);
 	EQ(res.X, 2.0)
 	EQ(res.Y, 4.0)	// Not 3 because second order is not accurate enough
 
@@ -29,16 +29,16 @@ extern "C" bool TestFirstDerivativeVec2SecondOrder(void) {
 }
 
 extern "C" bool TestFirstDerivativeVec2FourthOrder(void) {
-	Vec2 data[5]={};
+	Math::Vec2 data[5]={};
 
 	for (int i=0; i<5; i++) {
 		data[i].X=1;
 		data[i].Y=i;
 	}
-	Vec2 res=Math::FirstDerivative(FixedSlice<Vec2, 5>(data), 1);
+	Math::Vec2 res=Math::FirstDerivative(FixedSlice<Math::Vec2,5>(data), 1);
 	EQ(res.X, 0.0)
 	EQ(res.Y, 1.0)
-	res=Math::FirstDerivative(FixedSlice<Vec2, 5>(data), 0.5);
+	res=Math::FirstDerivative(FixedSlice<Math::Vec2,5>(data), 0.5);
 	EQ(res.X, 0.0)
 	EQ(res.Y, 2.0)
 
@@ -46,7 +46,7 @@ extern "C" bool TestFirstDerivativeVec2FourthOrder(void) {
 		data[i].X=i*i;
 		data[i].Y=i*i*i;
 	}
-	res=Math::FirstDerivative(FixedSlice<Vec2, 5>(data), 1);
+	res=Math::FirstDerivative(FixedSlice<Math::Vec2,5>(data), 1);
 	EQ(res.X, 2.0 * 2.0) // 2x
 	EQ(res.Y, 3.0 * 2.0 * 2.0) // 3x^2
 
@@ -54,16 +54,16 @@ extern "C" bool TestFirstDerivativeVec2FourthOrder(void) {
 }
 
 extern "C" bool TestSecondDerivativeVec2SecondOrder(void) {
-	Vec2 data[3]={};
+	Math::Vec2 data[3]={};
 
 	for (int i=0; i<3; i++) {
 		data[i].X=1;
 		data[i].Y=i;
 	}
-	Vec2 res=Math::SecondDerivative(FixedSlice<Vec2, 3>(data), 1);
+	Math::Vec2 res=Math::SecondDerivative(FixedSlice<Math::Vec2,3>(data), 1);
 	EQ(res.X, 0.0)
 	EQ(res.Y, 0.0)
-	res=Math::SecondDerivative(FixedSlice<Vec2, 3>(data), 0.5);
+	res=Math::SecondDerivative(FixedSlice<Math::Vec2,3>(data), 0.5);
 	EQ(res.X, 0.0)
 	EQ(res.Y, 0.0)
 
@@ -71,10 +71,10 @@ extern "C" bool TestSecondDerivativeVec2SecondOrder(void) {
 		data[i].X=i*i;
 		data[i].Y=i*i*i;
 	}
-	res=Math::SecondDerivative(FixedSlice<Vec2, 3>(data), 1);
+	res=Math::SecondDerivative(FixedSlice<Math::Vec2,3>(data), 1);
 	EQ(res.X, 2.0)
 	EQ(res.Y, 6.0)
-	res=Math::SecondDerivative(FixedSlice<Vec2, 3>(data), 0.5);
+	res=Math::SecondDerivative(FixedSlice<Math::Vec2,3>(data), 0.5);
 	EQ(res.X, 8.0)
 	EQ(res.Y, 24.0)
 
@@ -82,16 +82,16 @@ extern "C" bool TestSecondDerivativeVec2SecondOrder(void) {
 }
 
 extern "C" bool TestSecondDerivativeVec2FourthOrder(void) {
-	Vec2 data[5]={};
+	Math::Vec2 data[5]={};
 
 	for (int i=0; i<5; i++) {
 		data[i].X=1;
 		data[i].Y=i;
 	}
-	Vec2 res=Math::SecondDerivative(FixedSlice<Vec2, 5>(data), 1);
+	Math::Vec2 res=Math::SecondDerivative(FixedSlice<Math::Vec2,5>(data), 1);
 	EQ(res.X, 0.0)
 	EQ(res.Y, 0.0)
-	res=Math::SecondDerivative(FixedSlice<Vec2, 5>(data), 0.5);
+	res=Math::SecondDerivative(FixedSlice<Math::Vec2,5>(data), 0.5);
 	EQ(res.X, 0.0)
 	EQ(res.Y, 0.0)
 
@@ -99,10 +99,10 @@ extern "C" bool TestSecondDerivativeVec2FourthOrder(void) {
 		data[i].X=i*i;
 		data[i].Y=i*i*i;
 	}
-	res=Math::SecondDerivative(FixedSlice<Vec2, 5>(data), 1);
+	res=Math::SecondDerivative(FixedSlice<Math::Vec2,5>(data), 1);
 	EQ(res.X, 2.0)
 	EQ(res.Y, 12.0)
-	res=Math::SecondDerivative(FixedSlice<Vec2, 5>(data), 0.5);
+	res=Math::SecondDerivative(FixedSlice<Math::Vec2,5>(data), 0.5);
 	EQ(res.X, 8.0)
 	EQ(res.Y, 48.0)
 
@@ -110,16 +110,16 @@ extern "C" bool TestSecondDerivativeVec2FourthOrder(void) {
 }
 
 extern "C" bool TestThirdDerivativeVec2SecondOrder(void) {
-	Vec2 data[5]={};
+	Math::Vec2 data[5]={};
 
 	for (int i=0; i<5; i++) {
 		data[i].X=i*i;
 		data[i].Y=i*i*i;
 	}
-	Vec2 res=Math::ThirdDerivative(FixedSlice<Vec2, 5>(data), 1);
+	Math::Vec2 res=Math::ThirdDerivative(FixedSlice<Math::Vec2,5>(data), 1);
 	EQ(res.X, 0.0)
 	EQ(res.Y, 6.0)
-	res=Math::ThirdDerivative(FixedSlice<Vec2, 5>(data), 0.5);
+	res=Math::ThirdDerivative(FixedSlice<Math::Vec2,5>(data), 0.5);
 	EQ(res.X, 0.0)
 	EQ(res.Y, 48.0)
 
@@ -127,16 +127,16 @@ extern "C" bool TestThirdDerivativeVec2SecondOrder(void) {
 }
 
 extern "C" bool TestThirdDerivativeVec2FourthOrder(void) {
-	Vec2 data[7]={};
+	Math::Vec2 data[7]={};
 
 	for (int i=0; i<7; i++) {
 		data[i].X=i*i;
 		data[i].Y=i*i*i;
 	}
-	Vec2 res=Math::ThirdDerivative(FixedSlice<Vec2, 7>(data), 1);
+	Math::Vec2 res=Math::ThirdDerivative(FixedSlice<Math::Vec2,7>(data), 1);
 	EQ(res.X, 0.0)
 	EQ(res.Y, 6.0)
-	res=Math::ThirdDerivative(FixedSlice<Vec2, 7>(data), 0.5);
+	res=Math::ThirdDerivative(FixedSlice<Math::Vec2,7>(data), 0.5);
 	EQ(res.X, 0.0)
 	EQ(res.Y, 48.0)
 
@@ -144,16 +144,16 @@ extern "C" bool TestThirdDerivativeVec2FourthOrder(void) {
 }
 
 extern "C" bool TestWeightedAvgVec2(void) {
-	Vec2 data[5]={
-		Vec2{.X=0, .Y=0},
-		Vec2{.X=1, .Y=1},
-		Vec2{.X=2, .Y=2},
-		Vec2{.X=1, .Y=1},
-		Vec2{.X=0, .Y=0},
+	Math::Vec2 data[5]={
+		Math::Vec2{.X=0, .Y=0},
+		Math::Vec2{.X=1, .Y=1},
+		Math::Vec2{.X=2, .Y=2},
+		Math::Vec2{.X=1, .Y=1},
+		Math::Vec2{.X=0, .Y=0},
 	};
 	double weights[5]={0,1,2,1,0};
-	Vec2 avg=Math::WeightedAvg(
-		FixedSlice<Vec2, 5>(data), FixedSlice<double, 5>(weights)
+	Math::Vec2 avg=Math::WeightedAvg(
+		FixedSlice<Math::Vec2,5>(data), FixedSlice<double, 5>(weights)
 	);
 	EQ(avg.X, 1.5)
 	EQ(avg.Y, 1.5)
@@ -162,16 +162,16 @@ extern "C" bool TestWeightedAvgVec2(void) {
 }
 
 extern "C" bool TestWeightedAvgVec2WeightProvided(void) {
-	Vec2 data[5]={
-		Vec2{.X=0, .Y=0},
-		Vec2{.X=1, .Y=1},
-		Vec2{.X=2, .Y=2},
-		Vec2{.X=1, .Y=1},
-		Vec2{.X=0, .Y=0},
+	Math::Vec2 data[5]={
+		Math::Vec2{.X=0, .Y=0},
+		Math::Vec2{.X=1, .Y=1},
+		Math::Vec2{.X=2, .Y=2},
+		Math::Vec2{.X=1, .Y=1},
+		Math::Vec2{.X=0, .Y=0},
 	};
 	double weights[5]={0,1,2,1,0};
-	Vec2 avg=Math::WeightedAvg(
-		FixedSlice<Vec2, 5>(data), FixedSlice<double, 5>(weights), 4
+	Math::Vec2 avg=Math::WeightedAvg(
+		FixedSlice<Math::Vec2,5>(data), FixedSlice<double, 5>(weights), 4
 	);
 	EQ(avg.X, 1.5)
 	EQ(avg.Y, 1.5)
@@ -180,19 +180,19 @@ extern "C" bool TestWeightedAvgVec2WeightProvided(void) {
 }
 
 extern "C" bool TestCenteredRollingWeightedAvgVec2WeightsSumToZero(void) {
-	Vec2 data[5]={
-		Vec2{.X=0, .Y=0},
-		Vec2{.X=1, .Y=1},
-		Vec2{.X=2, .Y=2},
-		Vec2{.X=1, .Y=1},
-		Vec2{.X=0, .Y=0},
+	Math::Vec2 data[5]={
+		Math::Vec2{.X=0, .Y=0},
+		Math::Vec2{.X=1, .Y=1},
+		Math::Vec2{.X=2, .Y=2},
+		Math::Vec2{.X=1, .Y=1},
+		Math::Vec2{.X=0, .Y=0},
 	};
-	Vec2 tmps[2]={};
+	Math::Vec2 tmps[2]={};
 	double weights[3]={1,-2,1};
 	Math::CenteredRollingWeightedAvg(
-		Slice<Vec2>(data, 5),
+		Slice<Math::Vec2>(data, 5),
 		FixedSlice<double, 3>(weights),
-		FixedRing<Vec2, 2>(tmps)
+		FixedRing<Math::Vec2,2>(tmps)
 	);
 
 	EQ(data[0].X, 0.0)
@@ -210,21 +210,21 @@ extern "C" bool TestCenteredRollingWeightedAvgVec2WeightsSumToZero(void) {
 }
 
 extern "C" bool TestCenteredRollingWeightedAvgVec2(void) {
-	Vec2 data[7]={
-		Vec2{.X=0, .Y=0},
-		Vec2{.X=1, .Y=1},
-		Vec2{.X=2, .Y=2},
-		Vec2{.X=1, .Y=1},
-		Vec2{.X=0, .Y=0},
-		Vec2{.X=1, .Y=1},
-		Vec2{.X=2, .Y=2},
+	Math::Vec2 data[7]={
+		Math::Vec2{.X=0, .Y=0},
+		Math::Vec2{.X=1, .Y=1},
+		Math::Vec2{.X=2, .Y=2},
+		Math::Vec2{.X=1, .Y=1},
+		Math::Vec2{.X=0, .Y=0},
+		Math::Vec2{.X=1, .Y=1},
+		Math::Vec2{.X=2, .Y=2},
 	};
-	Vec2 tmps[2]={};
+	Math::Vec2 tmps[2]={};
 	double weights[3]={1,2,1};
 	Math::CenteredRollingWeightedAvg(
-		Slice<Vec2>(data, 7),
+		Slice<Math::Vec2>(data, 7),
 		FixedSlice<double, 3>(weights),
-		FixedRing<Vec2, 2>(tmps)
+		FixedRing<Math::Vec2,2>(tmps)
 	);
 
 	EQ(data[0].X, 0.0)
@@ -246,24 +246,24 @@ extern "C" bool TestCenteredRollingWeightedAvgVec2(void) {
 }
 
 extern "C" bool TestNSmallestMinimumsMoreExpectedThanPresent(void) {
-	Vec2YOps data[11]={
-		(Vec2YOps)Vec2{.X=0, .Y=0},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=2, .Y=2},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=0, .Y=0},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=2, .Y=2},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=0, .Y=0},
-		(Vec2YOps)Vec2{.X=1, .Y=-1},
-		(Vec2YOps)Vec2{.X=2, .Y=-2},
+	Math::Vec2YOps data[11]={
+		(Math::Vec2YOps)Math::Vec2{.X=0, .Y=0},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=2, .Y=2},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=0, .Y=0},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=2, .Y=2},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=0, .Y=0},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=-1},
+		(Math::Vec2YOps)Math::Vec2{.X=2, .Y=-2},
 	};
 	size_t results[2]={};
 	size_t numMins = Math::NSmallestMinimums(
-		Slice<Vec2YOps>(data, 11),
+		Slice<Math::Vec2YOps>(data, 11),
 		Slice<size_t>(results, 2),
-		(Vec2YOps)Vec2{
+		(Math::Vec2YOps)Math::Vec2{
 			.X=std::numeric_limits<double>::infinity(),
 			.Y=std::numeric_limits<double>::infinity(),
 		}
@@ -277,25 +277,25 @@ extern "C" bool TestNSmallestMinimumsMoreExpectedThanPresent(void) {
 }
 
 extern "C" bool TestNSmallestMinimumsMorePresentThanExpected(void) {
-	Vec2YOps data[12]={
-		(Vec2YOps)Vec2{.X=0, .Y=2},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=2, .Y=-1},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=0, .Y=2},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=2, .Y=0},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=0, .Y=2},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=2, .Y=-2},
-		(Vec2YOps)Vec2{.X=2, .Y=1},
+	Math::Vec2YOps data[12]={
+		(Math::Vec2YOps)Math::Vec2{.X=0, .Y=2},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=2, .Y=-1},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=0, .Y=2},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=2, .Y=0},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=0, .Y=2},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=2, .Y=-2},
+		(Math::Vec2YOps)Math::Vec2{.X=2, .Y=1},
 	};
 	size_t results[2]={};
 	size_t numMins = Math::NSmallestMinimums(
-		Slice<Vec2YOps>(data, 12),
+		Slice<Math::Vec2YOps>(data, 12),
 		Slice<size_t>(results, 2),
-		(Vec2YOps)Vec2{
+		(Math::Vec2YOps)Math::Vec2{
 			.X=std::numeric_limits<double>::infinity(),
 			.Y=std::numeric_limits<double>::infinity(),
 		}
@@ -309,25 +309,25 @@ extern "C" bool TestNSmallestMinimumsMorePresentThanExpected(void) {
 }
 
 extern "C" bool TestNSmallestMinimumsLargerWindow(void) {
-	Vec2YOps data[12]={
-		(Vec2YOps)Vec2{.X=0, .Y=2},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=2, .Y=-1},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=0, .Y=2},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=2, .Y=0},
-		(Vec2YOps)Vec2{.X=1, .Y=-1},
-		(Vec2YOps)Vec2{.X=0, .Y=0},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=2, .Y=2},
-		(Vec2YOps)Vec2{.X=2, .Y=1},
+	Math::Vec2YOps data[12]={
+		(Math::Vec2YOps)Math::Vec2{.X=0, .Y=2},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=2, .Y=-1},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=0, .Y=2},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=2, .Y=0},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=-1},
+		(Math::Vec2YOps)Math::Vec2{.X=0, .Y=0},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=2, .Y=2},
+		(Math::Vec2YOps)Math::Vec2{.X=2, .Y=1},
 	};
 	size_t results[2]={};
 	size_t numMins = Math::NSmallestMinimums(
-		Slice<Vec2YOps>(data, 12),
+		Slice<Math::Vec2YOps>(data, 12),
 		Slice<size_t>(results, 2),
-		(Vec2YOps)Vec2{
+		(Math::Vec2YOps)Math::Vec2{
 			.X=std::numeric_limits<double>::infinity(),
 			.Y=std::numeric_limits<double>::infinity(),
 		},
@@ -342,24 +342,24 @@ extern "C" bool TestNSmallestMinimumsLargerWindow(void) {
 }
 
 extern "C" bool TestNLargestMaximumsMoreExpectedThanPresent(void) {
-	Vec2YOps data[11]={
-		(Vec2YOps)Vec2{.X=0, .Y=2},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=2, .Y=0},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=0, .Y=2},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=2, .Y=0},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=0, .Y=2},
-		(Vec2YOps)Vec2{.X=1, .Y=3},
-		(Vec2YOps)Vec2{.X=2, .Y=4},
+	Math::Vec2YOps data[11]={
+		(Math::Vec2YOps)Math::Vec2{.X=0, .Y=2},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=2, .Y=0},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=0, .Y=2},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=2, .Y=0},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=0, .Y=2},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=3},
+		(Math::Vec2YOps)Math::Vec2{.X=2, .Y=4},
 	};
 	size_t results[2]={};
 	size_t numMaxes = Math::NLargestMaximums(
-		Slice<Vec2YOps>(data, 11),
+		Slice<Math::Vec2YOps>(data, 11),
 		Slice<size_t>(results, 2),
-		(Vec2YOps)Vec2{
+		(Math::Vec2YOps)Math::Vec2{
 			.X=-1*std::numeric_limits<double>::infinity(),
 			.Y=-1*std::numeric_limits<double>::infinity(),
 		}
@@ -373,25 +373,25 @@ extern "C" bool TestNLargestMaximumsMoreExpectedThanPresent(void) {
 }
 
 extern "C" bool TestNLargestMaximumssMorePresentThanExpected(void) {
-	Vec2YOps data[12]={
-		(Vec2YOps)Vec2{.X=0, .Y=0},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=2, .Y=3},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=0, .Y=0},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=2, .Y=2},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=0, .Y=0},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=2, .Y=4},
-		(Vec2YOps)Vec2{.X=2, .Y=1},
+	Math::Vec2YOps data[12]={
+		(Math::Vec2YOps)Math::Vec2{.X=0, .Y=0},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=2, .Y=3},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=0, .Y=0},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=2, .Y=2},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=0, .Y=0},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=2, .Y=4},
+		(Math::Vec2YOps)Math::Vec2{.X=2, .Y=1},
 	};
 	size_t results[2]={};
 	size_t numMaxes = Math::NLargestMaximums(
-		Slice<Vec2YOps>(data, 12),
+		Slice<Math::Vec2YOps>(data, 12),
 		Slice<size_t>(results, 2),
-		(Vec2YOps)Vec2{
+		(Math::Vec2YOps)Math::Vec2{
 			.X=-1*std::numeric_limits<double>::infinity(),
 			.Y=-1*std::numeric_limits<double>::infinity(),
 		}
@@ -405,25 +405,25 @@ extern "C" bool TestNLargestMaximumssMorePresentThanExpected(void) {
 }
 
 extern "C" bool TestNLargestMaximumsLargerWindow(void) {
-	Vec2YOps data[12]={
-		(Vec2YOps)Vec2{.X=0, .Y=0},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=2, .Y=2},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=0, .Y=0},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=2, .Y=2},
-		(Vec2YOps)Vec2{.X=1, .Y=3},
-		(Vec2YOps)Vec2{.X=0, .Y=2},
-		(Vec2YOps)Vec2{.X=1, .Y=1},
-		(Vec2YOps)Vec2{.X=2, .Y=0},
-		(Vec2YOps)Vec2{.X=2, .Y=0},
+	Math::Vec2YOps data[12]={
+		(Math::Vec2YOps)Math::Vec2{.X=0, .Y=0},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=2, .Y=2},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=0, .Y=0},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=2, .Y=2},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=3},
+		(Math::Vec2YOps)Math::Vec2{.X=0, .Y=2},
+		(Math::Vec2YOps)Math::Vec2{.X=1, .Y=1},
+		(Math::Vec2YOps)Math::Vec2{.X=2, .Y=0},
+		(Math::Vec2YOps)Math::Vec2{.X=2, .Y=0},
 	};
 	size_t results[2]={};
 	size_t numMaxes = Math::NLargestMaximums(
-		Slice<Vec2YOps>(data, 12),
+		Slice<Math::Vec2YOps>(data, 12),
 		Slice<size_t>(results, 2),
-		(Vec2YOps)Vec2{
+		(Math::Vec2YOps)Math::Vec2{
 			.X=-1*std::numeric_limits<double>::infinity(),
 			.Y=-1*std::numeric_limits<double>::infinity(),
 		},

@@ -50,11 +50,6 @@ struct Slice {
 			this->data[i]=val;
 		}
 	}
-	void Reverse() {
-		for (size_t i=0; i<this->len/2; i++) {
-			std::swap(this->data[i], this->data[this->len-i-1]);
-		}
-	}
 
 	void Free() {
 		free(this->data);
@@ -71,8 +66,58 @@ struct Slice {
 			}
 		}
 		os << "]";
-	    return os;
+		return os;
 	}
+
+	struct Iterator {
+		Slice<T> vals;
+		size_t current;
+
+		// Iterator traits
+		using iterator_category = std::bidirectional_iterator_tag;
+		using value_type = T;
+		using difference_type = std::ptrdiff_t;
+		using pointer = T*;
+		using reference = T&;
+
+		reference operator*() { return vals[current]; }
+		pointer operator->() { return &vals[current]; }
+
+		Iterator& operator++() { ++current; return *this; }
+		Iterator operator++(int) { Iterator rv = *this; ++(*this); return rv; }
+		Iterator& operator+=(size_t n) { current+=n; return *this; };
+		Iterator operator+(size_t n) { Iterator rv = *this; rv.current+=n; return rv; }
+
+		Iterator& operator--() { --current; return *this; }
+		Iterator operator--(int) { Iterator rv = *this; --(*this); return rv; }
+		Iterator& operator-=(size_t n) { current-=n; return *this; };
+		Iterator operator-(size_t n) { Iterator rv = *this; current-=n; return rv; };
+		size_t operator-(Iterator& other) { return this->current-other.current; }
+
+		reference operator[]() { return vals[current]; }
+
+		friend bool operator==(const Iterator& a, const Iterator& b) {
+			return a.current == b.current;
+		}
+		friend bool operator!=(const Iterator& a, const Iterator& b) {
+			return a.current != b.current;
+		}
+		friend bool operator>(const Iterator& a, const Iterator& b) {
+			return a.current > b.current;
+		}
+		friend bool operator>=(const Iterator& a, const Iterator& b) {
+			return a.current >= b.current;
+		}
+		friend bool operator<(const Iterator& a, const Iterator& b) {
+			return a.current < b.current;
+		}
+		friend bool operator<=(const Iterator& a, const Iterator& b) {
+			return a.current <= b.current;
+		}
+	};
+
+	Iterator begin() { return Iterator{ .vals = *this, .current = 0 }; }
+	Iterator end() { return Iterator{ .vals = *this, .current = this->len }; }
 };
 
 template<typename T, size_t N>
@@ -123,8 +168,58 @@ struct FixedSlice {
 			}
 		}
 		os << "]";
-	    return os;
+		return os;
 	}
+
+	struct Iterator {
+		FixedSlice<T, N> vals;
+		size_t current;
+
+		// Iterator traits
+		using iterator_category = std::bidirectional_iterator_tag;
+		using value_type = T;
+		using difference_type = std::ptrdiff_t;
+		using pointer = T*;
+		using reference = T&;
+
+		reference operator*() { return vals[current]; }
+		pointer operator->() { return &vals[current]; }
+
+		Iterator& operator++() { ++current; return *this; }
+		Iterator operator++(int) { Iterator rv = *this; ++(*this); return rv; }
+		Iterator& operator+=(size_t n) { current+=n; return *this; };
+		Iterator operator+(size_t n) { Iterator rv = *this; rv.current+=n; return rv; }
+
+		Iterator& operator--() { --current; return *this; }
+		Iterator operator--(int) { Iterator rv = *this; --(*this); return rv; }
+		Iterator& operator-=(size_t n) { current-=n; return *this; };
+		Iterator operator-(size_t n) { Iterator rv = *this; current-=n; return rv; };
+		size_t operator-(Iterator& other) { return this->current-other.current; }
+
+		reference operator[]() { return vals[current]; }
+
+		friend bool operator==(const Iterator& a, const Iterator& b) {
+			return a.current == b.current;
+		}
+		friend bool operator!=(const Iterator& a, const Iterator& b) {
+			return a.current != b.current;
+		}
+		friend bool operator>(const Iterator& a, const Iterator& b) {
+			return a.current > b.current;
+		}
+		friend bool operator>=(const Iterator& a, const Iterator& b) {
+			return a.current >= b.current;
+		}
+		friend bool operator<(const Iterator& a, const Iterator& b) {
+			return a.current < b.current;
+		}
+		friend bool operator<=(const Iterator& a, const Iterator& b) {
+			return a.current <= b.current;
+		}
+	};
+
+	Iterator begin() { return Iterator{ .vals = *this, .current = 0 }; }
+	Iterator end() { return Iterator{ .vals = *this, .current = N }; }
 };
 
 template<typename T, size_t N>
@@ -167,8 +262,58 @@ struct FixedRing {
 			}
 		}
 		os << "]";
-	    return os;
+		return os;
 	}
+
+	struct Iterator {
+		FixedRing<T, N> vals;
+		size_t current;
+
+		// Iterator traits
+		using iterator_category = std::bidirectional_iterator_tag;
+		using value_type = T;
+		using difference_type = std::ptrdiff_t;
+		using pointer = T*;
+		using reference = T&;
+
+		reference operator*() { return vals[current]; }
+		pointer operator->() { return &vals[current]; }
+
+		Iterator& operator++() { ++current; return *this; }
+		Iterator operator++(int) { Iterator rv = *this; ++(*this); return rv; }
+		Iterator& operator+=(size_t n) { current+=n; return *this; };
+		Iterator operator+(size_t n) { Iterator rv = *this; rv.current+=n; return rv; }
+
+		Iterator& operator--() { --current; return *this; }
+		Iterator operator--(int) { Iterator rv = *this; --(*this); return rv; }
+		Iterator& operator-=(size_t n) { current-=n; return *this; };
+		Iterator operator-(size_t n) { Iterator rv = *this; current-=n; return rv; };
+		size_t operator-(Iterator& other) { return this->current-other.current; }
+
+		reference operator[]() { return vals[current]; }
+
+		friend bool operator==(const Iterator& a, const Iterator& b) {
+			return a.current == b.current;
+		}
+		friend bool operator!=(const Iterator& a, const Iterator& b) {
+			return a.current != b.current;
+		}
+		friend bool operator>(const Iterator& a, const Iterator& b) {
+			return a.current > b.current;
+		}
+		friend bool operator>=(const Iterator& a, const Iterator& b) {
+			return a.current >= b.current;
+		}
+		friend bool operator<(const Iterator& a, const Iterator& b) {
+			return a.current < b.current;
+		}
+		friend bool operator<=(const Iterator& a, const Iterator& b) {
+			return a.current <= b.current;
+		}
+	};
+
+	Iterator begin() { return Iterator{ .vals = *this, .current = 0 }; }
+	Iterator end() { return Iterator{ .vals = *this, .current = N }; }
 };
 
 template <typename T, typename U>
@@ -251,59 +396,8 @@ struct AssociatedSlices {
 			}
 		}
 		os << "]";
-	    return os;
+		return os;
 	}
-};
-
-namespace Heap {
-
-template <typename T, typename U>
-void heapHelper(T s, size_t curIdx, bool(*cmp)(U l, U r)) {
-	size_t largest=curIdx;
-	size_t left=2*curIdx+1;
-	size_t right=2*curIdx+2;
-
-	if (left<s.Len() && cmp(s[left], s[largest])) {
-		largest=left;
-	}
-	if (right<s.Len() && cmp(s[right], s[largest])) {
-		largest=right;
-	}
-
-	if (largest!=curIdx) {
-		using std::swap;
-		swap(s[curIdx], s[largest]);
-		heapHelper<T, U>(s, largest, cmp);
-	}
-}
-
-template <typename T, typename U>
-void Max(T s) {
-	int startNode=(s.Len()/2)-1;
-	auto op=[](U a, U b) { return a>b; };
-	for (size_t i=startNode; i>0; i--) {
-		heapHelper<T, U>(s, i, op);
-	}
-	heapHelper<T, U>(s, 0, op);
-}
-
-template <typename T, typename U>
-void Min(T s) {
-	int startNode=(s.Len()/2)-1;
-	auto op=[](U a, U b) { return a<b; };
-	for (size_t i=startNode; i>0; i--) {
-		heapHelper<T, U>(s, i, op);
-	}
-	heapHelper<T, U>(s, 0, op);
-}
-
-template <typename T>
-void Max(Slice<T> s) { Max<Slice<T>, T>(s); }
-
-template <typename T>
-void Min(Slice<T> s) { Min<Slice<T>, T>(s); }
-
-
 };
 
 #endif

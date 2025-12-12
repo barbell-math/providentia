@@ -14,6 +14,18 @@ import "testing"
 
 func runCgoTests(t *testing.T) {
 
+	t.Run("MaxHeap", func(t *testing.T) {
+		if !C.TestMaxHeap() {
+			t.Fatal()
+		}
+	})
+
+	t.Run("MinHeap", func(t *testing.T) {
+		if !C.TestMinHeap() {
+			t.Fatal()
+		}
+	})
+
 	t.Run("SlicePointerConstructor", func(t *testing.T) {
 		if !C.TestSlicePointerConstructor() {
 			t.Fatal()
@@ -28,6 +40,12 @@ func runCgoTests(t *testing.T) {
 
 	t.Run("SliceSubslice", func(t *testing.T) {
 		if !C.TestSliceSubslice() {
+			t.Fatal()
+		}
+	})
+
+	t.Run("SliceIterator", func(t *testing.T) {
+		if !C.TestSliceIterator() {
 			t.Fatal()
 		}
 	})
@@ -62,6 +80,12 @@ func runCgoTests(t *testing.T) {
 		}
 	})
 
+	t.Run("FixedSliceIterator", func(t *testing.T) {
+		if !C.TestFixedSliceIterator() {
+			t.Fatal()
+		}
+	})
+
 	t.Run("FixedRingPointerConstructor", func(t *testing.T) {
 		if !C.TestFixedRingPointerConstructor() {
 			t.Fatal()
@@ -92,20 +116,14 @@ func runCgoTests(t *testing.T) {
 		}
 	})
 
+	t.Run("FixedRingIterator", func(t *testing.T) {
+		if !C.TestFixedRingIterator() {
+			t.Fatal()
+		}
+	})
+
 	t.Run("AssociatedSlicesConstructor", func(t *testing.T) {
 		if !C.TestAssociatedSlicesConstructor() {
-			t.Fatal()
-		}
-	})
-
-	t.Run("MaxHeap", func(t *testing.T) {
-		if !C.TestMaxHeap() {
-			t.Fatal()
-		}
-	})
-
-	t.Run("MinHeap", func(t *testing.T) {
-		if !C.TestMinHeap() {
 			t.Fatal()
 		}
 	})
