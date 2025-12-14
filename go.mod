@@ -26,5 +26,3 @@ require (
 	golang.org/x/sync v0.18.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
 )
-
-replace code.barbellmath.net/barbell-math/smoothbrain-cgoTest => ../smoothbrain-cgoTest // TODO - remove!
