@@ -24,5 +24,6 @@ go.work.sum
 # env file
 .env
 
+sbbs
 vim-session.vim
 **/_obj/

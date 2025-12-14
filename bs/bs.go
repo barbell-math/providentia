@@ -5,6 +5,7 @@ import (
 )
 
 func main() {
+	sbbs.RegisterInstallBashAutocompleteTarget()
 	sbbs.RegisterBsBuildTarget()
 	sbbs.RegisterDepTargets()
 	sbbs.RegisterGoMarkDocTargets(sbbs.NewReadmeOpts().
