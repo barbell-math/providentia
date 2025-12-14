@@ -132,6 +132,7 @@ func TestTimeSeriesNotMonotonicErr(t *testing.T) {
 		ApproxErr:     types.FourthOrder,
 		MinNumSamples: 5,
 		TimeDeltaEps:  1e-6,
+		NoiseFilter:   3,
 	}
 	baseData := dal.BulkCreateTrainingLogsParams{
 		Weight: 1,
@@ -164,6 +165,7 @@ func TestFractionalSets(t *testing.T) {
 		ApproxErr:     types.SecondOrder,
 		MinNumSamples: 5,
 		TimeDeltaEps:  1e-6,
+		NoiseFilter:   3,
 	}
 	baseData := dal.BulkCreateTrainingLogsParams{
 		Weight: 1,
@@ -379,6 +381,7 @@ func TestQuadPolynomialSecondOrderAccuracy(t *testing.T) {
 			ApproxErr:     types.SecondOrder,
 			MinNumSamples: 10,
 			TimeDeltaEps:  1e-6,
+			NoiseFilter:   3,
 		},
 		&dal.BulkCreateTrainingLogsParams{
 			Weight: 1,
@@ -404,6 +407,7 @@ func TestQuadPolynomialFourthOrderAccuracy(t *testing.T) {
 			ApproxErr:     types.FourthOrder,
 			MinNumSamples: 10,
 			TimeDeltaEps:  1e-6,
+			NoiseFilter:   3,
 		},
 		&dal.BulkCreateTrainingLogsParams{
 			Weight: 1,

@@ -5,7 +5,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
-#include "common.h"
 #include "errors.h"
 
 template <typename T>

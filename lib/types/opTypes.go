@@ -19,6 +19,7 @@ type (
 		MinNumSamples   uint64
 		TimeDeltaEps    Second
 		ApproxErr       ApproximationError
+		NoiseFilter     uint64
 		NearZeroFilter  float64
 		SmootherWeight1 float64
 		SmootherWeight2 float64

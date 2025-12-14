@@ -170,7 +170,7 @@ enum BarPathCalcErrCode_t calcRepSplits(
 		Slice<AbsVec2YOps>((AbsVec2YOps*)data->pos, data->timeLen),
 		repCenters,
 		(AbsVec2YOps)Math::Vec2{ .X=0, .Y=0, },	// zeros because abs
-		3	// TODO - make this a param in opts
+		opts->NoiseFilter
 	);
 	std::sort(repCenters.begin(), repCenters.end());
 

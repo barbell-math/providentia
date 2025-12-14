@@ -38,6 +38,7 @@ extern "C" {
 		uint64_t MinNumSamples;
 		double_t TimeDeltaEps;
 		enum ApproximationError_t ApproxErr;
+		uint64_t NoiseFilter;
 		double_t NearZeroFilter;
 		double_t SmootherWeight1;
 		double_t SmootherWeight2;

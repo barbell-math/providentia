@@ -266,6 +266,7 @@ func TestSquatDataSecondOrder(t *testing.T) {
 			SmootherWeight5: 0.5,
 			MinNumSamples:   10,
 			TimeDeltaEps:    1e-2,
+			NoiseFilter:     3,
 		},
 		baseData: dal.BulkCreateTrainingLogsParams{
 			Weight: 1,
@@ -302,6 +303,7 @@ func TestSquatDataFourthOrder(t *testing.T) {
 			SmootherWeight5: 0.5,
 			MinNumSamples:   10,
 			TimeDeltaEps:    1e-2,
+			NoiseFilter:     3,
 		},
 		baseData: dal.BulkCreateTrainingLogsParams{
 			Weight: 1,
