@@ -436,3 +436,29 @@ extern "C" bool TestNLargestMaximumsLargerWindow(void) {
 
 	return true;
 }
+
+extern "C" bool TestLeftRoot(void) {
+	double data[12]={
+		2, 1, 0, -1, -2, -3,
+		2, 1, 0, -1, -2, -3,
+	};
+
+	std::optional<size_t> idx=Math::LeftRoot<double>(
+		Slice<double>(data, 12), 5, [](const double &v) { return v<0; }
+	);
+	EQ(idx.has_value(), true);
+	EQ(*idx, (size_t)2);
+
+	idx=Math::LeftRoot<double>(
+		Slice<double>(data, 12), 11, [](const double &v) { return v<0; }
+	);
+	EQ(idx.has_value(), true);
+	EQ(*idx, (size_t)8);
+
+	idx=Math::LeftRoot<double>(
+		Slice<double>(data, 12), 12, [](const double &v) { return v<0; }
+	);
+	EQ(idx.has_value(), false);
+
+	return true;
+}

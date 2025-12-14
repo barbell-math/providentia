@@ -85,6 +85,8 @@ bool TestNLargestMaximumssMorePresentThanExpected(void);
 
 bool TestNLargestMaximumsLargerWindow(void);
 
+bool TestLeftRoot(void);
+
 
 #ifdef __cplusplus
 }

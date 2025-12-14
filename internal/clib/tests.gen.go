@@ -224,4 +224,10 @@ func runCgoTests(t *testing.T) {
 		}
 	})
 
+	t.Run("LeftRoot", func(t *testing.T) {
+		if !C.TestLeftRoot() {
+			t.Fatal()
+		}
+	})
+
 }

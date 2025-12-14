@@ -5,9 +5,14 @@
 #include <bits/stdc++.h>
 #include "cpu.h"
 #include "../../clib/glue.h"
-#include "../../clib/common.h"
 
 namespace BarPathCalc {
+
+template <typename T>
+struct PointInTime {
+	double Time;
+	T Value;
+};
 
 struct AbsVec2YOps : Math::Vec2 {
 	friend bool operator>(const AbsVec2YOps l, const AbsVec2YOps r) {
@@ -27,6 +32,27 @@ struct AbsVec2YOps : Math::Vec2 {
 	}
 	friend bool operator==(const AbsVec2YOps l, const AbsVec2YOps r) {
 		return fabs(l.Y) == fabs(r.Y);
+	}
+};
+
+struct Vec2MagOps : Math::Vec2 {
+	friend bool operator>(const Vec2MagOps l, const Vec2MagOps r) {
+		return Math::Mag(l) > Math::Mag(r);
+	}
+	friend bool operator<(const Vec2MagOps l, const Vec2MagOps r) {
+		return Math::Mag(l) < Math::Mag(r);
+	}
+	friend bool operator>=(const Vec2MagOps l, const Vec2MagOps r) {
+		return Math::Mag(l) >= Math::Mag(r);
+	}
+	friend bool operator<=(const Vec2MagOps l, const Vec2MagOps r) {
+		return Math::Mag(l) <= Math::Mag(r);
+	}
+	friend bool operator!=(const Vec2MagOps l, const Vec2MagOps r) {
+		return Math::Mag(l) != Math::Mag(r);
+	}
+	friend bool operator==(const Vec2MagOps l, const Vec2MagOps r) {
+		return Math::Mag(l) == Math::Mag(r);
 	}
 };
 
@@ -133,74 +159,39 @@ enum BarPathCalcErrCode_t calcHigherOrderData(
 	return NoErr;
 }
 
+// TODO - see if the near zero filter can be removed.
+// How to find "resting position" of bar?
 enum BarPathCalcErrCode_t calcRepSplits(
 	barPathData_t* data,
 	barPathCalcHyperparams_t* opts
 ) {
-	// Slice<size_t> repCenters(data->reps);
-	// size_t numMaxes = Math::NLargestMaximums(
-	// 	Slice<AbsVec2YOps>((AbsVec2YOps*)data->pos, data->timeLen),
-	// 	repCenters,
-	// 	(AbsVec2YOps)Math::Vec2{ .X=0, .Y=0, },	// zeros because abs
-	// 	3	// TODO - make this a param in opts
-	// );
-	// std::sort(repCenters.begin(), repCenters.end());
+	Slice<size_t> repCenters(data->reps);
+	size_t numMaxes = Math::NLargestMaximums(
+		Slice<AbsVec2YOps>((AbsVec2YOps*)data->pos, data->timeLen),
+		repCenters,
+		(AbsVec2YOps)Math::Vec2{ .X=0, .Y=0, },	// zeros because abs
+		3	// TODO - make this a param in opts
+	);
+	std::sort(repCenters.begin(), repCenters.end());
 
-	int centersAdded=0;
-	std::vector<TimestampedVal> repCenters(data->reps);
-	for (int i=1; i<data->timeLen-1; i++) {
-		if (std::signbit(data->vel[i].Y)!=std::signbit(data->vel[i-1].Y)) {
-			TimestampedVal localMin=TimestampedVal{
-				.Idx = i,
-				.Time = data->time[i],
-				.Value=-fabs(data->pos[i].Y),
-			};
-			if (centersAdded<data->reps) {
-				repCenters[centersAdded]=localMin;
-				std::make_heap(
-					repCenters.begin(), repCenters.end(),
-					TimestampedVal::sortByValue
-				);
-				centersAdded++;
-			} else if (localMin.Value<repCenters[0].Value) {
-				std::pop_heap(
-					repCenters.begin(), repCenters.end(),
-					TimestampedVal::sortByValue
-				);
-				repCenters[repCenters.size()-1]=localMin;
-				std::push_heap(
-					repCenters.begin(), repCenters.end(),
-					TimestampedVal::sortByValue
-				);
-			}
-		}
-	}
-	std::sort(repCenters.begin(), repCenters.end(), TimestampedVal::sortByTime);
-	//
-	// std::cout << numMaxes << ", " << centersAdded << std::endl;
-	// std::cout << absMaxes << std::endl;
-	// for (size_t i=0; i<repCenters.size(); i++) {
-	// 	std::cout << repCenters[i].Idx << " ";
-	// }
-	// std::cout << std::endl;
-
-	for (size_t i=0; i<repCenters.size(); i++) {
-		TimestampedVal& iterRep=repCenters[i];
-
-		for (int j=iterRep.Idx+2; j<data->timeLen; j++) {
+	Slice<Math::Vec2> vel((Math::Vec2*)data->vel, data->timeLen);
+	Slice<Math::Vec2> pos((Math::Vec2*)data->pos, data->timeLen);
+	for (size_t i=0; i<numMaxes; i++) {
+		size_t repCenter=repCenters[i];
+		for (int j=repCenter+2; j<data->timeLen; j++) {
 			if (
-				std::signbit(data->vel[j].Y)!=std::signbit(data->vel[j-1].Y) &&
-				fabs(data->pos[i].Y)<opts->NearZeroFilter
+				std::signbit(vel[j].Y)!=std::signbit(vel[j-1].Y) &&
+				fabs(pos[i].Y)<opts->NearZeroFilter
 			) {
 				data->repSplit[i].EndIdx=j;
 				break;
 			}
 		}
 
-		for (int j=iterRep.Idx-2; j>=0; j--) {
+		for (int j=repCenter-2; j>=0; j--) {
 			if (
-				std::signbit(data->vel[j].Y)!=std::signbit(data->vel[j+1].Y) &&
-				fabs(data->pos[i].Y)<opts->NearZeroFilter
+				std::signbit(vel[j].Y)!=std::signbit(vel[j+1].Y) &&
+				fabs(pos[i].Y)<opts->NearZeroFilter
 			) {
 				data->repSplit[i].StartIdx=j;
 				break;
@@ -208,112 +199,100 @@ enum BarPathCalcErrCode_t calcRepSplits(
 		}
 	}
 
-	// for (int i=0; i<data->reps; i++){
-	// 	std::cout << "(" 
-	// 		<< data->repSplit[i].StartIdx << "[" << data->time[data->repSplit[i].StartIdx] << "], " 
-	// 		<< data->repSplit[i].EndIdx << "[" << data->time[data->repSplit[i].EndIdx] << "], " 
-	// 	<< ") ";
-	// }
-	// std::cout << std::endl;
-
 	return NoErr;
 }
 
-void setPointInTimeMinMax(
-	PointInTime *curMin,
-	PointInTime *curMax,
-	PointInTime val
+template <typename T, typename U>
+void setRepMinMaxVal(
+	Slice<double> time,
+	Slice<T> data,
+	split_t repSplit,
+	PointInTime<U> *minPointInTime,
+	PointInTime<U> *maxPointInTime,
+	U (*valueTransform)(const T& t)=[](const T& t){ return t; }
 ) {
-	if (curMin->Value>val.Value) {
-		*curMin=val;
-	}
-	if (curMax->Value<val.Value) {
-		*curMax=val;
-	}
+	Slice<T> subSlice(data(repSplit.StartIdx, repSplit.EndIdx));
+	typename Slice<T>::Iterator min=std::min_element(subSlice.begin(), subSlice.end());
+	typename Slice<T>::Iterator max=std::max_element(subSlice.begin(), subSlice.end());
+	size_t minIdx=(min-subSlice.begin())+(size_t)repSplit.StartIdx;
+	size_t maxIdx=(max-subSlice.begin())+(size_t)repSplit.StartIdx;
+
+	minPointInTime->Time=time[minIdx];
+	minPointInTime->Value=valueTransform(*min);
+	maxPointInTime->Time=time[maxIdx];
+	maxPointInTime->Value=valueTransform(*max);
+}
+
+template <typename T, typename U>
+void setRepAvgVal(
+	Slice<T> data,
+	split_t repSplit,
+	U *avgVal,
+	U (*valueTransform)(const T& t)=[](const T& t){ return t; }
+) {
+	*avgVal=U{};
+	Slice<T> subSlice(data(repSplit.StartIdx, repSplit.EndIdx));
+	if (subSlice.Len()==0) { return; }
+	U tot=std::accumulate(subSlice.begin(), subSlice.end(), *avgVal);
+	*avgVal=valueTransform(tot)/subSlice.Len();
 }
 
 enum BarPathCalcErrCode_t calcRepStats(
 	barPathData_t* data,
 	barPathCalcHyperparams_t* opts
 ) {
-	for (int i=0; i<data->reps; i++) {
-		data->minVel[i].Value=INFINITY;
-		data->maxVel[i].Value=-INFINITY;
-		data->minAcc[i].Value=INFINITY;
-		data->maxAcc[i].Value=-INFINITY;
-		data->minForce[i].Value=INFINITY;
-		data->maxForce[i].Value=-INFINITY;
-		data->minImpulse[i].Value=INFINITY;
-		data->maxImpulse[i].Value=-INFINITY;
-		data->avgWork[i]=0;
-		data->minWork[i].Value=INFINITY;
-		data->maxWork[i].Value=-INFINITY;
-		data->avgPower[i]=-1;	// todo - wtf???
-		data->minPower[i].Value=INFINITY;
-		data->maxPower[i].Value=-INFINITY;
-		int avgCntr=0;
+	Slice<double> time((double*)data->time, data->timeLen);
+	Slice<Vec2MagOps> vel((Vec2MagOps*)data->vel, data->timeLen);
+	Slice<Vec2MagOps> acc((Vec2MagOps*)data->acc, data->timeLen);
+	Slice<Vec2MagOps> force((Vec2MagOps*)data->force, data->timeLen);
+	Slice<Vec2MagOps> impulse((Vec2MagOps*)data->impulse, data->timeLen);
+	Slice<double> power((double*)data->power, data->timeLen);
+	Slice<double> work((double*)data->work, data->timeLen);
+	auto transform=[](const Vec2MagOps& t){ return Math::Mag((Math::Vec2)t); };
 
-		for (
-			int j=data->repSplit[i].StartIdx;
-			j<data->repSplit[i].EndIdx && j<data->timeLen;
-			j++
-		) {
-			setPointInTimeMinMax(
-				(PointInTime*)(&data->minVel[i]),
-				(PointInTime*)(&data->maxVel[i]),
-				PointInTime{
-					.Time=data->time[j], .Value=Math::Mag(*(Math::Vec2*)(&data->vel[j]))
-				}
-			);
-			setPointInTimeMinMax(
-				(PointInTime*)(&data->minAcc[i]),
-				(PointInTime*)(&data->maxAcc[i]),
-				PointInTime{
-					.Time=data->time[j], .Value=Math::Mag(*(Math::Vec2*)(&data->acc[j]))
-				}
-			);
-			setPointInTimeMinMax(
-				(PointInTime*)(&data->minForce[i]),
-				(PointInTime*)(&data->maxForce[i]),
-				PointInTime{
-					.Time=data->time[j], .Value=Math::Mag(*(Math::Vec2*)(&data->force[j]))
-				}
-			);
-			setPointInTimeMinMax(
-				(PointInTime*)(&data->minImpulse[i]),
-				(PointInTime*)(&data->maxImpulse[i]),
-				PointInTime{
-					.Time=data->time[j], .Value=Math::Mag(*(Math::Vec2*)(&data->impulse[j]))
-				}
-			);
-			setPointInTimeMinMax(
-				(PointInTime*)(&data->minPower[i]),
-				(PointInTime*)(&data->maxPower[i]),
-				PointInTime{
-					.Time=data->time[j], .Value=data->power[j],
-				}
-			);
-			setPointInTimeMinMax(
-				(PointInTime*)(&data->minWork[i]),
-				(PointInTime*)(&data->maxWork[i]),
-				PointInTime{
-					.Time=data->time[j], .Value=data->work[j],
-				}
-			);
-			
-
-			data->avgPower[i]+=data->power[j];
-			data->avgWork[i]+=data->work[j];
-			avgCntr++;
+	for (size_t i=0; i<(size_t)data->reps; i++) {
+		split_t repSplit=data->repSplit[i];
+		if (repSplit.EndIdx-repSplit.StartIdx==0) {
+			continue;
 		}
 
-		if (avgCntr>0) {
-			data->avgPower[i]/=avgCntr;
-			data->avgWork[i]/=avgCntr;
-		} else {
-			data->avgPower[i]=0;
-			data->avgWork[i]=0;
-		}
+		setRepMinMaxVal<Vec2MagOps, double>(
+			time, vel, repSplit,
+			(PointInTime<double>*)&data->minVel[i],
+			(PointInTime<double>*)&data->maxVel[i],
+			transform
+		);
+		setRepMinMaxVal<Vec2MagOps, double>(
+			time, acc, repSplit,
+			(PointInTime<double>*)&data->minAcc[i],
+			(PointInTime<double>*)&data->maxAcc[i],
+			transform
+		);
+		setRepMinMaxVal<Vec2MagOps, double>(
+			time, force, repSplit,
+			(PointInTime<double>*)&data->minForce[i],
+			(PointInTime<double>*)&data->maxForce[i],
+			transform
+		);
+		setRepMinMaxVal<Vec2MagOps, double>(
+			time, impulse, repSplit,
+			(PointInTime<double>*)&data->minImpulse[i],
+			(PointInTime<double>*)&data->maxImpulse[i],
+			transform
+		);
+		setRepMinMaxVal<double, double>(
+			time, power, repSplit,
+			(PointInTime<double>*)&data->minPower[i],
+			(PointInTime<double>*)&data->maxPower[i]
+		);
+		setRepMinMaxVal<double, double>(
+			time, work, repSplit,
+			(PointInTime<double>*)&data->minWork[i],
+			(PointInTime<double>*)&data->maxWork[i]
+		);
+
+		setRepAvgVal(power, repSplit, data->avgPower);
+		setRepAvgVal(work, repSplit, data->avgWork);
 	}
 	return NoErr;
 }

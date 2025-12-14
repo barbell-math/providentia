@@ -93,6 +93,7 @@ struct Slice {
 		Iterator& operator-=(size_t n) { current-=n; return *this; };
 		Iterator operator-(size_t n) { Iterator rv = *this; current-=n; return rv; };
 		size_t operator-(Iterator& other) { return this->current-other.current; }
+		size_t operator-(const Iterator& other) { return this->current-other.current; }
 
 		reference operator[]() { return vals[current]; }
 
@@ -195,6 +196,7 @@ struct FixedSlice {
 		Iterator& operator-=(size_t n) { current-=n; return *this; };
 		Iterator operator-(size_t n) { Iterator rv = *this; current-=n; return rv; };
 		size_t operator-(Iterator& other) { return this->current-other.current; }
+		size_t operator-(const Iterator& other) { return this->current-other.current; }
 
 		reference operator[]() { return vals[current]; }
 
@@ -289,6 +291,7 @@ struct FixedRing {
 		Iterator& operator-=(size_t n) { current-=n; return *this; };
 		Iterator operator-(size_t n) { Iterator rv = *this; current-=n; return rv; };
 		size_t operator-(Iterator& other) { return this->current-other.current; }
+		size_t operator-(const Iterator& other) { return this->current-other.current; }
 
 		reference operator[]() { return vals[current]; }
 

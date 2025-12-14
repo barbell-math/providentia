@@ -83,7 +83,7 @@ struct Vec2YOps : Vec2 {
 };
 
 // Operators -------------------------------------------------------------------
-inline double Mag(Vec2 v) {
+inline double Mag(const Vec2& v) {
 	return sqrt(v.X*v.X+v.Y*v.Y);
 }
 
@@ -397,10 +397,22 @@ size_t NLargestMaximums(
 	return std::min(numMaxes, maxes.Len());
 }
 
-// TODO
-// size_t LeftRoot(Slice<T> data, start idx)
-// size_t RightRoot(Slice<T> data, start idx)
-// [2]size_t Roots(Slice<T> data, start idx)
+template <typename T>
+std::optional<size_t> LeftRoot(
+	Slice<T> data,
+	size_t startIdx,
+	bool (*signBit)(const T& val)
+) {
+	std::optional<size_t> rv{};
+	if (startIdx>=data.Len()) return rv;
+	for (size_t i=startIdx-1; i>=0; i--) {
+		if (signBit(data[i])!=signBit(data[i+1])) {
+			rv=i;
+			break;
+		}
+	}
+	return rv;
+}
 
 };
 
