@@ -18,12 +18,13 @@ func TestClient(t *testing.T) {
 	t.Run("ensureRead", clientEnsureRead)
 	t.Run("createFind", clientCreateFind)
 	t.Run("createCSVRead", clientCreateCSVRead)
+	t.Run("ensureCSVRead", ensureCreateCSVRead)
 	t.Run("createUpdateRead", clientCreateUpdateRead)
 	t.Run("createDeleteRead", clientCreateDeleteRead)
 }
 
 func clientFailingNoWrites(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 	t.Run("missingFirstName", clientMissingFirstName(ctxt))
 	t.Run("missingLastName", clientMissingLastName(ctxt))
@@ -80,7 +81,7 @@ func clientInvalidEmail(ctxt context.Context) func(t *testing.T) {
 }
 
 func clientDuplicateEmail(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	clients := make([]types.Client, 13)
@@ -104,7 +105,7 @@ func clientDuplicateEmail(t *testing.T) {
 }
 
 func clientTransactionRollback(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	clients := make([]types.Client, 13)
@@ -134,7 +135,7 @@ func clientTransactionRollback(t *testing.T) {
 }
 
 func clientCreateRead(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	clients := make([]types.Client, 13)
@@ -165,7 +166,7 @@ func clientCreateRead(t *testing.T) {
 }
 
 func clientEnsureRead(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	clients := make([]types.Client, 13)
@@ -207,7 +208,7 @@ func clientEnsureRead(t *testing.T) {
 }
 
 func clientCreateFind(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	clients := make([]types.Client, 13)
@@ -255,7 +256,7 @@ func clientCreateFind(t *testing.T) {
 }
 
 func clientCreateUpdateRead(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	clients := make([]types.Client, 13)
@@ -301,7 +302,7 @@ func clientCreateUpdateRead(t *testing.T) {
 }
 
 func clientCreateDeleteRead(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	clients := make([]types.Client, 13)
@@ -352,7 +353,7 @@ func clientCreateDeleteRead(t *testing.T) {
 }
 
 func clientCreateCSVRead(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	err := CreateClientsFromCSV(
@@ -379,6 +380,47 @@ func clientCreateCSVRead(t *testing.T) {
 		LastName:  "TwoLN",
 		Email:     "two@gmail.com",
 	})
+
+	_, err = ReadClientsByEmail(ctxt, "bad@email.com")
+	sbtest.ContainsError(t, types.CouldNotFindRequestedClientErr, err)
+}
+
+func ensureCreateCSVRead(t *testing.T) {
+	ctxt, cleanup := resetApp(t, context.Background())
+	t.Cleanup(cleanup)
+
+	err := EnsureClientsExistFromCSV(
+		ctxt, sbcsv.Opts{}, "./testData/clientData/clients.csv",
+	)
+	sbtest.Nil(t, err)
+
+	numClients, err := ReadNumClients(ctxt)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 2, numClients)
+
+	client, err := ReadClientsByEmail(ctxt, "one@gmail.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, client[0], types.Client{
+		FirstName: "OneFN",
+		LastName:  "OneLN",
+		Email:     "one@gmail.com",
+	})
+
+	client, err = ReadClientsByEmail(ctxt, "two@gmail.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, client[0], types.Client{
+		FirstName: "TwoFN",
+		LastName:  "TwoLN",
+		Email:     "two@gmail.com",
+	})
+
+	err = EnsureClientsExistFromCSV(
+		ctxt, sbcsv.Opts{}, "./testData/clientData/clients.csv",
+	)
+	sbtest.Nil(t, err)
+	numClients, err = ReadNumClients(ctxt)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 2, numClients)
 
 	_, err = ReadClientsByEmail(ctxt, "bad@email.com")
 	sbtest.ContainsError(t, types.CouldNotFindRequestedClientErr, err)

@@ -100,7 +100,23 @@ func CreateExercisesFromCSV(
 	})
 }
 
-// TODO - doc, test
+// Checks that the supplied exercises are present in the database and adds them
+// if they are not present. In order for the supplied exercises to be be
+// considered already present the name, kind, and focus fields must all match.
+// Any newly created exercises must satisfy the uniqueness constraints outlined
+// by [CreateExercises]. All csv files must be valid as outlined by
+// [EnsureExercisesExist].
+//
+// This function will be slower than [CreateExercises], so if you are working
+// with large amounts of data and are ok with erroring on duplicated exercises
+// consider using [CreateExercises].
+//
+// The context must have a [types.State] variable.
+//
+// Exercises will be uploaded in batches that respect the size set in the
+// [State.BatchSize] variable.
+//
+// If any error occurs no changes will be made to the database.
 func EnsureExercisesExistFromCSV(
 	ctxt context.Context,
 	opts sbcsv.Opts,

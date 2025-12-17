@@ -16,11 +16,12 @@ func TestHyperparams(t *testing.T) {
 	t.Run("ensureRead", hyperparamsEnsureRead)
 	t.Run("createFind", hyperparamsCreateFind)
 	t.Run("createCSVRead", hyperparamsCreateCSVRead)
+	t.Run("ensureCSVRead", hyperparamsEnsureCSVRead)
 	t.Run("addDeleteRead", hyperparamsCreateDeleteRead)
 }
 
 func hyperparamsFailingNoWrites(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	t.Run("invalidBarPathCalc", hyperparamsInvalidBarPathCalc(ctxt))
@@ -116,7 +117,7 @@ func hyperparamsInvalidBarPathTracker(ctxt context.Context) func(t *testing.T) {
 }
 
 func hyperparamsCreateRead(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	calcParams := []types.BarPathCalcHyperparams{{
@@ -191,7 +192,7 @@ func hyperparamsCreateRead(t *testing.T) {
 }
 
 func hyperparamsCreateCSVRead(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	calcParams := []types.BarPathCalcHyperparams{{
@@ -199,6 +200,7 @@ func hyperparamsCreateCSVRead(t *testing.T) {
 		MinNumSamples:   2,
 		TimeDeltaEps:    1,
 		ApproxErr:       types.SecondOrder,
+		NoiseFilter:     6,
 		NearZeroFilter:  1,
 		SmootherWeight1: 0.1,
 		SmootherWeight2: 0.2,
@@ -210,6 +212,7 @@ func hyperparamsCreateCSVRead(t *testing.T) {
 		MinNumSamples:   2,
 		TimeDeltaEps:    1,
 		ApproxErr:       types.FourthOrder,
+		NoiseFilter:     6,
 		NearZeroFilter:  1,
 		SmootherWeight1: 0.1,
 		SmootherWeight2: 0.2,
@@ -279,8 +282,113 @@ func hyperparamsCreateCSVRead(t *testing.T) {
 	sbtest.Eq(t, params2[0], trackParams[1])
 }
 
+func hyperparamsEnsureCSVRead(t *testing.T) {
+	ctxt, cleanup := resetApp(t, context.Background())
+	t.Cleanup(cleanup)
+
+	calcParams := []types.BarPathCalcHyperparams{{
+		Version:         1,
+		MinNumSamples:   2,
+		TimeDeltaEps:    1,
+		ApproxErr:       types.SecondOrder,
+		NoiseFilter:     6,
+		NearZeroFilter:  1,
+		SmootherWeight1: 0.1,
+		SmootherWeight2: 0.2,
+		SmootherWeight3: 0.3,
+		SmootherWeight4: 0.4,
+		SmootherWeight5: 0.5,
+	}, {
+		Version:         2,
+		MinNumSamples:   2,
+		TimeDeltaEps:    1,
+		ApproxErr:       types.FourthOrder,
+		NearZeroFilter:  1,
+		NoiseFilter:     6,
+		SmootherWeight1: 0.1,
+		SmootherWeight2: 0.2,
+		SmootherWeight3: 0.3,
+		SmootherWeight4: 0.4,
+		SmootherWeight5: 0.5,
+	}}
+	trackParams := []types.BarPathTrackerHyperparams{{
+		Version:     1,
+		MinLength:   1,
+		MinFileSize: 1,
+		MaxFileSize: 2,
+	}, {
+		Version:     2,
+		MinLength:   1,
+		MinFileSize: 1,
+		MaxFileSize: 2,
+	}}
+
+	err := EnsureHyperparamsExistFromCSV[types.BarPathCalcHyperparams](
+		ctxt, sbcsv.Opts{}, "./testData/hyperparamData/1.barPathCalc.csv",
+	)
+	sbtest.Nil(t, err)
+
+	err = EnsureHyperparamsExistFromCSV[types.BarPathTrackerHyperparams](
+		ctxt, sbcsv.Opts{}, "./testData/hyperparamData/2.barPathTracker.csv",
+	)
+	sbtest.Nil(t, err)
+
+	res, err := ReadNumHyperparams(ctxt)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 6, res)
+
+	res, err = ReadNumHyperparamsFor[types.BarPathCalcHyperparams](ctxt)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 3, res)
+	res, err = ReadNumHyperparamsFor[types.BarPathTrackerHyperparams](ctxt)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 3, res)
+
+	params, err := ReadHyperparamsByVersionFor[types.BarPathCalcHyperparams](
+		ctxt, 1,
+	)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 1, len(params))
+	sbtest.Eq(t, params[0], calcParams[0])
+
+	params, err = ReadHyperparamsByVersionFor[types.BarPathCalcHyperparams](
+		ctxt, 2,
+	)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 1, len(params))
+	sbtest.Eq(t, params[0], calcParams[1])
+
+	params2, err := ReadHyperparamsByVersionFor[types.BarPathTrackerHyperparams](
+		ctxt, 1,
+	)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 1, len(params2))
+	sbtest.Eq(t, params2[0], trackParams[0])
+
+	params2, err = ReadHyperparamsByVersionFor[types.BarPathTrackerHyperparams](
+		ctxt, 2,
+	)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 1, len(params2))
+	sbtest.Eq(t, params2[0], trackParams[1])
+
+	err = EnsureHyperparamsExistFromCSV[types.BarPathCalcHyperparams](
+		ctxt, sbcsv.Opts{}, "./testData/hyperparamData/1.barPathCalc.csv",
+	)
+	sbtest.Nil(t, err)
+
+	err = EnsureHyperparamsExistFromCSV[types.BarPathTrackerHyperparams](
+		ctxt, sbcsv.Opts{}, "./testData/hyperparamData/2.barPathTracker.csv",
+	)
+	sbtest.Nil(t, err)
+
+	res, err = ReadNumHyperparams(ctxt)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 6, res)
+}
+
 func hyperparamsEnsureRead(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	calcParams := []types.BarPathCalcHyperparams{{
@@ -374,7 +482,7 @@ func hyperparamsEnsureRead(t *testing.T) {
 }
 
 func hyperparamsCreateFind(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	calcParams := []types.BarPathCalcHyperparams{{
@@ -470,7 +578,7 @@ func hyperparamsCreateFind(t *testing.T) {
 }
 
 func hyperparamsCreateDeleteRead(t *testing.T) {
-	ctxt, cleanup := resetApp(t,context.Background())
+	ctxt, cleanup := resetApp(t, context.Background())
 	t.Cleanup(cleanup)
 
 	calcParams := []types.BarPathCalcHyperparams{{

@@ -69,7 +69,7 @@ type (
 		Weight  Kilogram // The weight the exercise was performed with
 		Sets    float64  // The number sets that were performed
 		Reps    int32    // The number of reps that were performed
-		Effort  RPE      //The effort the exercise was performed at
+		Effort  RPE      // The effort the exercise was performed at
 		BarPath []BarPathVariant
 	}
 

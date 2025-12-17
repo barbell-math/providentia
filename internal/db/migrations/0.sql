@@ -49,6 +49,32 @@ CREATE TABLE IF NOT EXISTS providentia.physics_data (
 	path TEXT[] UNIQUE,
 	bar_path_calc_id INT4 NOT NULL REFERENCES providentia.hyperparams(id) ON DELETE CASCADE,
 	bar_path_track_id INT4 REFERENCES providentia.hyperparams(id) ON DELETE CASCADE,
+	-- data JSONB NOT NULL
+
+	-- TODO - try to implement some kind of checking
+	-- SELECT jsonb_typeof(jsonb_path_query('{"time": [[1],[1,1],[1,1,1]]}', '$.time[0][0]'));
+	-- CONSTRAINT check_data_schema CHECK (
+    --     data ? 'time' AND
+	-- 		jsonb_typeof(data->'time') = 'array' AND
+	-- 		jsonb_typeof(data->'time'[0]) = 'array' AND
+	-- 		jsonb_typeof(data->'time'[0][0]) = 'number' AND
+    --     data ? 'position' AND
+	-- 		jsonb_typeof(data->'position') = 'array' AND
+	-- 		jsonb_typeof(data->'position'[0]) = 'array' AND
+	-- 		jsonb_typeof(data->'position'[0][0]) = 'number' AND
+    --     data ? 'velocity' AND
+	-- 		jsonb_typeof(data->'velocity') = 'array' AND
+	-- 		jsonb_typeof(data->'velocity'[0]) = 'array' AND
+	-- 		jsonb_typeof(data->'velocity'[0][0]) = 'number' AND
+    --     data ? 'acceleration' AND
+	-- 		jsonb_typeof(data->'acceleration') = 'array' AND
+	-- 		jsonb_typeof(data->'acceleration'[0]) = 'array' AND
+	-- 		jsonb_typeof(data->'acceleration'[0][0]) = 'number' AND
+    --     data ? 'jerk' AND
+	-- 		jsonb_typeof(data->'jerk') = 'array' AND
+	-- 		jsonb_typeof(data->'jerk'[0]) = 'array' AND
+	-- 		jsonb_typeof(data->'jerk'[0][0]) = 'number' AND
+    -- )
 
 	time FLOAT8[][] NOT NULL,
 	position POINT[][] NOT NULL,
@@ -137,9 +163,7 @@ AS $$
 BEGIN
 	DELETE FROM providentia.physics_data
 	WHERE OLD.physics_id = providentia.physics_data.id;
-	
-	-- TODO - wtf am I returning here??
-	RETURN NEW;
+	RETURN NULL;
 END;
 $$;
 

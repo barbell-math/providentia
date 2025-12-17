@@ -54,12 +54,6 @@ type (
 		DataDir       string
 	}
 
-	csvTimeSeriesData struct {
-		Time      float64
-		XPosition float64
-		YPosition float64
-	}
-
 	WorkoutFileChunk struct {
 		Headers    []byte
 		FullFile   []byte

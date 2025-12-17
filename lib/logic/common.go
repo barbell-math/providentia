@@ -1,3 +1,5 @@
+// All logic that works with the library's exposed types is exposed through this
+// package.
 package logic
 
 import (

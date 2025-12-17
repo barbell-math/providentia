@@ -108,7 +108,23 @@ func CreateHyperparamsFromCSV[T types.Hyperparams](
 	})
 }
 
-// TODO - docs,test
+// Checks that the supplied hyperparams are present in the database and adds
+// them if they are not present. In order for the supplied hyperparams to be be
+// considered already present the model type, version number, and parameter
+// fields must all match. Any newly created hyperparams must satisfy the
+// uniqueness constraints outlined by [CreateHyperparams]. All csv files must be
+// valid as outlined by [CreateHyperparamsFromCSV].
+//
+// This function will be slower than [CreateHyperparams], so if you are working
+// with large amounts of data and are ok with erroring on duplicated hyperparams
+// consider using [CreateHyperparams].
+//
+// The context must have a [types.State] variable.
+//
+// Hyperparams will be uploaded in batches that respect the size set in the
+// [State.BatchSize] variable.
+//
+// If any error occurs no changes will be made to the database.
 func EnsureHyperparamsExistFromCSV[T types.Hyperparams](
 	ctxt context.Context,
 	opts sbcsv.Opts,
