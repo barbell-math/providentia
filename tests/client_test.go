@@ -2,7 +2,6 @@ package tests
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"code.barbellmath.net/barbell-math/providentia/lib/logic"
@@ -140,7 +139,7 @@ func clientCreateRead(t *testing.T) {
 	readClients, err = logic.ReadClientsByEmail(ctxt, "asdfasdf")
 	sbtest.ContainsError(
 		t, types.CouldNotReadAllClientsErr, err,
-		"Only read 0 clients out of batch of 1 requests",
+		"Only read 0 entries out of batch of 1 requests",
 	)
 
 	n, err := logic.ReadNumClients(ctxt)
@@ -205,13 +204,12 @@ func clientCreateFind(t *testing.T) {
 			Email:     "email1@email.com",
 		},
 	}
-	err := logic.EnsureClientsExist(ctxt, clients...)
+	err := logic.CreateClients(ctxt, clients...)
 	sbtest.Nil(t, err)
 
 	foundClients, err := logic.FindClientsByEmail(
 		ctxt, clients[0].Email, clients[1].Email, "asdfasdf",
 	)
-	fmt.Println(foundClients)
 	sbtest.Nil(t, err)
 	sbtest.SlicesMatch(t, []types.Found[types.Client]{{
 		Found: true,
@@ -322,7 +320,7 @@ func clientCreateDeleteRead(t *testing.T) {
 	err = logic.DeleteClients(ctxt, clients[0].Email)
 	sbtest.ContainsError(
 		t, types.CouldNotDeleteAllClientsErr, err,
-		`Could not delete client at idx 0 \(Does client exist\?\)`,
+		`Could not delete entry with id 'email@email.com' \(Does id exist\?\)`,
 	)
 
 	n, err = logic.ReadNumClients(ctxt)
@@ -339,9 +337,9 @@ func clientCreateCSVRead(t *testing.T) {
 	)
 	sbtest.Nil(t, err)
 
-	numClients, err := logic.ReadNumClients(ctxt)
+	n, err := logic.ReadNumClients(ctxt)
 	sbtest.Nil(t, err)
-	sbtest.Eq(t, 2, numClients)
+	sbtest.Eq(t, 2, n)
 
 	client, err := logic.ReadClientsByEmail(ctxt, "one@gmail.com")
 	sbtest.Nil(t, err)
@@ -371,7 +369,7 @@ func clientCreateCSVRead(t *testing.T) {
 		`duplicate key value violates unique constraint "client_email_key" \(SQLSTATE 23505\)`,
 	)
 
-	n, err := logic.ReadNumClients(ctxt)
+	n, err = logic.ReadNumClients(ctxt)
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, 2, n)
 }
@@ -385,9 +383,9 @@ func clientEnsureCSVRead(t *testing.T) {
 	)
 	sbtest.Nil(t, err)
 
-	numClients, err := logic.ReadNumClients(ctxt)
+	n, err := logic.ReadNumClients(ctxt)
 	sbtest.Nil(t, err)
-	sbtest.Eq(t, 2, numClients)
+	sbtest.Eq(t, 2, n)
 
 	client, err := logic.ReadClientsByEmail(ctxt, "one@gmail.com")
 	sbtest.Nil(t, err)
@@ -413,7 +411,7 @@ func clientEnsureCSVRead(t *testing.T) {
 	)
 	sbtest.Nil(t, err)
 
-	n, err := logic.ReadNumClients(ctxt)
+	n, err = logic.ReadNumClients(ctxt)
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, 2, n)
 }

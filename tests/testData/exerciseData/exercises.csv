@@ -1,4 +1,4 @@
-Name,KindID,FocusID
+Name,KindId,FocusId
 one,MainCompoundAccessory,UnknownExerciseFocus
 two,MainCompound,Squat
 three,Accessory,Deadlift

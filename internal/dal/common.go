@@ -2,7 +2,9 @@ package dal
 
 import (
 	"context"
+	"fmt"
 	"iter"
+	"strings"
 
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	"github.com/jackc/pgx/v5"
@@ -10,10 +12,10 @@ import (
 
 type (
 	AvailableTypes interface {
-		types.Client // TODO - add more types here as created
+		types.Client | types.Exercise // TODO - add more types here as created
 	}
 
-	CreateFunc[T types.Client] func(
+	CreateFunc[T AvailableTypes] func(
 		ctxt context.Context,
 		state *types.State,
 		tx pgx.Tx,
@@ -47,4 +49,15 @@ func batchIndexes[S ~[]E, E any](s S, step int) iter.Seq2[int, int] {
 			}
 		}
 	}
+}
+
+func dollarList(n int) string {
+	var sb strings.Builder
+	for i := range n {
+		sb.WriteString(fmt.Sprintf("$%d", i+1))
+		if i+1 < n {
+			sb.WriteString(", ")
+		}
+	}
+	return sb.String()
 }

@@ -4,9 +4,23 @@ import (
 	"context"
 
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
-	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
-	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
 	"github.com/jackc/pgx/v5"
+)
+
+type (
+	ReadExerciseByNameOpts struct {
+		Names     []string
+		Exercises *[]types.Exercise
+	}
+
+	FindExerciseByNameOpts struct {
+		Names     []string
+		Exercises *[]types.Found[types.Exercise]
+	}
+)
+
+const (
+	exerciseTableName = "exercise"
 )
 
 func CreateExercisesWithID(
@@ -15,86 +29,145 @@ func CreateExercisesWithID(
 	tx pgx.Tx,
 	exercises []types.IdWrapper[types.Exercise],
 ) error {
-	cpy := CpyFromSlice[types.IdWrapper[types.Exercise]]{
-		Data: exercises,
-		ValueGetter: func(v *types.IdWrapper[types.Exercise], res *[]any) error {
-			if len(*res) < 4 {
-				*res = make([]any, 4)
-			}
-			(*res)[0] = v.Id
-			(*res)[1] = v.Val.Name
-			(*res)[2] = v.Val.KindId
-			(*res)[3] = v.Val.FocusId
-			return nil
+	return genericCreateWithId(
+		ctxt, state, tx, &genericCreateOpts[types.IdWrapper[types.Exercise]]{
+			TableName: exerciseTableName,
+			Columns:   []string{"id", "name", "kind_id", "focus_id"},
+			Data:      exercises,
+			ValueGetter: func(v *types.IdWrapper[types.Exercise], res *[]any) error {
+				if len(*res) < 4 {
+					*res = make([]any, 4)
+				}
+				(*res)[0] = v.Id
+				(*res)[1] = v.Val.Name
+				(*res)[2] = v.Val.KindId
+				(*res)[3] = v.Val.FocusId
+				return nil
+			},
+			Err: types.CouldNotCreateAllExercisesErr,
 		},
-	}
-	if n, err := tx.CopyFrom(
-		ctxt, pgx.Identifier{"providentia", "exercise"},
-		[]string{"id", "name", "kind_id", "focus_id"},
-		&cpy,
-	); err != nil {
-		return sberr.AppendError(types.CouldNotCreateAllExercisesErr, err)
-	} else if n != int64(len(exercises)) {
-		return sberr.Wrap(
-			types.CouldNotCreateAllExercisesErr,
-			"Expected to create %d exercises but only created %d, rolling back",
-			len(exercises), n,
-		)
-	}
-
-	if _, err := tx.Exec(ctxt, updateExerciseKindSerialCountSql); err != nil {
-		return sberr.Wrap(
-			types.CouldNotCreateAllExercisesErr,
-			"Failed to update serial index",
-		)
-	}
-
-	state.Log.Log(
-		ctxt, sblog.VLevel(3),
-		"DAL: Created new exercises with IDs",
-		"NumRows", len(exercises),
 	)
-	return nil
 }
 
 func CreateExercises(
 	ctxt context.Context,
 	state *types.State,
 	tx pgx.Tx,
-	clients []types.Client,
+	exercises []types.Exercise,
 ) error {
-	// TODO - impl
-	// cpy := CpyFromSlice[types.Client]{
-	// 	Data: clients,
-	// 	ValueGetter: func(v *types.Client, res *[]any) error {
-	// 		if len(*res) < 3 {
-	// 			*res = make([]any, 3)
-	// 		}
-	// 		(*res)[0] = v.FirstName
-	// 		(*res)[1] = v.LastName
-	// 		(*res)[2] = v.Email
-	// 		return nil
-	// 	},
-	// }
-	// if n, err := tx.CopyFrom(
-	// 	ctxt, pgx.Identifier{"providentia", "client"},
-	// 	[]string{"first_name", "last_name", "email"},
-	// 	&cpy,
-	// ); err != nil {
-	// 	return sberr.AppendError(types.CouldNotCreateAllClientsErr, err)
-	// } else if n != int64(len(clients)) {
-	// 	return sberr.Wrap(
-	// 		types.CouldNotCreateAllClientsErr,
-	// 		"Expected to create %d clients but only created %d, rolling back",
-	// 		len(clients), n,
-	// 	)
-	// }
+	return genericCreate(
+		ctxt, state, tx, &genericCreateOpts[types.Exercise]{
+			TableName: exerciseTableName,
+			Columns:   []string{"name", "kind_id", "focus_id"},
+			Data:      exercises,
+			ValueGetter: func(v *types.Exercise, res *[]any) error {
+				if len(*res) < 3 {
+					*res = make([]any, 3)
+				}
+				(*res)[0] = v.Name
+				(*res)[1] = v.KindId
+				(*res)[2] = v.FocusId
+				return nil
+			},
+			Err: types.CouldNotCreateAllExercisesErr,
+		},
+	)
+}
 
-	// state.Log.Log(
-	// 	ctxt, sblog.VLevel(3),
-	// 	"DAL: Created new clients",
-	// 	"NumRows", len(clients),
-	// )
-	// return nil
-	return nil
+func EnsureExercisesExist(
+	ctxt context.Context,
+	state *types.State,
+	tx pgx.Tx,
+	exercises []types.Exercise,
+) error {
+	return genericEnsureExists(
+		ctxt, state, tx, &genericCreateOpts[types.Exercise]{
+			TableName: exerciseTableName,
+			Columns:   []string{"name", "kind_id", "focus_id"},
+			Data:      exercises,
+			ValueGetter: func(v *types.Exercise, res *[]any) error {
+				*res = make([]any, 3)
+				(*res)[0] = v.Name
+				(*res)[1] = v.KindId
+				(*res)[2] = v.FocusId
+				return nil
+			},
+			Err: types.CouldNotCreateAllExercisesErr,
+		},
+	)
+}
+
+func ReadNumExercises(
+	ctxt context.Context,
+	state *types.State,
+	tx pgx.Tx,
+	num *int64,
+) error {
+	return genericReadTotalNum(
+		ctxt, state, tx, &genericReadTotalNumOpts{
+			TableName: exerciseTableName,
+			Res:       num,
+		},
+	)
+}
+
+func ReadExercisesByName(
+	ctxt context.Context,
+	state *types.State,
+	tx pgx.Tx,
+	opts ReadExerciseByNameOpts,
+) error {
+	return genericReadByUniqueId(
+		ctxt, state, tx, &genericReadByUniqueIdOpts[string, types.Exercise]{
+			TableName:  exerciseTableName,
+			Columns:    []string{"name", "kind_id", "focus_id"},
+			UniqueCol:  "name",
+			IdsSqlType: "TEXT",
+			Ids:        opts.Names,
+			Res:        opts.Exercises,
+			Err:        types.CouldNotReadAllExercisesErr,
+		},
+	)
+}
+
+func FindExercisesByName(
+	ctxt context.Context,
+	state *types.State,
+	tx pgx.Tx,
+	opts FindExerciseByNameOpts,
+) error {
+	return genericFindByUniqueId(
+		ctxt, state, tx, &genericFindByUniqueIdOpts[
+			string, types.Found[types.Exercise], types.Exercise,
+		]{
+			TableName:  exerciseTableName,
+			Columns:    []string{"name", "kind_id", "focus_id"},
+			UniqueCol:  "name",
+			IdsSqlType: "TEXT",
+			Ids:        opts.Names,
+			Res:        opts.Exercises,
+			SetScanValues: func(v *types.Exercise, res []any) {
+				res[0] = &v.Name
+				res[1] = &v.KindId
+				res[2] = &v.FocusId
+			},
+			Err: types.CouldNotReadAllExercisesErr,
+		},
+	)
+}
+
+func DeleteExercises(
+	ctxt context.Context,
+	state *types.State,
+	tx pgx.Tx,
+	emails []string,
+) error {
+	return genericDeleteByUniqueId(
+		ctxt, state, tx, &genericDeleteByUniqueIdOpts[string]{
+			Ids:       emails,
+			TableName: exerciseTableName,
+			UniqueCol: "name",
+			Err:       types.CouldNotDeleteAllExercisesErr,
+		},
+	)
 }
