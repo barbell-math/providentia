@@ -63,5 +63,38 @@ func CreateExercises(
 	tx pgx.Tx,
 	clients []types.Client,
 ) error {
+	// TODO - impl
+	// cpy := CpyFromSlice[types.Client]{
+	// 	Data: clients,
+	// 	ValueGetter: func(v *types.Client, res *[]any) error {
+	// 		if len(*res) < 3 {
+	// 			*res = make([]any, 3)
+	// 		}
+	// 		(*res)[0] = v.FirstName
+	// 		(*res)[1] = v.LastName
+	// 		(*res)[2] = v.Email
+	// 		return nil
+	// 	},
+	// }
+	// if n, err := tx.CopyFrom(
+	// 	ctxt, pgx.Identifier{"providentia", "client"},
+	// 	[]string{"first_name", "last_name", "email"},
+	// 	&cpy,
+	// ); err != nil {
+	// 	return sberr.AppendError(types.CouldNotCreateAllClientsErr, err)
+	// } else if n != int64(len(clients)) {
+	// 	return sberr.Wrap(
+	// 		types.CouldNotCreateAllClientsErr,
+	// 		"Expected to create %d clients but only created %d, rolling back",
+	// 		len(clients), n,
+	// 	)
+	// }
+
+	// state.Log.Log(
+	// 	ctxt, sblog.VLevel(3),
+	// 	"DAL: Created new clients",
+	// 	"NumRows", len(clients),
+	// )
+	// return nil
 	return nil
 }

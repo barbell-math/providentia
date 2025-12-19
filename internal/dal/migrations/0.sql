@@ -41,12 +41,6 @@ CREATE TABLE IF NOT EXISTS providentia.client (
     )
 );
 
-CREATE TABLE IF NOT EXISTS providentia.model (
-	id SERIAL4 NOT NULL PRIMARY KEY,
-	name TEXT NOT NULL UNIQUE,
-	description TEXT NOT NULL
-);
-
 CREATE TABLE IF NOT EXISTS providentia.hyperparams (
 	id SERIAL4 NOT NULL PRIMARY KEY,
 	model_id INT4 NOT NULL REFERENCES providentia.model(id) ON DELETE CASCADE,
@@ -142,6 +136,12 @@ CREATE TABLE IF NOT EXISTS providentia.training_log (
 	total_reps FLOAT8 NOT NULL CHECK (total_reps>=0) GENERATED ALWAYS AS (sets*reps) STORED,
 
 	UNIQUE (client_id, date_performed, inter_session_cntr, inter_workout_cntr)
+);
+
+CREATE TABLE IF NOT EXISTS providentia.model (
+	id SERIAL4 NOT NULL PRIMARY KEY,
+	name TEXT NOT NULL UNIQUE,
+	description TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS providentia.model_state (
