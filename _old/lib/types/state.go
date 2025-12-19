@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	"log/slog"
 
 	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
@@ -33,4 +34,16 @@ type (
 
 		Global GlobalConf
 	}
+)
+
+var (
+	InvalidGlobalErr    = errors.New("Invalid global conf")
+	InvalidBatchSizeErr = errors.New("Invalid batch size")
+
+	InvalidLoggerErr            = errors.New("Invalid logger")
+	InvalidDBErr                = errors.New("Invalid database connection pool")
+	InvalidPhysicsJobQueueErr   = errors.New("Invalid physics job queue")
+	InvalidVideoJobQueue        = errors.New("Invalid video job queue")
+	InvalidCSVLoaderJobQueueErr = errors.New("Invalid csv loader job queue")
+	InvalidGPJobQueueErr        = errors.New("Invalid general purpose loader job queue")
 )

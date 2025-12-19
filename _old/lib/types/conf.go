@@ -9,7 +9,8 @@ import (
 type (
 	// Global settings that configure many parts of providentia's behavior.
 	GlobalConf struct {
-		BatchSize uint
+		BatchSize             uint
+		PerRequestIdCacheSize uint
 	}
 
 	// Holds all configuration data for the library. Used to define the state of

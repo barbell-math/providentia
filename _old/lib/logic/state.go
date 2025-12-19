@@ -81,7 +81,7 @@ func ValidateState(s *types.State) error {
 func checkStateGlobalConf(state *types.State) error {
 	if state.Global.BatchSize == 0 {
 		return sberr.AppendError(
-			types.InvalidGlobalConfErr,
+			types.InvalidGlobalErr,
 			sberr.Wrap(
 				types.InvalidBatchSizeErr,
 				"Must be >0. Got: %d", state.Global.BatchSize,

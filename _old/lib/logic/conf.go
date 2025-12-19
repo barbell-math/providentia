@@ -32,7 +32,8 @@ func ConfDefaults() *types.Conf {
 			Port: 5432,
 		},
 		Global: types.GlobalConf{
-			BatchSize: 1e3,
+			BatchSize:             1e3,
+			PerRequestIdCacheSize: 1e2,
 		},
 		PhysicsJobQueue: sbjobqueue.Opts{
 			QueueLen:       10,
@@ -56,19 +57,19 @@ func ConfDefaults() *types.Conf {
 		},
 		ClientCSVFileChunks: sbcsv.ChunkFileOpts{
 			PredictedAvgRowSizeInBytes: 100,
-			MinChunkRows:               50000,
+			MinChunkRows:               1e5,
 			MaxChunkRows:               math.MaxInt,
 			RequestedNumChunks:         runtime.NumCPU(),
 		},
 		ExerciseCSVFileChunks: sbcsv.ChunkFileOpts{
 			PredictedAvgRowSizeInBytes: 100,
-			MinChunkRows:               50000,
+			MinChunkRows:               1e5,
 			MaxChunkRows:               math.MaxInt,
 			RequestedNumChunks:         runtime.NumCPU(),
 		},
 		HyperparamCSVFileChunks: sbcsv.ChunkFileOpts{
 			NumRowSamples:      2,
-			MinChunkRows:       50000,
+			MinChunkRows:       1e5,
 			MaxChunkRows:       math.MaxInt,
 			RequestedNumChunks: runtime.NumCPU(),
 		},
@@ -78,7 +79,7 @@ func ConfDefaults() *types.Conf {
 			// and video mainly) have a greater chance of being filled up. Can
 			// help loading data with sparse physics data, which will be the
 			// more typical use case, but won't speed up loading data with dense
-			// physics data. - TODO - what???
+			// physics data.
 			MinChunkRows:       1e2,
 			MaxChunkRows:       math.MaxInt,
 			RequestedNumChunks: runtime.NumCPU(),
@@ -114,6 +115,7 @@ func ConfDefaultRequiredArgs() []string {
 //   - <longArgStart>.DB.Name
 //   - <longArgStart>.Global.BatchSize
 //   - <longArgStart>.Global.PerRequestIdCacheSize
+//   - <longArgStart>.PhysicsData.MinNumSamples
 //   - <longArgStart>.PhysicsData.TimeDeltaEps
 //   - <longArgStart>.PhysicsJobQueue.QueueLen
 //   - <longArgStart>.PhysicsJobQueue.MaxNumWorkers
@@ -171,6 +173,15 @@ func ConfParser(
 		sbargp.Uint(
 			&val.Global.BatchSize,
 			_default.Global.BatchSize,
+			10,
+		),
+	)
+	fs.Func(
+		startStr("Global", "PerRequestIdCacheSize"),
+		"The maximum allowed cache size for each requests id caches. Smaller numbers will use less memory at the potential expense of more netowrk trips.",
+		sbargp.Uint(
+			&val.Global.PerRequestIdCacheSize,
+			_default.Global.PerRequestIdCacheSize,
 			10,
 		),
 	)
