@@ -12,7 +12,6 @@ import (
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	sbargp "code.barbellmath.net/barbell-math/smoothbrain-argparse"
 	sbjobqueue "code.barbellmath.net/barbell-math/smoothbrain-jobQueue"
-	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -116,10 +115,7 @@ func testAppMain(
 	}
 
 	end := time.Now()
-	state.Log.Log(
-		appLifetime, sblog.VLevel(4),
-		"Time to setup app", "Seconds", end.Sub(start).Seconds(),
-	)
+	state.Log.Info("Time to setup app", "Seconds", end.Sub(start).Seconds())
 
 	// Normally there would be a defer function call rather than returning a
 	// function

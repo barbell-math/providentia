@@ -8,27 +8,32 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+func getState(ctxt context.Context) (*types.State, error) {
+	state, ok := StateFromContext(ctxt)
+	if !ok {
+		return nil, sberr.Wrap(types.InvalidCtxtErr, "Missing State struct")
+	}
+	if state.DB == nil {
+		return nil, sberr.Wrap(
+			types.InvalidCtxtErr, "State db was not setup properly",
+		)
+	}
+	if state.Log == nil {
+		return nil, sberr.Wrap(
+			types.InvalidCtxtErr, "State logging was not setup properly",
+		)
+	}
+	return state, nil
+}
+
 func runOp[T any](
 	ctxt context.Context,
 	op func(ctxt context.Context, state *types.State, tx pgx.Tx, opts T) error,
 	opts T,
-) (opErr error) {
-	state, ok := StateFromContext(ctxt)
-	if !ok {
-		opErr = sberr.Wrap(types.InvalidCtxtErr, "Missing State struct")
-		return
-	}
-	if state.DB == nil {
-		opErr = sberr.Wrap(
-			types.InvalidCtxtErr, "State db was not setup properly",
-		)
-		return
-	}
-	if state.Log == nil {
-		opErr = sberr.Wrap(
-			types.InvalidCtxtErr, "State logging was not setup properly",
-		)
-		return
+) error {
+	state, err := getState(ctxt)
+	if err != nil {
+		return err
 	}
 
 	return pgx.BeginTxFunc(

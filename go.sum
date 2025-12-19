@@ -10,10 +10,10 @@ code.barbellmath.net/barbell-math/smoothbrain-jobQueue v0.0.0-20251214092757-9b1
 code.barbellmath.net/barbell-math/smoothbrain-jobQueue v0.0.0-20251214092757-9b122b518fea/go.mod h1:Jf5Icpy9nt2WaMBV4vvss7UI92C2yRHXX4plfbadIOQ=
 code.barbellmath.net/barbell-math/smoothbrain-logging v0.0.0-20251214091108-38f7f10ecc50 h1:zjpXil4NjlO6K2DVVkVj5j+IRlcrCO6Ug++AVY3kkGk=
 code.barbellmath.net/barbell-math/smoothbrain-logging v0.0.0-20251214091108-38f7f10ecc50/go.mod h1:ouTebENuyJUZDDJVUJJhHFo/6CVu0DCI3fhk9X27kvQ=
-code.barbellmath.net/barbell-math/smoothbrain-sqlmigrate v0.0.0-20251214091629-b69fb78d65fe h1:YGRz1LFLpBDPxTkR3rQFRZ8qEY7kNNHpAhE8WES/mGQ=
-code.barbellmath.net/barbell-math/smoothbrain-sqlmigrate v0.0.0-20251214091629-b69fb78d65fe/go.mod h1:rm8H/5oSaqmwh6qvoT0Lzg4oX/vuNvIk/Oo5TruELc0=
-code.barbellmath.net/barbell-math/smoothbrain-test v0.0.0-20251214085843-191da1ba9a8d h1:7YUdZDKohxtsFA1yhzPYDv3MPgYeRDxNMaBCZbc1ALU=
-code.barbellmath.net/barbell-math/smoothbrain-test v0.0.0-20251214085843-191da1ba9a8d/go.mod h1:6ztz7cLNwk+3nisu7g+5oJLSM5VbVIaBLAO2KFLubrM=
+code.barbellmath.net/barbell-math/smoothbrain-sqlmigrate v0.0.0-20251219074219-9b844eb6a153 h1:T6Z0bM7IEjqWPJIdrx402l2mZdFriooHRbNwOAQ306w=
+code.barbellmath.net/barbell-math/smoothbrain-sqlmigrate v0.0.0-20251219074219-9b844eb6a153/go.mod h1:4T5mVAsmYdLP+TFSqX3KT0cS6YwJoD8lUsFKItzxvG8=
+code.barbellmath.net/barbell-math/smoothbrain-test v0.0.0-20251219050905-f51a8750587a h1:zJ1FEev5Fsky9jTiegJtWGwCO8XIo7+pld8Zyn3WY3A=
+code.barbellmath.net/barbell-math/smoothbrain-test v0.0.0-20251219050905-f51a8750587a/go.mod h1:6ztz7cLNwk+3nisu7g+5oJLSM5VbVIaBLAO2KFLubrM=
 github.com/BurntSushi/toml v1.6.0 h1:dRaEfpa2VI55EwlIW72hMRHdWouJeRF7TPYhI+AUQjk=
 github.com/BurntSushi/toml v1.6.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

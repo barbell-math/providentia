@@ -1,652 +1,870 @@
 package migrations
 
-// TODO - wtf delete
-// func mustMarshalJson(a any) []byte {
-// 	rv, err := json.Marshal(a)
-// 	if err != nil {
-// 		panic(fmt.Sprintf("mustMarshalJson Err: %s", err))
-// 	}
-// 	return rv
-// }
+import (
+	"code.barbellmath.net/barbell-math/providentia/internal/dal"
+	"code.barbellmath.net/barbell-math/providentia/lib/types"
+)
 
-// var (
-// 	ModelSetupData = []dal.BulkCreateModelsWithIDParams{
-// 		{
-// 			ID:          types.BarPathCalc,
-// 			Name:        types.BarPathCalc.String(),
-// 			Description: "Controls for the algorithims that calculate physics data from bar path time series position data.",
-// 		},
-// 		{
-// 			ID:          types.BarPathTracker,
-// 			Name:        types.BarPathTracker.String(),
-// 			Description: "Controls for the algorithims that generate bar path time series position data from a video.",
-// 		},
-// 	}
-//
-// 	HyperparamsSetupData = []dal.BulkCreateHyperparamsParams{
-// 		{
-// 			ModelID: types.BarPathCalc,
-// 			Version: 0,
-// 			Params: mustMarshalJson(types.BarPathCalcHyperparams{
-// 				MinNumSamples:   100,
-// 				TimeDeltaEps:    0.02,
-// 				ApproxErr:       types.FourthOrder,
-// 				NearZeroFilter:  0.1,
-// 				SmootherWeight1: 0.5,
-// 				SmootherWeight2: 0.5,
-// 				SmootherWeight3: 1,
-// 				SmootherWeight4: 0.5,
-// 				SmootherWeight5: 0.5,
-// 			}),
-// 		},
-// 		{
-// 			ModelID: types.BarPathTracker,
-// 			Version: 0,
-// 			Params: mustMarshalJson(types.BarPathTrackerHyperparams{
-// 				MinLength:   5,
-// 				MinFileSize: 5e7, // 50MB
-// 				MaxFileSize: 5e8, // 500MB
-// 			}),
-// 		},
-// 	}
-//
-// 	ExerciseFocusSetupData = []dal.BulkCreateExerciseFocusWithIDParams{
-// 		{
-// 			ID:    types.UnknownExerciseFocus,
-// 			Focus: types.UnknownExerciseFocus.String(),
-// 		},
-// 		{
-// 			ID:    types.Squat,
-// 			Focus: types.Squat.String(),
-// 		},
-// 		{
-// 			ID:    types.Bench,
-// 			Focus: types.Bench.String(),
-// 		},
-// 		{
-// 			ID:    types.Deadlift,
-// 			Focus: types.Deadlift.String(),
-// 		},
-// 	}
-//
-// 	ExerciseKindSetupData = []dal.BulkCreateExerciseKindWithIDParams{
-// 		{
-// 			ID:          types.MainCompound,
-// 			Kind:        types.MainCompound.String(),
-// 			Description: "The squat, bench, and deadlift.",
-// 		},
-// 		{
-// 			ID:          types.MainCompoundAccessory,
-// 			Kind:        types.MainCompoundAccessory.String(),
-// 			Description: "Variations of the squat, bench, and deadlift.",
-// 		},
-// 		{
-// 			ID:          types.CompoundAccessory,
-// 			Kind:        types.CompoundAccessory.String(),
-// 			Description: "Multi-joint accessories that are not part of the main compound accessory group.",
-// 		},
-// 		{
-// 			ID:          types.Accessory,
-// 			Kind:        types.Accessory.String(),
-// 			Description: "Single joint lifts and core work.",
-// 		},
-// 	}
-//
-// 	ExerciseSetupData = []dal.BulkCreateExerciseWithIDParams{
-// 		{
-// 			ID: 1, Name: "45 Degree Hyperextensions",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 2, Name: "Banded Deadlift",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 3, Name: "Banded Squat",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 4, Name: "Barbell Rows",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 5, Name: "Bench",
-// 			KindID:  types.MainCompound,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 6, Name: "Block Press",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 7, Name: "Box Jump",
-// 			KindID:  types.Accessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 8, Name: "Bulgarian Split Squat",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 9, Name: "Cable Crunches",
-// 			KindID:  types.Accessory,
-// 			FocusID: types.UnknownExerciseFocus,
-// 		},
-// 		{
-// 			ID: 10, Name: "Mid Cable Fly",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 11, Name: "Cable Row",
-// 			KindID:  types.Accessory,
-// 			FocusID: types.UnknownExerciseFocus,
-// 		},
-// 		{
-// 			ID: 12, Name: "Cannonball Squat",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 13, Name: "Close Grip Bench",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 14, Name: "Deadbugs",
-// 			KindID:  types.Accessory,
-// 			FocusID: types.UnknownExerciseFocus,
-// 		},
-// 		{
-// 			ID: 15, Name: "Deadlift",
-// 			KindID:  types.MainCompound,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 16, Name: "Deadlift Row",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 17, Name: "Deficit Romanian Deadlift",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 18, Name: "Dip",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 19, Name: "Dumbbell Bulgarian Split Squat",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 20, Name: "Dumbbell Lateral Side Raise",
-// 			KindID:  types.Accessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 21, Name: "Dumbbell Press",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 22, Name: "Dumbbell RDL",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 23, Name: "Face Pull",
-// 			KindID:  types.Accessory,
-// 			FocusID: types.UnknownExerciseFocus,
-// 		},
-// 		{
-// 			ID: 24, Name: "Flat Dumbbell Press",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 25, Name: "Goblet Squat",
-// 			KindID:  types.Accessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 26, Name: "Halfway Paused Squats",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 27, Name: "Hamstring Curls",
-// 			KindID:  types.Accessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 28, Name: "Heeled Squat",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 29, Name: "Incline Bench",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 30, Name: "Incline Dumbbell Press",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 31, Name: "Larson Press",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 32, Name: "Lat Pulldown",
-// 			KindID:  types.Accessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 33, Name: "Narrow Grip Bench",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 34, Name: "Overhead Press",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 35, Name: "Paused Deadlift",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 36, Name: "Paused Squat",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 37, Name: "Pin Press",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 38, Name: "Plank",
-// 			KindID:  types.Accessory,
-// 			FocusID: types.UnknownExerciseFocus,
-// 		},
-// 		{
-// 			ID: 39, Name: "Pullup",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 40, Name: "Pushup",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 41, Name: "Romanian Deadlift",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 42, Name: "Saftey Bar Squat",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 43, Name: "Seated Dumbbell Overhead Press",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 44, Name: "Skull Crusher",
-// 			KindID:  types.Accessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 45, Name: "Squat",
-// 			KindID:  types.MainCompound,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 46, Name: "Squat Static Hold",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 47, Name: "Tempo Squat",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 48, Name: "Tricep Pushdowns",
-// 			KindID:  types.Accessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 49, Name: "V Bar Rows",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 50, Name: "YTW",
-// 			KindID:  types.Accessory,
-// 			FocusID: types.UnknownExerciseFocus,
-// 		},
-// 		{
-// 			ID: 51, Name: "Low Cable Fly",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 52, Name: "High Cable Fly",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 53, Name: "Overhead Cable Tricep Extension",
-// 			KindID:  types.Accessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 54, Name: "Chest Supported Row",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 55, Name: "Hack Squat",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 56, Name: "Single Arm Overhead Cable Tricep Extension",
-// 			KindID:  types.Accessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 57, Name: "Cable Lateral Side Raise",
-// 			KindID:  types.Accessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 58, Name: "Heeled Saftey Bar Squat",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 59, Name: "Supinated Grip Lat Pulldown",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 60, Name: "5-1-0 Bench",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 61, Name: "Spoto Press",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 62, Name: "Single Arm Dumbbell Row",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 63, Name: "Paused Bench",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 64, Name: "Duffalo Bar Squat",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 65, Name: "Quad Extension",
-// 			KindID:  types.Accessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 66, Name: "Seated Barbell Overhead Press",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 67, Name: "Banded Pushup",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 68, Name: "Single Leg Quad Extension",
-// 			KindID:  types.Accessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 69, Name: "Hyperextension",
-// 			KindID:  types.Accessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 70, Name: "Close Grip Larson Press",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 71, Name: "Dumbbell Pec Fly",
-// 			KindID:  types.Accessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 72, Name: "Wall Sit",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 73, Name: "Staggered Pushup",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 74, Name: "Single Leg Hamstring Curl",
-// 			KindID:  types.Accessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 75, Name: "3-0-1 Squat",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 76, Name: "2-0-1 Squat",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 77, Name: "Single Leg Squat",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 78, Name: "Reverse Hyperextension",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 79, Name: "Hand Release Pushup",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 80, Name: "Bison Bench Press",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 81, Name: "T Bar Row",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 82, Name: "Tricep Rollbacks",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 83, Name: "Tibialis Raise",
-// 			KindID:  types.Accessory,
-// 			FocusID: types.UnknownExerciseFocus,
-// 		},
-// 		{
-// 			ID: 84, Name: "Cossack Squat",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 85, Name: "Reverse Nordic Curl",
-// 			KindID:  types.Accessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 86, Name: "Heeled Banded Squat",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 87, Name: "Pylo Pushups",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 88, Name: "Cross Cable Tricep Extensions",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 89, Name: "Lying Hamstring Curl",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 90, Name: "0-1-0 Bench",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 91, Name: "Banded Bench",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 92, Name: "3-1-0 Bench",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 93, Name: "Walking Dumbbell Lunges",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 94, Name: "3-3-0 Bench",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 95, Name: "Sternal Pec Fly",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 96, Name: "Behind The Back Row",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 97, Name: "3-1-0 Larson Press",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 98, Name: "Wide Grip Lat Pulldown",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 99, Name: "0-1-0 Larson Press",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 100, Name: "Single Leg Landmine Romanian Deadlift",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 101, Name: "Single Arm Landmine Row",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 102, Name: "Dumbbell Row",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 103, Name: "Chest Supported Dumbbell Row",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 104, Name: "Good Morning",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 105, Name: "Kickstand Romanian Deadlift",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 106, Name: "JM Press",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 107, Name: "Belt Squat",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 108, Name: "Close Grip Pullups",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Deadlift,
-// 		},
-// 		{
-// 			ID: 109, Name: "Single Arm Tricep Pushdown",
-// 			KindID:  types.Accessory,
-// 			FocusID: types.Bench,
-// 		},
-// 		{
-// 			ID: 110, Name: "Constant Tension SSB Squat",
-// 			KindID:  types.MainCompoundAccessory,
-// 			FocusID: types.Squat,
-// 		},
-// 		{
-// 			ID: 111, Name: "Constant Tension Belt Squat",
-// 			KindID:  types.CompoundAccessory,
-// 			FocusID: types.Squat,
-// 		},
-// 	}
-// )
+var (
+	// 	ModelSetupData = []dal.BulkCreateModelsWithIDParams{
+	// 		{
+	// 			Id:          types.BarPathCalc,
+	// 			Name:        types.BarPathCalc.String(),
+	// 			Description: "Controls for the algorithims that calculate physics data from bar path time series position data.",
+	// 		},
+	// 		{
+	// 			Id:          types.BarPathTracker,
+	// 			Name:        types.BarPathTracker.String(),
+	// 			Description: "Controls for the algorithims that generate bar path time series position data from a video.",
+	// 		},
+	// 	}
+	//
+	// 	HyperparamsSetupData = []dal.BulkCreateHyperparamsParams{
+	// 		{
+	// 			ModelId: types.BarPathCalc,
+	// 			Version: 0,
+	// 			Params: mustMarshalJson(types.BarPathCalcHyperparams{
+	// 				MinNumSamples:   100,
+	// 				TimeDeltaEps:    0.02,
+	// 				ApproxErr:       types.FourthOrder,
+	// 				NearZeroFilter:  0.1,
+	// 				SmootherWeight1: 0.5,
+	// 				SmootherWeight2: 0.5,
+	// 				SmootherWeight3: 1,
+	// 				SmootherWeight4: 0.5,
+	// 				SmootherWeight5: 0.5,
+	// 			}),
+	// 		},
+	// 		{
+	// 			ModelId: types.BarPathTracker,
+	// 			Version: 0,
+	// 			Params: mustMarshalJson(types.BarPathTrackerHyperparams{
+	// 				MinLength:   5,
+	// 				MinFileSize: 5e7, // 50MB
+	// 				MaxFileSize: 5e8, // 500MB
+	// 			}),
+	// 		},
+	// 	}
+
+	ExerciseFocusSetupData = []dal.CreateExerciseFocusWithIDOpts{
+		{
+			ExerciseFocus: types.UnknownExerciseFocus,
+			Desc:          types.UnknownExerciseFocus.String(),
+		},
+		{
+			ExerciseFocus: types.Squat,
+			Desc:          types.Squat.String(),
+		},
+		{
+			ExerciseFocus: types.Bench,
+			Desc:          types.Bench.String(),
+		},
+		{
+			ExerciseFocus: types.Deadlift,
+			Desc:          types.Deadlift.String(),
+		},
+	}
+
+	ExerciseKindSetupData = []dal.CreateExerciseKindWithIDOpts{
+		{
+			ExerciseKind: types.MainCompound,
+			Name:         types.MainCompound.String(),
+			Desc:         "The squat, bench, and deadlift.",
+		},
+		{
+			ExerciseKind: types.MainCompoundAccessory,
+			Name:         types.MainCompoundAccessory.String(),
+			Desc:         "Variations of the squat, bench, and deadlift.",
+		},
+		{
+			ExerciseKind: types.CompoundAccessory,
+			Name:         types.CompoundAccessory.String(),
+			Desc:         "Multi-joint accessories that are not part of the main compound accessory group.",
+		},
+		{
+			ExerciseKind: types.Accessory,
+			Name:         types.Accessory.String(),
+			Desc:         "Single joint lifts and core work.",
+		},
+	}
+
+	ExerciseSetupData = []types.IdWrapper[types.Exercise]{
+		{
+			Id: 1, Val: types.Exercise{
+				Name:    "45 Degree Hyperextensions",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 2, Val: types.Exercise{
+				Name:    "Banded Deadlift",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 3, Val: types.Exercise{
+				Name:    "Banded Squat",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 4, Val: types.Exercise{
+				Name:    "Barbell Rows",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 5, Val: types.Exercise{
+				Name:    "Bench",
+				KindId:  types.MainCompound,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 6, Val: types.Exercise{
+				Name:    "Block Press",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 7, Val: types.Exercise{
+				Name:    "Box Jump",
+				KindId:  types.Accessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 8, Val: types.Exercise{
+				Name:    "Bulgarian Split Squat",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 9, Val: types.Exercise{
+				Name:    "Cable Crunches",
+				KindId:  types.Accessory,
+				FocusId: types.UnknownExerciseFocus,
+			},
+		},
+		{
+			Id: 10, Val: types.Exercise{
+				Name:    "Mid Cable Fly",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 11, Val: types.Exercise{
+				Name:    "Cable Row",
+				KindId:  types.Accessory,
+				FocusId: types.UnknownExerciseFocus,
+			},
+		},
+		{
+			Id: 12, Val: types.Exercise{
+				Name:    "Cannonball Squat",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 13, Val: types.Exercise{
+				Name:    "Close Grip Bench",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 14, Val: types.Exercise{
+				Name:    "Deadbugs",
+				KindId:  types.Accessory,
+				FocusId: types.UnknownExerciseFocus,
+			},
+		},
+		{
+			Id: 15, Val: types.Exercise{
+				Name:    "Deadlift",
+				KindId:  types.MainCompound,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 16, Val: types.Exercise{
+				Name:    "Deadlift Row",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 17, Val: types.Exercise{
+				Name:    "Deficit Romanian Deadlift",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 18, Val: types.Exercise{
+				Name:    "Dip",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 19, Val: types.Exercise{
+				Name:    "Dumbbell Bulgarian Split Squat",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 20, Val: types.Exercise{
+				Name:    "Dumbbell Lateral Side Raise",
+				KindId:  types.Accessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 21, Val: types.Exercise{
+				Name:    "Dumbbell Press",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 22, Val: types.Exercise{
+				Name:    "Dumbbell RDL",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 23, Val: types.Exercise{
+				Name:    "Face Pull",
+				KindId:  types.Accessory,
+				FocusId: types.UnknownExerciseFocus,
+			},
+		},
+		{
+			Id: 24, Val: types.Exercise{
+				Name:    "Flat Dumbbell Press",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 25, Val: types.Exercise{
+				Name:    "Goblet Squat",
+				KindId:  types.Accessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 26, Val: types.Exercise{
+				Name:    "Halfway Paused Squats",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 27, Val: types.Exercise{
+				Name:    "Hamstring Curls",
+				KindId:  types.Accessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 28, Val: types.Exercise{
+				Name:    "Heeled Squat",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 29, Val: types.Exercise{
+				Name:    "Incline Bench",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 30, Val: types.Exercise{
+				Name:    "Incline Dumbbell Press",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 31, Val: types.Exercise{
+				Name:    "Larson Press",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 32, Val: types.Exercise{
+				Name:    "Lat Pulldown",
+				KindId:  types.Accessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 33, Val: types.Exercise{
+				Name:    "Narrow Grip Bench",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 34, Val: types.Exercise{
+				Name:    "Overhead Press",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 35, Val: types.Exercise{
+				Name:    "Paused Deadlift",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 36, Val: types.Exercise{
+				Name:    "Paused Squat",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 37, Val: types.Exercise{
+				Name:    "Pin Press",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 38, Val: types.Exercise{
+				Name:    "Plank",
+				KindId:  types.Accessory,
+				FocusId: types.UnknownExerciseFocus,
+			},
+		},
+		{
+			Id: 39, Val: types.Exercise{
+				Name:    "Pullup",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 40, Val: types.Exercise{
+				Name:    "Pushup",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 41, Val: types.Exercise{
+				Name:    "Romanian Deadlift",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 42, Val: types.Exercise{
+				Name:    "Saftey Bar Squat",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 43, Val: types.Exercise{
+				Name:    "Seated Dumbbell Overhead Press",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 44, Val: types.Exercise{
+				Name:    "Skull Crusher",
+				KindId:  types.Accessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 45, Val: types.Exercise{
+				Name:    "Squat",
+				KindId:  types.MainCompound,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 46, Val: types.Exercise{
+				Name:    "Squat Static Hold",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 47, Val: types.Exercise{
+				Name:    "Tempo Squat",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 48, Val: types.Exercise{
+				Name:    "Tricep Pushdowns",
+				KindId:  types.Accessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 49, Val: types.Exercise{
+				Name:    "V Bar Rows",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 50, Val: types.Exercise{
+				Name:    "YTW",
+				KindId:  types.Accessory,
+				FocusId: types.UnknownExerciseFocus,
+			},
+		},
+		{
+			Id: 51, Val: types.Exercise{
+				Name:    "Low Cable Fly",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 52, Val: types.Exercise{
+				Name:    "High Cable Fly",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 53, Val: types.Exercise{
+				Name:    "Overhead Cable Tricep Extension",
+				KindId:  types.Accessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 54, Val: types.Exercise{
+				Name:    "Chest Supported Row",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 55, Val: types.Exercise{
+				Name:    "Hack Squat",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 56, Val: types.Exercise{
+				Name:    "Single Arm Overhead Cable Tricep Extension",
+				KindId:  types.Accessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 57, Val: types.Exercise{
+				Name:    "Cable Lateral Side Raise",
+				KindId:  types.Accessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 58, Val: types.Exercise{
+				Name:    "Heeled Saftey Bar Squat",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 59, Val: types.Exercise{
+				Name:    "Supinated Grip Lat Pulldown",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 60, Val: types.Exercise{
+				Name:    "5-1-0 Bench",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 61, Val: types.Exercise{
+				Name:    "Spoto Press",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 62, Val: types.Exercise{
+				Name:    "Single Arm Dumbbell Row",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 63, Val: types.Exercise{
+				Name:    "Paused Bench",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 64, Val: types.Exercise{
+				Name:    "Duffalo Bar Squat",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 65, Val: types.Exercise{
+				Name:    "Quad Extension",
+				KindId:  types.Accessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 66, Val: types.Exercise{
+				Name:    "Seated Barbell Overhead Press",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 67, Val: types.Exercise{
+				Name:    "Banded Pushup",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 68, Val: types.Exercise{
+				Name:    "Single Leg Quad Extension",
+				KindId:  types.Accessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 69, Val: types.Exercise{
+				Name:    "Hyperextension",
+				KindId:  types.Accessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 70, Val: types.Exercise{
+				Name:    "Close Grip Larson Press",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 71, Val: types.Exercise{
+				Name:    "Dumbbell Pec Fly",
+				KindId:  types.Accessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 72, Val: types.Exercise{
+				Name:    "Wall Sit",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 73, Val: types.Exercise{
+				Name:    "Staggered Pushup",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 74, Val: types.Exercise{
+				Name:    "Single Leg Hamstring Curl",
+				KindId:  types.Accessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 75, Val: types.Exercise{
+				Name:    "3-0-1 Squat",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 76, Val: types.Exercise{
+				Name:    "2-0-1 Squat",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 77, Val: types.Exercise{
+				Name:    "Single Leg Squat",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 78, Val: types.Exercise{
+				Name:    "Reverse Hyperextension",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 79, Val: types.Exercise{
+				Name:    "Hand Release Pushup",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 80, Val: types.Exercise{
+				Name:    "Bison Bench Press",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 81, Val: types.Exercise{
+				Name:    "T Bar Row",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 82, Val: types.Exercise{
+				Name:    "Tricep Rollbacks",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 83, Val: types.Exercise{
+				Name:    "Tibialis Raise",
+				KindId:  types.Accessory,
+				FocusId: types.UnknownExerciseFocus,
+			},
+		},
+		{
+			Id: 84, Val: types.Exercise{
+				Name:    "Cossack Squat",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 85, Val: types.Exercise{
+				Name:    "Reverse Nordic Curl",
+				KindId:  types.Accessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 86, Val: types.Exercise{
+				Name:    "Heeled Banded Squat",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 87, Val: types.Exercise{
+				Name:    "Pylo Pushups",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 88, Val: types.Exercise{
+				Name:    "Cross Cable Tricep Extensions",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 89, Val: types.Exercise{
+				Name:    "Lying Hamstring Curl",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 90, Val: types.Exercise{
+				Name:    "0-1-0 Bench",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 91, Val: types.Exercise{
+				Name:    "Banded Bench",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 92, Val: types.Exercise{
+				Name:    "3-1-0 Bench",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 93, Val: types.Exercise{
+				Name:    "Walking Dumbbell Lunges",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 94, Val: types.Exercise{
+				Name:    "3-3-0 Bench",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 95, Val: types.Exercise{
+				Name:    "Sternal Pec Fly",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 96, Val: types.Exercise{
+				Name:    "Behind The Back Row",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 97, Val: types.Exercise{
+				Name:    "3-1-0 Larson Press",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 98, Val: types.Exercise{
+				Name:    "Wide Grip Lat Pulldown",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 99, Val: types.Exercise{
+				Name:    "0-1-0 Larson Press",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 100, Val: types.Exercise{
+				Name:    "Single Leg Landmine Romanian Deadlift",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 101, Val: types.Exercise{
+				Name:    "Single Arm Landmine Row",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 102, Val: types.Exercise{
+				Name:    "Dumbbell Row",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 103, Val: types.Exercise{
+				Name:    "Chest Supported Dumbbell Row",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 104, Val: types.Exercise{
+				Name:    "Good Morning",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 105, Val: types.Exercise{
+				Name:    "Kickstand Romanian Deadlift",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 106, Val: types.Exercise{
+				Name:    "JM Press",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 107, Val: types.Exercise{
+				Name:    "Belt Squat",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 108, Val: types.Exercise{
+				Name:    "Close Grip Pullups",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Deadlift,
+			},
+		},
+		{
+			Id: 109, Val: types.Exercise{
+				Name:    "Single Arm Tricep Pushdown",
+				KindId:  types.Accessory,
+				FocusId: types.Bench,
+			},
+		},
+		{
+			Id: 110, Val: types.Exercise{
+				Name:    "Constant Tension SSB Squat",
+				KindId:  types.MainCompoundAccessory,
+				FocusId: types.Squat,
+			},
+		},
+		{
+			Id: 111, Val: types.Exercise{
+				Name:    "Constant Tension Belt Squat",
+				KindId:  types.CompoundAccessory,
+				FocusId: types.Squat,
+			},
+		},
+	}
+)

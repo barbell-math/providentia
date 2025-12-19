@@ -9,8 +9,8 @@ require (
 	code.barbellmath.net/barbell-math/smoothbrain-errs v0.0.0-20251214092612-fc98d8585e15
 	code.barbellmath.net/barbell-math/smoothbrain-jobQueue v0.0.0-20251214092757-9b122b518fea
 	code.barbellmath.net/barbell-math/smoothbrain-logging v0.0.0-20251214091108-38f7f10ecc50
-	code.barbellmath.net/barbell-math/smoothbrain-sqlmigrate v0.0.0-20251214091629-b69fb78d65fe
-	code.barbellmath.net/barbell-math/smoothbrain-test v0.0.0-20251214085843-191da1ba9a8d
+	code.barbellmath.net/barbell-math/smoothbrain-sqlmigrate v0.0.0-20251219074219-9b844eb6a153
+	code.barbellmath.net/barbell-math/smoothbrain-test v0.0.0-20251219050905-f51a8750587a
 	github.com/jackc/pgx/v5 v5.7.6
 )
 

@@ -2,28 +2,18 @@ CREATE SCHEMA IF NOT EXISTS providentia;
 
 CREATE TABLE IF NOT EXISTS providentia.exercise_focus (
 	id SERIAL4 PRIMARY KEY NOT NULL,
-	focus TEXT NOT NULL
+	focus TEXT NOT NULL,
+
+	CONSTRAINT focus_not_empty CHECK ( focus != '')
 );
 
 CREATE TABLE IF NOT EXISTS providentia.exercise_kind (
 	id SERIAL4 NOT NULL PRIMARY KEY,
 	kind TEXT NOT NULL,
-	description TEXT NOT NULL
-);
+	description TEXT NOT NULL,
 
-CREATE TABLE IF NOT EXISTS providentia.model (
-	id SERIAL4 NOT NULL PRIMARY KEY,
-	name TEXT NOT NULL UNIQUE,
-	description TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS providentia.hyperparams (
-	id SERIAL4 NOT NULL PRIMARY KEY,
-	model_id INT4 NOT NULL REFERENCES providentia.model(id) ON DELETE CASCADE,
-	version INT4 NOT NULL,
-	params JSONB NOT NULL,
-
-	UNIQUE (model_id, version)
+	CONSTRAINT kind_not_empty CHECK ( kind != ''),
+	CONSTRAINT description_not_empty CHECK ( description != '')
 );
 
 CREATE TABLE IF NOT EXISTS providentia.exercise (
@@ -32,7 +22,8 @@ CREATE TABLE IF NOT EXISTS providentia.exercise (
 	kind_id INT4 NOT NULL REFERENCES providentia.exercise_kind(id) ON DELETE CASCADE,
 	focus_id INT4 NOT NULL REFERENCES providentia.exercise_focus(id) ON DELETE CASCADE,
 
-	UNIQUE(name, kind_id, focus_id)
+	UNIQUE(name, kind_id, focus_id),
+	CONSTRAINT name_not_empty CHECK ( name != '')
 );
 
 CREATE TABLE IF NOT EXISTS providentia.client (
@@ -48,6 +39,21 @@ CREATE TABLE IF NOT EXISTS providentia.client (
 	CONSTRAINT valid_email_format CHECK (
         email ~* '^[A-Za-z0-9._%-]+@[A-Za-z0-9.-]+[.][A-Za-z]+$'
     )
+);
+
+CREATE TABLE IF NOT EXISTS providentia.model (
+	id SERIAL4 NOT NULL PRIMARY KEY,
+	name TEXT NOT NULL UNIQUE,
+	description TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS providentia.hyperparams (
+	id SERIAL4 NOT NULL PRIMARY KEY,
+	model_id INT4 NOT NULL REFERENCES providentia.model(id) ON DELETE CASCADE,
+	version INT4 NOT NULL,
+	params JSONB NOT NULL,
+
+	UNIQUE (model_id, version)
 );
 
 CREATE TABLE IF NOT EXISTS providentia.physics_data (

@@ -59,6 +59,9 @@ func EnsureClientsExist(
 //   - LastName (string): the last name of the client
 //   - Email (string): the email of the client
 //
+// For performance it is recommended to set the `ReuseRecord` variable to `true`
+// in the [sbcsv.Opts] struct. This will reduce the number of allocations made.
+//
 // The context must have a [types.State] variable.
 //
 // Clients will be uploaded in batches that respect the size set in the
