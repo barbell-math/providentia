@@ -6,45 +6,42 @@ import (
 )
 
 var (
-	// 	ModelSetupData = []dal.BulkCreateModelsWithIDParams{
-	// 		{
-	// 			Id:          types.BarPathCalc,
-	// 			Name:        types.BarPathCalc.String(),
-	// 			Description: "Controls for the algorithims that calculate physics data from bar path time series position data.",
-	// 		},
-	// 		{
-	// 			Id:          types.BarPathTracker,
-	// 			Name:        types.BarPathTracker.String(),
-	// 			Description: "Controls for the algorithims that generate bar path time series position data from a video.",
-	// 		},
-	// 	}
-	//
-	// 	HyperparamsSetupData = []dal.BulkCreateHyperparamsParams{
-	// 		{
-	// 			ModelId: types.BarPathCalc,
-	// 			Version: 0,
-	// 			Params: mustMarshalJson(types.BarPathCalcHyperparams{
-	// 				MinNumSamples:   100,
-	// 				TimeDeltaEps:    0.02,
-	// 				ApproxErr:       types.FourthOrder,
-	// 				NearZeroFilter:  0.1,
-	// 				SmootherWeight1: 0.5,
-	// 				SmootherWeight2: 0.5,
-	// 				SmootherWeight3: 1,
-	// 				SmootherWeight4: 0.5,
-	// 				SmootherWeight5: 0.5,
-	// 			}),
-	// 		},
-	// 		{
-	// 			ModelId: types.BarPathTracker,
-	// 			Version: 0,
-	// 			Params: mustMarshalJson(types.BarPathTrackerHyperparams{
-	// 				MinLength:   5,
-	// 				MinFileSize: 5e7, // 50MB
-	// 				MaxFileSize: 5e8, // 500MB
-	// 			}),
-	// 		},
-	// 	}
+	ModelSetupData = []dal.CreateModelsWithIDOpts{
+		{
+			ModelID: types.BarPathCalc,
+			Name:    types.BarPathCalc.String(),
+			Desc:    "Controls for the algorithims that calculate physics data from bar path time series position data.",
+		},
+		{
+			ModelID: types.BarPathTracker,
+			Name:    types.BarPathTracker.String(),
+			Desc:    "Controls for the algorithims that generate bar path time series position data from a video.",
+		},
+	}
+
+	BarPathCalcHyperparamsSetupData = []types.BarPathCalcHyperparams{
+		{
+			Version:         0,
+			MinNumSamples:   100,
+			TimeDeltaEps:    0.02,
+			ApproxErr:       types.FourthOrder,
+			NearZeroFilter:  0.1,
+			SmootherWeight1: 0.5,
+			SmootherWeight2: 0.5,
+			SmootherWeight3: 1,
+			SmootherWeight4: 0.5,
+			SmootherWeight5: 0.5,
+		},
+	}
+
+	BarPathTrackerHyperparamsSetupData = []types.BarPathTrackerHyperparams{
+		{
+			Version:     0,
+			MinLength:   5,
+			MinFileSize: 5e7, // 50MB
+			MaxFileSize: 5e8, // 500MB
+		},
+	}
 
 	ExerciseFocusSetupData = []dal.CreateExerciseFocusWithIDOpts{
 		{

@@ -18,6 +18,12 @@ type (
 		Name               string `db:"kind"`
 		Desc               string `db:"description"`
 	}
+
+	CreateModelsWithIDOpts struct {
+		types.ModelID `db:"id"`
+		Name          string `db:"kind"`
+		Desc          string `db:"description"`
+	}
 )
 
 func CreateExerciseFocusWithID(
@@ -65,6 +71,31 @@ func CreateExerciseKindWithID(
 				return nil
 			},
 			Err: types.CouldNotCreateAllExerciseKindEntriesErr,
+		},
+	)
+}
+
+func CreateModelsWithID(
+	ctxt context.Context,
+	state *types.State,
+	tx pgx.Tx,
+	data []CreateModelsWithIDOpts,
+) error {
+	return genericCreateWithId(
+		ctxt, state, tx, &genericCreateOpts[CreateModelsWithIDOpts]{
+			TableName: "model",
+			Columns:   []string{"id", "name", "description"},
+			Data:      data,
+			ValueGetter: func(v *CreateModelsWithIDOpts, res *[]any) error {
+				if len(*res) < 3 {
+					*res = make([]any, 3)
+				}
+				(*res)[0] = v.ModelID
+				(*res)[1] = v.Name
+				(*res)[2] = v.Desc
+				return nil
+			},
+			Err: types.CouldNotCreateAllModelsErr,
 		},
 	)
 }

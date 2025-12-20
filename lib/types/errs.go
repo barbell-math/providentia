@@ -27,6 +27,11 @@ var (
 	CouldNotCreateAllExerciseKindEntriesErr = errors.New("Could not create all exercise kind entries")
 )
 
+// [Model] errors
+var (
+	CouldNotCreateAllModelsErr = errors.New("Could not create all models")
+)
+
 // [Client] errors
 var (
 	CouldNotCreateAllClientsErr = errors.New("Could not create all clients")
@@ -41,6 +46,23 @@ var (
 	CouldNotReadAllExercisesErr   = errors.New("Could not read all exercises")
 	CouldNotUpdateAllExercisesErr = errors.New("Could not update all exercises")
 	CouldNotDeleteAllExercisesErr = errors.New("Could not delete all exercises")
+)
+
+// [Hyperparams] errors
+var (
+	InvalidBarPathCalcErr    = errors.New("Invalid bar path calc conf")
+	InvalidMinNumSamplesErr  = errors.New("Invalid min num samples")
+	InvalidTimeDeltaEpsErr   = errors.New("Invalid time delta eps")
+	InvalidNearZeroFilterErr = errors.New("Invalid near zero filter")
+
+	InvalidBarPathTrackerErr = errors.New("Invalid bar path tracker conf")
+	InvalidMinLengthErr      = errors.New("Invalid min length")
+	InvalidMaxFileSizeErr    = errors.New("Invalid max file size")
+
+	CouldNotCreateAllHyperparamsErr = errors.New("Could not create all hyperparams")
+	CouldNotReadAllHyperparamsErr   = errors.New("Could not read all hyperparams")
+	CouldNotUpdateAllHyperparamsErr = errors.New("Could not update all hyperparams")
+	CouldNotDeleteAllHyperparamsErr = errors.New("Could not delete all hyperparams")
 )
 
 // Job queue errors

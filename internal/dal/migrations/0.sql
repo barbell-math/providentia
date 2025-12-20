@@ -53,7 +53,11 @@ CREATE TABLE IF NOT EXISTS providentia.hyperparams (
 	version INT4 NOT NULL,
 	params JSONB NOT NULL,
 
-	UNIQUE (model_id, version)
+	UNIQUE (model_id, version),
+	UNIQUE (model_id, version, params),
+	CONSTRAINT params_is_json_obj CHECK (
+		jsonb_typeof(params) = 'object' AND params <> '{}'::JSONB
+	)
 );
 
 CREATE TABLE IF NOT EXISTS providentia.physics_data (
