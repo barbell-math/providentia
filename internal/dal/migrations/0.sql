@@ -50,13 +50,13 @@ CREATE TABLE IF NOT EXISTS providentia.model (
 CREATE TABLE IF NOT EXISTS providentia.hyperparams (
 	id SERIAL4 NOT NULL PRIMARY KEY,
 	model_id INT4 NOT NULL REFERENCES providentia.model(id) ON DELETE CASCADE,
-	version INT4 NOT NULL,
 	params JSONB NOT NULL,
 
-	UNIQUE (model_id, version),
-	UNIQUE (model_id, version, params),
-	CONSTRAINT params_is_json_obj CHECK (
-		jsonb_typeof(params) = 'object' AND params <> '{}'::JSONB
+	UNIQUE (model_id, params->'version'),
+	UNIQUE (model_id, params),
+	CONSTRAINT params_is_json_obj_with_version CHECK (
+		jsonb_typeof(params) = 'object' AND params <> '{}'::JSONB AND
+        params ? 'version' AND jsonb_typeof(params->'version') = 'number'
 	)
 );
 
