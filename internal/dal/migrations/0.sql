@@ -50,13 +50,13 @@ CREATE TABLE IF NOT EXISTS providentia.model (
 CREATE TABLE IF NOT EXISTS providentia.hyperparams (
 	id SERIAL4 NOT NULL PRIMARY KEY,
 	model_id INT4 NOT NULL REFERENCES providentia.model(id) ON DELETE CASCADE,
+	version INT4 NOT NULL,
 	params JSONB NOT NULL,
 
-	UNIQUE (model_id, params->'version'),
-	UNIQUE (model_id, params),
-	CONSTRAINT params_is_json_obj_with_version CHECK (
-		jsonb_typeof(params) = 'object' AND params <> '{}'::JSONB AND
-        params ? 'version' AND jsonb_typeof(params->'version') = 'number'
+	UNIQUE (model_id, version),
+	UNIQUE (model_id, version, params),
+	CONSTRAINT params_is_json_obj CHECK (
+		jsonb_typeof(params) = 'object' AND params <> '{}'::JSONB
 	)
 );
 
@@ -65,72 +65,45 @@ CREATE TABLE IF NOT EXISTS providentia.physics_data (
 	path TEXT[] UNIQUE,
 	bar_path_calc_id INT4 NOT NULL REFERENCES providentia.hyperparams(id) ON DELETE CASCADE,
 	bar_path_track_id INT4 REFERENCES providentia.hyperparams(id) ON DELETE CASCADE,
-	-- data JSONB NOT NULL
 
-	-- TODO - try to implement some kind of checking
-	-- SELECT jsonb_typeof(jsonb_path_query('{"time": [[1],[1,1],[1,1,1]]}', '$.time[0][0]'));
-	-- CONSTRAINT check_data_schema CHECK (
-    --     data ? 'time' AND
-	-- 		jsonb_typeof(data->'time') = 'array' AND
-	-- 		jsonb_typeof(data->'time'[0]) = 'array' AND
-	-- 		jsonb_typeof(data->'time'[0][0]) = 'number' AND
-    --     data ? 'position' AND
-	-- 		jsonb_typeof(data->'position') = 'array' AND
-	-- 		jsonb_typeof(data->'position'[0]) = 'array' AND
-	-- 		jsonb_typeof(data->'position'[0][0]) = 'number' AND
-    --     data ? 'velocity' AND
-	-- 		jsonb_typeof(data->'velocity') = 'array' AND
-	-- 		jsonb_typeof(data->'velocity'[0]) = 'array' AND
-	-- 		jsonb_typeof(data->'velocity'[0][0]) = 'number' AND
-    --     data ? 'acceleration' AND
-	-- 		jsonb_typeof(data->'acceleration') = 'array' AND
-	-- 		jsonb_typeof(data->'acceleration'[0]) = 'array' AND
-	-- 		jsonb_typeof(data->'acceleration'[0][0]) = 'number' AND
-    --     data ? 'jerk' AND
-	-- 		jsonb_typeof(data->'jerk') = 'array' AND
-	-- 		jsonb_typeof(data->'jerk'[0]) = 'array' AND
-	-- 		jsonb_typeof(data->'jerk'[0][0]) = 'number' AND
-    -- )
+	time FLOAT8[] NOT NULL,
+	position POINT[] NOT NULL,
+	velocity POINT[] NOT NULL,
+	acceleration POINT[] NOT NULL,
+	jerk POINT[] NOT NULL,
 
-	time FLOAT8[][] NOT NULL,
-	position POINT[][] NOT NULL,
-	velocity POINT[][] NOT NULL,
-	acceleration POINT[][] NOT NULL,
-	jerk POINT[][] NOT NULL,
+	force POINT[] NOT NULL,
+	impulse POINT[] NOT NULL,
+	work FLOAT8[] NOT NULL,
+	power FLOAT8[] NOT NULL,
 
-	force POINT[][] NOT NULL,
-	impulse POINT[][] NOT NULL,
-	work FLOAT8[][] NOT NULL,
-	power FLOAT8[][] NOT NULL,
+	rep_splits POINT[] NOT NULL,
 
-	rep_splits POINT[][] NOT NULL,
+	min_vel POINT[] NOT NULL,
+	max_vel POINT[] NOT NULL,
 
-	min_vel POINT[][] NOT NULL,
-	max_vel POINT[][] NOT NULL,
+	min_acc POINT[] NOT NULL,
+	max_acc POINT[] NOT NULL,
 
-	min_acc POINT[][] NOT NULL,
-	max_acc POINT[][] NOT NULL,
+	min_force POINT[] NOT NULL,
+	max_force POINT[] NOT NULL,
 
-	min_force POINT[][] NOT NULL,
-	max_force POINT[][] NOT NULL,
+	min_impulse POINT[] NOT NULL,
+	max_impulse POINT[] NOT NULL,
 
-	min_impulse POINT[][] NOT NULL,
-	max_impulse POINT[][] NOT NULL,
+	avg_work FLOAT8[] NOT NULL,
+	min_work POINT[] NOT NULL,
+	max_work POINT[] NOT NULL,
 
-	avg_work FLOAT8[][] NOT NULL,
-	min_work POINT[][] NOT NULL,
-	max_work POINT[][] NOT NULL,
-
-	avg_power FLOAT8[][] NOT NULL,
-	min_power POINT[][] NOT NULL,
-	max_power POINT[][] NOT NULL
+	avg_power FLOAT8[] NOT NULL,
+	min_power POINT[] NOT NULL,
+	max_power POINT[] NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS providentia.training_log (
 	id SERIAL8 NOT NULL PRIMARY KEY,
 	exercise_id INT4 NOT NULL REFERENCES providentia.exercise(id) ON DELETE CASCADE,
 	client_id INT8 NOT NULL REFERENCES providentia.client(id) ON DELETE CASCADE,
-	physics_id INT8 REFERENCES providentia.physics_data(id) ON DELETE SET NULL,
 
 	date_performed DATE NOT NULL,
 	inter_session_cntr INT2 NOT NULL CHECK (inter_session_cntr>0),
@@ -146,6 +119,15 @@ CREATE TABLE IF NOT EXISTS providentia.training_log (
 	total_reps FLOAT8 NOT NULL CHECK (total_reps>=0) GENERATED ALWAYS AS (sets*reps) STORED,
 
 	UNIQUE (client_id, date_performed, inter_session_cntr, inter_workout_cntr)
+);
+
+CREATE TABLE IF NOT EXISTS providentia.training_log_to_physics_data (
+	training_log_id INT8 NOT NULL REFERENCES providentia.training_log(id) ON DELETE CASCADE,
+	physics_id INT8 NOT NULL REFERENCES providentia.training_log(id) ON DELETE CASCADE,
+	set_num INT4 NOT NULL,
+	rep_num INT4 NOT NULL,
+
+	PRIMARY KEY (training_log_id, physics_id, set_num, rep_num)
 );
 
 CREATE TABLE IF NOT EXISTS providentia.model_state (
@@ -171,19 +153,3 @@ CREATE TABLE IF NOT EXISTS providentia.model_state (
 
 	UNIQUE (training_log_id, hyperparams_id)
 );
-
-CREATE FUNCTION reverse_cascade_training_log_physics_data()
-   RETURNS TRIGGER
-   LANGUAGE PLPGSQL
-AS $$
-BEGIN
-	DELETE FROM providentia.physics_data
-	WHERE OLD.physics_id = providentia.physics_data.id;
-	RETURN NULL;
-END;
-$$;
-
-CREATE TRIGGER reverse_cascade_training_log_physics_data
-  AFTER DELETE ON providentia.training_log
-  FOR EACH ROW
-  EXECUTE PROCEDURE reverse_cascade_training_log_physics_data();

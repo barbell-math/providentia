@@ -69,4 +69,10 @@ var (
 // Job queue errors
 var (
 	CSVLoaderJobQueueErr = errors.New("Could not process csv loader job")
+
+	PhysicsJobQueueErr        = errors.New("Could not process physics job")
+	InvalidRawDataLenErr      = errors.New("Invalid raw data length")
+	InvalidExpNumRepsErr      = errors.New("Invalid exp num reps")
+	TimeSeriesDecreaseErr     = errors.New("Time series data must not decrease")
+	TimeSeriesNotMonotonicErr = errors.New("Time series must increase mononically")
 )

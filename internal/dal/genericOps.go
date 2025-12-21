@@ -207,9 +207,8 @@ func genericReadByUniqueId[T any, U any](
 ) error {
 	if len(*opts.Res) < len(opts.Ids) {
 		*opts.Res = make([]U, len(opts.Ids))
-	} else if len(*opts.Res) > len(opts.Ids) {
-		*opts.Res = (*opts.Res)[:len(opts.Ids)]
 	}
+	*opts.Res = (*opts.Res)[:len(opts.Ids)]
 
 	commaSepCols := strings.Join(opts.Columns, ", ")
 	sql := fmt.Sprintf(
@@ -265,9 +264,8 @@ func genericFindByUniqueId[T any, U types.Found[V], V any](
 ) error {
 	if len(*opts.Res) < len(opts.Ids) {
 		*opts.Res = make([]U, len(opts.Ids))
-	} else if len(*opts.Res) > len(opts.Ids) {
-		*opts.Res = (*opts.Res)[:len(opts.Ids)]
 	}
+	*opts.Res = (*opts.Res)[:len(opts.Ids)]
 
 	commaSepCols := strings.Join(opts.Columns, ", ")
 	sql := fmt.Sprintf(

@@ -315,18 +315,11 @@ func ReadDefaultHyperparamsFor[T types.Hyperparams](
 	res *T,
 ) error {
 	var tmp []T
-	var err error
 	opts := ReadHyperparamsByVersionForOpts[T]{
 		Versions: []int32{0},
 		Params:   &tmp,
 	}
-	switch any((*T)(nil)).(type) {
-	case *types.BarPathCalcHyperparams:
-		err = ReadHyperparamsByVersionFor(ctxt, state, tx, opts)
-	case *types.BarPathTrackerHyperparams:
-		err = ReadHyperparamsByVersionFor(ctxt, state, tx, opts)
-	}
-
+	err := ReadHyperparamsByVersionFor(ctxt, state, tx, opts)
 	if err != nil {
 		return err
 	}
