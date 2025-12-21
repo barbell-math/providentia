@@ -100,7 +100,7 @@ func TestTimeSeriesNotMonotonicErr(t *testing.T) {
 func TestInvalidApproxErrErr(t *testing.T) {
 	rawData := getBasicRawData()
 	params := types.BarPathCalcHyperparams{
-		ApproxErr:     types.ApproximationError(500),
+		ApproxErr:     types.ApproximationError(math.MaxInt32),
 		MinNumSamples: 5,
 		TimeDeltaEps:  1e-6,
 	}
@@ -299,4 +299,36 @@ func TestQuadPolynomialFourthOrderAccuracy(t *testing.T) {
 			NoiseFilter:   3,
 		},
 	)
+}
+
+func TestRepsExtendToStartAndEnd(t *testing.T) {
+	rawData := types.PhysicsData{
+		Time: []types.Second{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+		Position: []types.Vec2[types.Meter, types.Meter]{
+			{X: 0, Y: 0}, {X: 1, Y: 1}, {X: 2, Y: 2},
+			{X: 3, Y: 3},
+			{X: 2, Y: 2}, {X: 1, Y: 1}, {X: 0, Y: 0},
+			{X: 1, Y: 1}, {X: 2, Y: 2},
+			{X: 3, Y: 3},
+			{X: 2, Y: 2}, {X: 1, Y: 1}, {X: 0, Y: 0},
+		},
+	}
+	params := types.BarPathCalcHyperparams{
+		MinNumSamples:   5,
+		TimeDeltaEps:    1,
+		ApproxErr:       types.SecondOrder,
+		NoiseFilter:     1,
+		NearZeroFilter:  2,
+		SmootherWeight1: 1,
+		SmootherWeight2: 1,
+		SmootherWeight3: 1,
+		SmootherWeight4: 1,
+		SmootherWeight5: 1,
+	}
+	err := Calc(&rawData, &params, 1, 2)
+	sbtest.Nil(t, err)
+	sbtest.SlicesMatch(t, rawData.RepSplits, []types.Split{
+		{StartIdx: 0, EndIdx: 6},
+		{StartIdx: 5, EndIdx: 13},
+	})
 }

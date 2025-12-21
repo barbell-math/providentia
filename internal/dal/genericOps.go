@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"code.barbellmath.net/barbell-math/providentia/internal/util"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
 	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
@@ -205,11 +206,7 @@ func genericReadByUniqueId[T any, U any](
 	tx pgx.Tx,
 	opts *genericReadByUniqueIdOpts[T, U],
 ) error {
-	if len(*opts.Res) < len(opts.Ids) {
-		*opts.Res = make([]U, len(opts.Ids))
-	}
-	*opts.Res = (*opts.Res)[:len(opts.Ids)]
-
+	*opts.Res = util.SliceClamp(*opts.Res, len(opts.Ids))
 	commaSepCols := strings.Join(opts.Columns, ", ")
 	sql := fmt.Sprintf(
 		readByUniqueIdSql, commaSepCols,
@@ -262,11 +259,7 @@ func genericFindByUniqueId[T any, U types.Found[V], V any](
 	tx pgx.Tx,
 	opts *genericFindByUniqueIdOpts[T, U, V],
 ) error {
-	if len(*opts.Res) < len(opts.Ids) {
-		*opts.Res = make([]U, len(opts.Ids))
-	}
-	*opts.Res = (*opts.Res)[:len(opts.Ids)]
-
+	*opts.Res = util.SliceClamp(*opts.Res, len(opts.Ids))
 	commaSepCols := strings.Join(opts.Columns, ", ")
 	sql := fmt.Sprintf(
 		findByUniqueIdSql, commaSepCols,

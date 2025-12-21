@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"unsafe"
 
+	"code.barbellmath.net/barbell-math/providentia/internal/util"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
 )
@@ -90,29 +91,28 @@ func Calc(
 	// intensive operations.
 
 	rawData.BarPathCalcVersion = barPathCalcParams.Version
-	// TODO - only alloc if necessary?
-	rawData.Velocity = make([]types.Vec2[types.MeterPerSec, types.MeterPerSec], expLen)
-	rawData.Acceleration = make([]types.Vec2[types.MeterPerSec2, types.MeterPerSec2], expLen)
-	rawData.Jerk = make([]types.Vec2[types.MeterPerSec3, types.MeterPerSec3], expLen)
-	rawData.Impulse = make([]types.Vec2[types.NewtonSec, types.NewtonSec], expLen)
-	rawData.Force = make([]types.Vec2[types.Newton, types.Newton], expLen)
-	rawData.Work = make([]types.Joule, expLen)
-	rawData.Power = make([]types.Watt, expLen)
-	rawData.RepSplits = make([]types.Split, expNumReps)
-	rawData.MinVel = make([]types.PointInTime[types.Second, types.MeterPerSec], expNumReps)
-	rawData.MaxVel = make([]types.PointInTime[types.Second, types.MeterPerSec], expNumReps)
-	rawData.MinAcc = make([]types.PointInTime[types.Second, types.MeterPerSec2], expNumReps)
-	rawData.MaxAcc = make([]types.PointInTime[types.Second, types.MeterPerSec2], expNumReps)
-	rawData.MinForce = make([]types.PointInTime[types.Second, types.Newton], expNumReps)
-	rawData.MaxForce = make([]types.PointInTime[types.Second, types.Newton], expNumReps)
-	rawData.MinImpulse = make([]types.PointInTime[types.Second, types.NewtonSec], expNumReps)
-	rawData.MaxImpulse = make([]types.PointInTime[types.Second, types.NewtonSec], expNumReps)
-	rawData.AvgWork = make([]types.Joule, expNumReps)
-	rawData.MinWork = make([]types.PointInTime[types.Second, types.Joule], expNumReps)
-	rawData.MaxWork = make([]types.PointInTime[types.Second, types.Joule], expNumReps)
-	rawData.AvgPower = make([]types.Watt, expNumReps)
-	rawData.MinPower = make([]types.PointInTime[types.Second, types.Watt], expNumReps)
-	rawData.MaxPower = make([]types.PointInTime[types.Second, types.Watt], expNumReps)
+	rawData.Velocity = util.SliceClamp(rawData.Velocity, expLen)
+	rawData.Acceleration = util.SliceClamp(rawData.Acceleration, expLen)
+	rawData.Jerk = util.SliceClamp(rawData.Jerk, expLen)
+	rawData.Impulse = util.SliceClamp(rawData.Impulse, expLen)
+	rawData.Force = util.SliceClamp(rawData.Force, expLen)
+	rawData.Work = util.SliceClamp(rawData.Work, expLen)
+	rawData.Power = util.SliceClamp(rawData.Power, expLen)
+	rawData.RepSplits = util.SliceClamp(rawData.RepSplits, expNumReps)
+	rawData.MinVel = util.SliceClamp(rawData.MinVel, expNumReps)
+	rawData.MaxVel = util.SliceClamp(rawData.MaxVel, expNumReps)
+	rawData.MinAcc = util.SliceClamp(rawData.MinAcc, expNumReps)
+	rawData.MaxAcc = util.SliceClamp(rawData.MaxAcc, expNumReps)
+	rawData.MinForce = util.SliceClamp(rawData.MinForce, expNumReps)
+	rawData.MaxForce = util.SliceClamp(rawData.MaxForce, expNumReps)
+	rawData.MinImpulse = util.SliceClamp(rawData.MinImpulse, expNumReps)
+	rawData.MaxImpulse = util.SliceClamp(rawData.MaxImpulse, expNumReps)
+	rawData.AvgWork = util.SliceClamp(rawData.AvgWork, expNumReps)
+	rawData.MinWork = util.SliceClamp(rawData.MinWork, expNumReps)
+	rawData.MaxWork = util.SliceClamp(rawData.MaxWork, expNumReps)
+	rawData.AvgPower = util.SliceClamp(rawData.AvgPower, expNumReps)
+	rawData.MinPower = util.SliceClamp(rawData.MinPower, expNumReps)
+	rawData.MaxPower = util.SliceClamp(rawData.MaxPower, expNumReps)
 
 	baseData := CData{
 		timeLen:    int64(len(rawData.Time)),

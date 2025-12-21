@@ -40,6 +40,12 @@ func RunCSVLoaderJobs[T dal.AvailableTypes](
 	batch, _ := sbjobqueue.BatchWithContext(ctxt)
 
 	for _, file := range opts.Files {
+		select {
+		case <-ctxt.Done():
+			return ctxt.Err()
+		default:
+		}
+
 		var fileChunks []*sbcsv.BasicFileChunk
 		if fileChunks, opErr = sbcsv.ChunkFile(
 			file, sbcsv.NewBasicFileChunk, state.ClientCSVFileChunks,

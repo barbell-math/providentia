@@ -178,6 +178,9 @@ enum BarPathCalcErrCode_t calcRepSplits(
 	Slice<Math::Vec2> pos((Math::Vec2*)data->pos, data->timeLen);
 	for (size_t i=0; i<numMaxes; i++) {
 		size_t repCenter=repCenters[i];
+		data->repSplit[i].StartIdx = 0;
+		data->repSplit[i].EndIdx = data->timeLen;
+
 		for (int j=repCenter+2; j<data->timeLen; j++) {
 			if (
 				std::signbit(vel[j].Y)!=std::signbit(vel[j-1].Y) &&

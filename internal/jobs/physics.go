@@ -27,16 +27,11 @@ type (
 		Results              *types.Optional[types.PhysicsData]
 	}
 
-	// TODO - make work with exercise data somehow? - will need to check len of
-	// slices
 	PhysicsOpts struct {
-		Weight               types.Kilogram
-		Sets                 float64
-		Reps                 int32
 		BarPathCalcParams    *types.BarPathCalcHyperparams
 		BarTrackerCalcParams *types.BarPathTrackerHyperparams
 		RawData              []types.BarPathVariant
-		Results              *[]types.Optional[types.PhysicsData]
+		ExerciseData         *types.ExerciseData
 	}
 )
 
@@ -46,62 +41,66 @@ func RunPhysicsJobs(
 	tx pgx.Tx,
 	opts PhysicsOpts,
 ) error {
-	ceilSets := math.Ceil(opts.Sets)
-	floorSets := math.Floor(opts.Sets)
-	if opts.Reps <= 0 {
+	ceilSets := math.Ceil(opts.ExerciseData.Sets)
+	floorSets := math.Floor(opts.ExerciseData.Sets)
+	if opts.ExerciseData.Reps <= 0 {
 		return sberr.Wrap(
 			types.PhysicsJobQueueErr,
-			"Supplied data must have at least 1 rep",
+			"Supplied exercise data must have at least 1 rep",
 		)
 	}
 	if len(opts.RawData) != int(ceilSets) {
 		return sberr.Wrap(
 			types.PhysicsJobQueueErr,
-			"The length of the supplied data (%d) must equal the ceiling of the number of sets (%d)",
+			"The length of the raw data (%d) must equal the ceiling of the number of sets (%f)",
 			len(opts.RawData), ceilSets,
 		)
 	}
 
 	batch, _ := sbjobqueue.BatchWithContext(ctxt)
-	if len(*opts.Results) < len(opts.RawData) {
-		*opts.Results = make(
+	if len(opts.ExerciseData.PhysData) < len(opts.RawData) {
+		opts.ExerciseData.PhysData = make(
 			[]types.Optional[types.PhysicsData], len(opts.RawData),
 		)
 	}
-	*opts.Results = (*opts.Results)[:len(opts.RawData)]
+	opts.ExerciseData.PhysData = opts.ExerciseData.PhysData[:len(opts.RawData)]
 
 	var iterPhysData types.PhysicsData
 	for i, exerciseSet := range opts.RawData {
 		select {
 		case <-ctxt.Done():
-			return nil
+			return ctxt.Err()
 		default:
 		}
 
-		if exerciseSet.Flag.IsValid() {
-			expReps := opts.Reps
-			if ceilSets > opts.Sets && int(floorSets) == i {
-				expReps = max(int32((opts.Sets-floorSets)*float64(opts.Reps)), 1)
-			}
-
-			state.PhysicsJobQueue.Schedule(&physics{
-				B:                    batch,
-				S:                    state,
-				Tx:                   tx,
-				UID:                  UID_CNTR.Add(1),
-				BarPathCalcParams:    opts.BarPathCalcParams,
-				BarTrackerCalcParams: opts.BarTrackerCalcParams,
-				Weight:               opts.Weight,
-				ExpNumReps:           expReps,
-				RawData:              opts.RawData[i],
-				Results:              &(*opts.Results)[i],
-			})
-		} else {
-			(*opts.Results)[i].Present = false
+		if !exerciseSet.Flag.IsValid() {
+			return sberr.AppendError(
+				types.PhysicsJobQueueErr, types.ErrInvalidBarPathFlag,
+			)
+		}
+		if exerciseSet.Flag == types.NoBarPathData {
+			opts.ExerciseData.PhysData[i].Present = false
 			continue
 		}
 
-		(*opts.Results)[i] = types.Optional[types.PhysicsData]{
+		expReps := opts.ExerciseData.Reps
+		if ceilSets > opts.ExerciseData.Sets && int(floorSets) == i {
+			expReps = max(int32((opts.ExerciseData.Sets-floorSets)*float64(opts.ExerciseData.Reps)), 1)
+		}
+		state.PhysicsJobQueue.Schedule(&physics{
+			B:                    batch,
+			S:                    state,
+			Tx:                   tx,
+			UID:                  UID_CNTR.Add(1),
+			BarPathCalcParams:    opts.BarPathCalcParams,
+			BarTrackerCalcParams: opts.BarTrackerCalcParams,
+			Weight:               opts.ExerciseData.Weight,
+			ExpNumReps:           expReps,
+			RawData:              opts.RawData[i],
+			Results:              &opts.ExerciseData.PhysData[i],
+		})
+
+		opts.ExerciseData.PhysData[i] = types.Optional[types.PhysicsData]{
 			Present: true,
 			Value:   iterPhysData,
 		}
@@ -125,10 +124,11 @@ func (p *physics) formatLogLine(msg string) string {
 func (p *physics) Run(ctxt context.Context) (opErr error) {
 	p.S.Log.Log(ctxt, sblog.VLevel(3), p.formatLogLine("Starting..."))
 
-	if p.RawData.Flag == types.VideoBarPathData {
+	switch p.RawData.Flag {
+	case types.VideoBarPathData:
 		p.Results.Value.VideoPath = p.RawData.VideoPath
 		// TODO - run video model to set time and position data
-	} else if p.RawData.Flag == types.TimeSeriesBarPathData {
+	case types.TimeSeriesBarPathData:
 		p.Results.Value.Time = p.RawData.TimeSeries.TimeData
 		p.Results.Value.Position = p.RawData.TimeSeries.PositionData
 	}

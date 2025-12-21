@@ -17,7 +17,11 @@ extern "C" {
 
 bool TestMaxHeap(void);
 
+bool TestMaxHeapSingleElementSlice(void);
+
 bool TestMinHeap(void);
+
+bool TestMinHeapSingleElementSlice(void);
 
 bool TestSlicePointerConstructor(void);
 

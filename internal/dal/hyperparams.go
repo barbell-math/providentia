@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"code.barbellmath.net/barbell-math/providentia/internal/util"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
 	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
@@ -250,12 +251,7 @@ func ReadHyperparamsByVersionFor[T types.Hyperparams](
 	tx pgx.Tx,
 	opts ReadHyperparamsByVersionForOpts[T],
 ) error {
-	if len(*opts.Params) < len(opts.Versions) {
-		*opts.Params = make([]T, len(opts.Versions))
-	} else if len(*opts.Params) > len(opts.Versions) {
-		*opts.Params = (*opts.Params)[:len(opts.Versions)]
-	}
-
+	*opts.Params = util.SliceClamp(*opts.Params, len(opts.Versions))
 	modelId := getModelIdFor[T]()
 	for start, end := range batchIndexes(opts.Versions, int(state.Global.BatchSize)) {
 		select {
@@ -345,12 +341,7 @@ func FindHyperparamsByVersionFor[T types.Hyperparams](
 	tx pgx.Tx,
 	opts FindHyperparamsByVersionForOpts[T],
 ) error {
-	if len(*opts.Params) < len(opts.Versions) {
-		*opts.Params = make([]types.Found[T], len(opts.Versions))
-	} else if len(*opts.Params) > len(opts.Versions) {
-		*opts.Params = (*opts.Params)[:len(opts.Versions)]
-	}
-
+	*opts.Params = util.SliceClamp(*opts.Params, len(opts.Versions))
 	modelId := getModelIdFor[T]()
 	for start, end := range batchIndexes(opts.Versions, int(state.Global.BatchSize)) {
 		select {

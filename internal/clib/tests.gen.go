@@ -20,8 +20,20 @@ func runCgoTests(t *testing.T) {
 		}
 	})
 
+	t.Run("MaxHeapSingleElementSlice", func(t *testing.T) {
+		if !C.TestMaxHeapSingleElementSlice() {
+			t.Fatal()
+		}
+	})
+
 	t.Run("MinHeap", func(t *testing.T) {
 		if !C.TestMinHeap() {
+			t.Fatal()
+		}
+	})
+
+	t.Run("MinHeapSingleElementSlice", func(t *testing.T) {
+		if !C.TestMinHeapSingleElementSlice() {
 			t.Fatal()
 		}
 	})
