@@ -3,7 +3,8 @@ package logic
 import (
 	"context"
 
-	"code.barbellmath.net/barbell-math/providentia/internal/ops"
+	"code.barbellmath.net/barbell-math/providentia/internal/dal"
+	"code.barbellmath.net/barbell-math/providentia/internal/jobs"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
 )
@@ -27,9 +28,6 @@ import (
 //
 // The context must have a [types.State] variable.
 //
-// Hyperparameters will be uploaded in batches that respect the size set in the
-// [State.BatchSize] variable.
-//
 // If any error occurs no changes will be made to the database.
 func CreateHyperparams[T types.Hyperparams](
 	ctxt context.Context,
@@ -38,7 +36,7 @@ func CreateHyperparams[T types.Hyperparams](
 	if len(params) == 0 {
 		return
 	}
-	return
+	return runOp(ctxt, dal.CreateHyperparams[T], params)
 }
 
 // Checks that the supplied hyperparams are present in the database and adds
@@ -64,7 +62,7 @@ func EnsureHyperparamsExist[T types.Hyperparams](
 	if len(params) == 0 {
 		return
 	}
-	return
+	return runOp(ctxt, dal.EnsureHyperparamsExist[T], params)
 }
 
 // Adds the hyperparams supplied in the csv files to the database. Has the same
@@ -84,13 +82,17 @@ func EnsureHyperparamsExist[T types.Hyperparams](
 // If any error occurs no changes will be made to the database.
 func CreateHyperparamsFromCSV[T types.Hyperparams](
 	ctxt context.Context,
-	opts sbcsv.Opts,
+	opts *sbcsv.Opts,
 	files ...string,
 ) (opErr error) {
 	if len(files) == 0 {
 		return
 	}
-	return
+	return runOp(ctxt, jobs.RunCSVLoaderJobs, jobs.CSVLoaderOpts[T]{
+		Opts:    opts,
+		Files:   files,
+		Creator: dal.CreateHyperparams[T],
+	})
 }
 
 // Checks that the supplied hyperparams are present in the database and adds
@@ -112,13 +114,17 @@ func CreateHyperparamsFromCSV[T types.Hyperparams](
 // If any error occurs no changes will be made to the database.
 func EnsureHyperparamsExistFromCSV[T types.Hyperparams](
 	ctxt context.Context,
-	opts sbcsv.Opts,
+	opts *sbcsv.Opts,
 	files ...string,
 ) (opErr error) {
 	if len(files) == 0 {
 		return
 	}
-	return
+	return runOp(ctxt, jobs.RunCSVLoaderJobs, jobs.CSVLoaderOpts[T]{
+		Opts:    opts,
+		Files:   files,
+		Creator: dal.EnsureHyperparamsExist[T],
+	})
 }
 
 // Gets the total number of hyperparameters across all hyperparameter types in
@@ -128,6 +134,7 @@ func EnsureHyperparamsExistFromCSV[T types.Hyperparams](
 //
 // No changes will be made to the database.
 func ReadNumHyperparams(ctxt context.Context) (res int64, opErr error) {
+	opErr = runOp(ctxt, dal.ReadNumHyperparams, &res)
 	return
 }
 
@@ -140,6 +147,7 @@ func ReadNumHyperparams(ctxt context.Context) (res int64, opErr error) {
 func ReadNumHyperparamsFor[T types.Hyperparams](
 	ctxt context.Context,
 ) (res int64, opErr error) {
+	opErr = runOp(ctxt, dal.ReadNumHyperparamsFor[T], &res)
 	return
 }
 
@@ -158,6 +166,13 @@ func ReadHyperparamsByVersionFor[T types.Hyperparams](
 	if len(versions) == 0 {
 		return
 	}
+	opErr = runOp(
+		ctxt, dal.ReadHyperparamsByVersionFor[T],
+		dal.ReadHyperparamsByVersionForOpts[T]{
+			Versions: versions,
+			Params:   &res,
+		},
+	)
 	return
 }
 
@@ -172,6 +187,7 @@ func ReadHyperparamsByVersionFor[T types.Hyperparams](
 func ReadDefaultHyperparamsFor[T types.Hyperparams](
 	ctxt context.Context,
 ) (res T, opErr error) {
+	opErr = runOp(ctxt, dal.ReadDefaultHyperparamsFor[T], &res)
 	return
 }
 
@@ -193,6 +209,13 @@ func FindHyperparamsByVersionFor[T types.Hyperparams](
 	if len(versions) == 0 {
 		return
 	}
+	opErr = runOp(
+		ctxt, dal.FindHyperparamsByVersionFor[T],
+		dal.FindHyperparamsByVersionForOpts[T]{
+			Versions: versions,
+			Params:   &res,
+		},
+	)
 	return
 }
 
@@ -210,5 +233,5 @@ func DeleteHyperparams[T types.Hyperparams](
 	if len(versions) == 0 {
 		return
 	}
-	return
+	return runOp(ctxt, dal.DeleteHyperparams[T], versions)
 }

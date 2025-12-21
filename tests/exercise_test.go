@@ -134,6 +134,12 @@ func exerciseCreateRead(t *testing.T) {
 		"Only read 0 entries out of batch of 1 requests",
 	)
 
+	err = logic.CreateExercises(ctxt, exercises...)
+	sbtest.ContainsError(
+		t, types.CouldNotCreateAllExercisesErr, err,
+		`duplicate key value violates unique constraint "exercise_name_key" \(SQLSTATE 23505\)`,
+	)
+
 	n, err := logic.ReadNumExercises(ctxt)
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, int64(len(migrations.ExerciseSetupData))+2, n)

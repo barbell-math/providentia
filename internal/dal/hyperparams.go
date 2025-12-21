@@ -16,21 +16,47 @@ type (
 		Versions []int32
 		Params   *[]T
 	}
+
+	FindHyperparamsByVersionForOpts[T any] struct {
+		Versions []int32
+		Params   *[]types.Found[T]
+	}
+
+	versionParamRes struct {
+		Version int32  `db:"version"`
+		Params  []byte `db:"params"`
+	}
 )
 
 const (
 	hyperparamsTableName = "hyperparams"
 
+	readNumHyperparamsForSql = `
+SELECT COUNT(*) FROM providentia.hyperparams WHERE model_id = $1;
+`
+
 	readHyperparamsByVersionForSql = `
-SELECT
-	providentia.hyperparams.version,
-	providentia.hyperparams.params
+SELECT version, params
 FROM providentia.hyperparams
 JOIN UNNEST($1::INT4[])
 WITH ORDINALITY t(version, ord)
 USING (version)
 WHERE model_id=$2
 ORDER BY ord;
+`
+
+	findHyperparamsByVersionForSql = `
+SELECT ord::INT8, version, params
+FROM providentia.hyperparams
+JOIN UNNEST($1::INT4[])
+WITH ORDINALITY t(version, ord)
+USING (version)
+WHERE model_id=$2
+ORDER BY ord;
+`
+
+	deleteHyperparamsByVersionFor = `
+DELETE FROM providentia.hyperparams WHERE model_id = $1 AND version = $2;
 `
 )
 
@@ -65,7 +91,7 @@ func setVersionTo[T types.Hyperparams](v *T, version int32) {
 
 func validateHyperparams[T types.Hyperparams](v *T) (opErr error) {
 	switch params := any(v).(type) {
-	case types.BarPathCalcHyperparams:
+	case *types.BarPathCalcHyperparams:
 		if params.MinNumSamples < 2 {
 			return sberr.AppendError(
 				types.InvalidBarPathCalcErr,
@@ -99,7 +125,16 @@ func validateHyperparams[T types.Hyperparams](v *T) (opErr error) {
 				),
 			)
 		}
-	case types.BarPathTrackerHyperparams:
+		if params.NoiseFilter <= 0 {
+			return sberr.AppendError(
+				types.InvalidBarPathCalcErr,
+				sberr.Wrap(
+					types.InvalidNoiseFilterErr,
+					"Must be >0. Got: %d", params.NoiseFilter,
+				),
+			)
+		}
+	case *types.BarPathTrackerHyperparams:
 		if params.MinLength < 0 {
 			return sberr.AppendError(
 				types.InvalidBarPathTrackerErr,
@@ -194,6 +229,21 @@ func ReadNumHyperparams(
 	)
 }
 
+func ReadNumHyperparamsFor[T types.Hyperparams](
+	ctxt context.Context,
+	state *types.State,
+	tx pgx.Tx,
+	num *int64,
+) error {
+	modelId := getModelIdFor[T]()
+	row := tx.QueryRow(ctxt, readNumHyperparamsForSql, modelId)
+	state.Log.Log(
+		ctxt, sblog.VLevel(3),
+		fmt.Sprintf("DAL: Read total num hyperparams for %s", modelId),
+	)
+	return row.Scan(num)
+}
+
 func ReadHyperparamsByVersionFor[T types.Hyperparams](
 	ctxt context.Context,
 	state *types.State,
@@ -219,15 +269,23 @@ func ReadHyperparamsByVersionFor[T types.Hyperparams](
 			opts.Versions[start:end], modelId,
 		)
 		if err != nil {
-			return err
+			return sberr.AppendError(types.CouldNotReadAllHyperparamsErr, err)
 		}
 
 		cntr := start
 		for rows.Next() {
-			(*opts.Params)[cntr], err = pgx.RowToStructByName[T](rows)
+			iterRes, err := pgx.RowToStructByName[versionParamRes](rows)
 			if err != nil {
 				rows.Close()
-				return err
+				return sberr.AppendError(types.CouldNotReadAllHyperparamsErr, err)
+			}
+
+			setVersionTo(&(*opts.Params)[cntr], iterRes.Version)
+			if err = json.Unmarshal(
+				iterRes.Params, &(*opts.Params)[cntr],
+			); err != nil {
+				rows.Close()
+				return sberr.AppendError(types.CouldNotReadAllHyperparamsErr, err)
 			}
 			cntr++
 		}
@@ -243,7 +301,156 @@ func ReadHyperparamsByVersionFor[T types.Hyperparams](
 
 		state.Log.Log(
 			ctxt, sblog.VLevel(3),
-			"DAL: Read hyperparams by version",
+			fmt.Sprintf("DAL: Read hyperparams by version for %s", modelId),
+			"NumRows", end-start,
+		)
+	}
+	return nil
+}
+
+func ReadDefaultHyperparamsFor[T types.Hyperparams](
+	ctxt context.Context,
+	state *types.State,
+	tx pgx.Tx,
+	res *T,
+) error {
+	var tmp []T
+	var err error
+	opts := ReadHyperparamsByVersionForOpts[T]{
+		Versions: []int32{0},
+		Params:   &tmp,
+	}
+	switch any((*T)(nil)).(type) {
+	case *types.BarPathCalcHyperparams:
+		err = ReadHyperparamsByVersionFor(ctxt, state, tx, opts)
+	case *types.BarPathTrackerHyperparams:
+		err = ReadHyperparamsByVersionFor(ctxt, state, tx, opts)
+	}
+
+	if err != nil {
+		return err
+	}
+	if len(tmp) != 1 {
+		state.Log.Error(
+			"Expected 1 result for a default hyperparameter but got more, database is not consistent with what was expected!",
+			"NumResults", len(tmp),
+		)
+		err = sberr.Wrap(
+			types.CouldNotReadAllHyperparamsErr,
+			"Expected 1 result for a default hyperparameter but got %d, database is not consistent with what was expected",
+			len(tmp),
+		)
+	}
+	*res = tmp[0]
+
+	return nil
+}
+
+func FindHyperparamsByVersionFor[T types.Hyperparams](
+	ctxt context.Context,
+	state *types.State,
+	tx pgx.Tx,
+	opts FindHyperparamsByVersionForOpts[T],
+) error {
+	if len(*opts.Params) < len(opts.Versions) {
+		*opts.Params = make([]types.Found[T], len(opts.Versions))
+	} else if len(*opts.Params) > len(opts.Versions) {
+		*opts.Params = (*opts.Params)[:len(opts.Versions)]
+	}
+
+	modelId := getModelIdFor[T]()
+	for start, end := range batchIndexes(opts.Versions, int(state.Global.BatchSize)) {
+		select {
+		case <-ctxt.Done():
+			return ctxt.Err()
+		default:
+		}
+
+		rows, err := tx.Query(
+			ctxt, findHyperparamsByVersionForSql,
+			opts.Versions[start:end], modelId,
+		)
+		if err != nil {
+			return sberr.AppendError(types.CouldNotReadAllHyperparamsErr, err)
+		}
+
+		var iterVal versionParamRes
+		ord := int64(0)
+		found := int64(0)
+		scanValues := []any{&ord, &iterVal.Version, &iterVal.Params}
+
+		for rows.Next() {
+			if err := rows.Scan(scanValues...); err != nil {
+				rows.Close()
+				return sberr.AppendError(types.CouldNotReadAllHyperparamsErr, err)
+			}
+
+			idx := int64(start) + ord - 1
+			(*opts.Params)[idx].Found = true
+			setVersionTo(&((*opts.Params)[idx].Value), iterVal.Version)
+			if err = json.Unmarshal(
+				iterVal.Params, &(*opts.Params)[idx].Value,
+			); err != nil {
+				rows.Close()
+				return sberr.AppendError(types.CouldNotReadAllHyperparamsErr, err)
+			}
+			found++
+		}
+		rows.Close()
+
+		state.Log.Log(
+			ctxt, sblog.VLevel(3),
+			fmt.Sprintf(
+				"DAL: Found hyperparams by version for %s", modelId,
+			),
+			"NumFound/NumRows", fmt.Sprintf("%d/%d", found, end-start),
+		)
+	}
+	return nil
+}
+
+func DeleteHyperparams[T types.Hyperparams](
+	ctxt context.Context,
+	state *types.State,
+	tx pgx.Tx,
+	versions []int32,
+) error {
+	// Deleting all referenced/referencing data is handled by cascade rules
+
+	modelId := getModelIdFor[T]()
+	for start, end := range batchIndexes(versions, int(state.Global.BatchSize)) {
+		select {
+		case <-ctxt.Done():
+			return ctxt.Err()
+		default:
+		}
+
+		b := pgx.Batch{}
+		for i := start; i < end; i++ {
+			b.Queue(deleteHyperparamsByVersionFor, modelId, versions[i])
+		}
+		results := tx.SendBatch(ctxt, &b)
+
+		for i := start; i < end; i++ {
+			if cmdTag, err := results.Exec(); err != nil {
+				results.Close()
+				return sberr.AppendError(
+					types.CouldNotDeleteAllHyperparamsErr, err,
+				)
+			} else if cmdTag.RowsAffected() == 0 {
+				results.Close()
+				return sberr.Wrap(
+					types.CouldNotDeleteAllHyperparamsErr,
+					"Could not delete entry with version '%d' (Does it exist?)",
+					versions[i],
+				)
+			}
+		}
+		results.Close()
+
+		state.Log.Log(
+			ctxt, sblog.VLevel(3),
+			fmt.Sprintf("DAL: Deleted hyperparams for %s", modelId),
 			"NumRows", end-start,
 		)
 	}

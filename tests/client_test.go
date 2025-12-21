@@ -44,7 +44,7 @@ func clientMissingFirstName(ctxt context.Context) func(t *testing.T) {
 		})
 		sbtest.ContainsError(
 			t, types.CouldNotCreateAllClientsErr, err,
-			`new row for relation \"client\" violates check constraint \"first_name_not_empty\" \(SQLSTATE 23514\)`,
+			`new row for relation "client" violates check constraint "first_name_not_empty" \(SQLSTATE 23514\)`,
 		)
 	}
 }
@@ -140,6 +140,12 @@ func clientCreateRead(t *testing.T) {
 	sbtest.ContainsError(
 		t, types.CouldNotReadAllClientsErr, err,
 		"Only read 0 entries out of batch of 1 requests",
+	)
+
+	err = logic.CreateClients(ctxt, clients...)
+	sbtest.ContainsError(
+		t, types.CouldNotCreateAllClientsErr, err,
+		`duplicate key value violates unique constraint "client_email_key" \(SQLSTATE 23505\)`,
 	)
 
 	n, err := logic.ReadNumClients(ctxt)
@@ -341,20 +347,20 @@ func clientCreateCSVRead(t *testing.T) {
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, 2, n)
 
-	client, err := logic.ReadClientsByEmail(ctxt, "one@gmail.com")
+	client, err := logic.ReadClientsByEmail(
+		ctxt, "one@gmail.com", "two@gmail.com",
+	)
 	sbtest.Nil(t, err)
-	sbtest.Eq(t, client[0], types.Client{
-		FirstName: "OneFN",
-		LastName:  "OneLN",
-		Email:     "one@gmail.com",
-	})
-
-	client, err = logic.ReadClientsByEmail(ctxt, "two@gmail.com")
-	sbtest.Nil(t, err)
-	sbtest.Eq(t, client[0], types.Client{
-		FirstName: "TwoFN",
-		LastName:  "TwoLN",
-		Email:     "two@gmail.com",
+	sbtest.SlicesMatch(t, client, []types.Client{
+		{
+			FirstName: "OneFN",
+			LastName:  "OneLN",
+			Email:     "one@gmail.com",
+		}, {
+			FirstName: "TwoFN",
+			LastName:  "TwoLN",
+			Email:     "two@gmail.com",
+		},
 	})
 
 	_, err = logic.ReadClientsByEmail(ctxt, "bad@email.com")
@@ -387,20 +393,20 @@ func clientEnsureCSVRead(t *testing.T) {
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, 2, n)
 
-	client, err := logic.ReadClientsByEmail(ctxt, "one@gmail.com")
+	client, err := logic.ReadClientsByEmail(
+		ctxt, "one@gmail.com", "two@gmail.com",
+	)
 	sbtest.Nil(t, err)
-	sbtest.Eq(t, client[0], types.Client{
-		FirstName: "OneFN",
-		LastName:  "OneLN",
-		Email:     "one@gmail.com",
-	})
-
-	client, err = logic.ReadClientsByEmail(ctxt, "two@gmail.com")
-	sbtest.Nil(t, err)
-	sbtest.Eq(t, client[0], types.Client{
-		FirstName: "TwoFN",
-		LastName:  "TwoLN",
-		Email:     "two@gmail.com",
+	sbtest.SlicesMatch(t, client, []types.Client{
+		{
+			FirstName: "OneFN",
+			LastName:  "OneLN",
+			Email:     "one@gmail.com",
+		}, {
+			FirstName: "TwoFN",
+			LastName:  "TwoLN",
+			Email:     "two@gmail.com",
+		},
 	})
 
 	_, err = logic.ReadClientsByEmail(ctxt, "bad@email.com")

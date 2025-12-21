@@ -12,7 +12,7 @@ import (
 
 type (
 	AvailableTypes interface {
-		types.Client | types.Exercise // TODO - add more types here as created
+		types.Client | types.Exercise | types.Hyperparams // TODO - add more types here as created
 	}
 
 	CreateFunc[T AvailableTypes] func(

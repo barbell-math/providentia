@@ -26,6 +26,7 @@ var (
 			TimeDeltaEps:    0.02,
 			ApproxErr:       types.FourthOrder,
 			NearZeroFilter:  0.1,
+			NoiseFilter:     3,
 			SmootherWeight1: 0.5,
 			SmootherWeight2: 0.5,
 			SmootherWeight3: 1,

@@ -75,13 +75,11 @@ USING (%s) ORDER BY ord;
 `
 
 	findByUniqueIdSql = `
-	SELECT ord::INT8, %s FROM providentia.%s JOIN UNNEST($1::%s[])
+SELECT ord::INT8, %s FROM providentia.%s JOIN UNNEST($1::%s[])
 WITH ORDINALITY t(%s, ord) USING (%s) ORDER BY ord;
 `
 
-	deleteByUniqueIdSql = `
-DELETE FROM providentia.%s WHERE %s = $1;
-`
+	deleteByUniqueIdSql = `DELETE FROM providentia.%s WHERE %s = $1;`
 )
 
 func genericCreateWithId[T any](
@@ -228,7 +226,7 @@ func genericReadByUniqueId[T any, U any](
 
 		rows, err := tx.Query(ctxt, sql, opts.Ids[start:end])
 		if err != nil {
-			return err
+			return sberr.AppendError(opts.Err, err)
 		}
 
 		cntr := start
@@ -236,7 +234,7 @@ func genericReadByUniqueId[T any, U any](
 			(*opts.Res)[cntr], err = pgx.RowToStructByName[U](rows)
 			if err != nil {
 				rows.Close()
-				return err
+				return sberr.AppendError(opts.Err, err)
 			}
 			cntr++
 		}
@@ -344,8 +342,9 @@ func genericDeleteByUniqueId[T any](
 		for i := start; i < end; i++ {
 			if cmdTag, err := results.Exec(); err != nil {
 				results.Close()
-				return err
+				return sberr.AppendError(opts.Err, err)
 			} else if cmdTag.RowsAffected() == 0 {
+				results.Close()
 				return sberr.Wrap(
 					opts.Err,
 					"Could not delete entry with id '%v' (Does id exist?)",

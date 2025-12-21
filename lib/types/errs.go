@@ -54,6 +54,7 @@ var (
 	InvalidMinNumSamplesErr  = errors.New("Invalid min num samples")
 	InvalidTimeDeltaEpsErr   = errors.New("Invalid time delta eps")
 	InvalidNearZeroFilterErr = errors.New("Invalid near zero filter")
+	InvalidNoiseFilterErr    = errors.New("Invalid noise filter")
 
 	InvalidBarPathTrackerErr = errors.New("Invalid bar path tracker conf")
 	InvalidMinLengthErr      = errors.New("Invalid min length")
