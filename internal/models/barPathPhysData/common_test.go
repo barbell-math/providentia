@@ -111,42 +111,6 @@ func TestInvalidApproxErrErr(t *testing.T) {
 	)
 }
 
-// TODO - move to where this belongs - part of tests package!!
-//
-//	func TestFractionalSets(t *testing.T) {
-//		rawData := getBasicRawData()
-//		params := types.BarPathCalcHyperparams{
-//			ApproxErr:     types.SecondOrder,
-//			MinNumSamples: 5,
-//			TimeDeltaEps:  1e-6,
-//			NoiseFilter:   3,
-//		}
-//		baseData := dal.BulkCreateTrainingLogsParams{
-//			Weight: 1,
-//			Reps:   2,
-//			Sets:   1.5,
-//		}
-//		err := Calc(&baseData, &rawData, &params, 0)
-//		sbtest.Nil(t, err)
-//		err = Calc(&baseData, &rawData, &params, 1)
-//		sbtest.Nil(t, err)
-//		sbtest.Eq(t, len(rawData.RepSplits), 2)
-//		sbtest.Eq(t, len(rawData.RepSplits[0]), 2)
-//		sbtest.Eq(t, len(rawData.RepSplits[1]), 1)
-//
-//		baseData = dal.BulkCreateTrainingLogsParams{
-//			Weight: 1,
-//			Reps:   1,
-//			Sets:   1.5,
-//		}
-//		err = Calc(&baseData, &rawData, &params, 0)
-//		sbtest.Nil(t, err)
-//		err = Calc(&baseData, &rawData, &params, 1)
-//		sbtest.Nil(t, err)
-//		sbtest.Eq(t, len(rawData.RepSplits), 2)
-//		sbtest.Eq(t, len(rawData.RepSplits[0]), 1)
-//		sbtest.Eq(t, len(rawData.RepSplits[1]), 1)
-//	}
 type funcVals struct {
 	f1 func(x float64) float64
 	d1 func(x float64) float64

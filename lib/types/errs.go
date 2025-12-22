@@ -66,10 +66,18 @@ var (
 	CouldNotDeleteAllHyperparamsErr = errors.New("Could not delete all hyperparams")
 )
 
-// Job queue errors
+// [PhysicsData] errors
+var (
+	CouldNotCreateAllPhysicsDataErr = errors.New("Could not create all physics data entries")
+)
+
+// CSV loader job queue errors
 var (
 	CSVLoaderJobQueueErr = errors.New("Could not process csv loader job")
+)
 
+// Physics job queue errors
+var (
 	PhysicsJobQueueErr        = errors.New("Could not process physics job")
 	InvalidRawDataLenErr      = errors.New("Invalid raw data length")
 	InvalidExpNumRepsErr      = errors.New("Invalid exp num reps")
