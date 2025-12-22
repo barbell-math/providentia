@@ -172,9 +172,7 @@ func CreateHyperparams[T types.Hyperparams](
 			Columns:   []string{"model_id", "version", "params"},
 			Data:      params,
 			ValueGetter: func(v *T, res *[]any) error {
-				if len(*res) < 3 {
-					*res = make([]any, 3)
-				}
+				*res = util.SliceClamp(*res, 3)
 				if err := validateHyperparams(v); err != nil {
 					return err
 				}

@@ -3,6 +3,7 @@ package dal
 import (
 	"context"
 
+	"code.barbellmath.net/barbell-math/providentia/internal/util"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	"github.com/jackc/pgx/v5"
 )
@@ -38,9 +39,7 @@ func CreateExerciseFocusWithID(
 			Columns:   []string{"id", "focus"},
 			Data:      data,
 			ValueGetter: func(v *CreateExerciseFocusWithIDOpts, res *[]any) error {
-				if len(*res) < 2 {
-					*res = make([]any, 2)
-				}
+				*res = util.SliceClamp(*res, 2)
 				(*res)[0] = v.ExerciseFocus
 				(*res)[1] = v.Desc
 				return nil
@@ -62,9 +61,7 @@ func CreateExerciseKindWithID(
 			Columns:   []string{"id", "kind", "description"},
 			Data:      data,
 			ValueGetter: func(v *CreateExerciseKindWithIDOpts, res *[]any) error {
-				if len(*res) < 3 {
-					*res = make([]any, 3)
-				}
+				*res = util.SliceClamp(*res, 3)
 				(*res)[0] = v.ExerciseKind
 				(*res)[1] = v.Name
 				(*res)[2] = v.Desc
@@ -87,9 +84,7 @@ func CreateModelsWithID(
 			Columns:   []string{"id", "name", "description"},
 			Data:      data,
 			ValueGetter: func(v *CreateModelsWithIDOpts, res *[]any) error {
-				if len(*res) < 3 {
-					*res = make([]any, 3)
-				}
+				*res = util.SliceClamp(*res, 3)
 				(*res)[0] = v.ModelID
 				(*res)[1] = v.Name
 				(*res)[2] = v.Desc

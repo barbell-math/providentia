@@ -3,6 +3,7 @@ package dal
 import (
 	"context"
 
+	"code.barbellmath.net/barbell-math/providentia/internal/util"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
 	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
@@ -42,9 +43,7 @@ func CreateClients(
 			Columns:   []string{"first_name", "last_name", "email"},
 			Data:      clients,
 			ValueGetter: func(v *types.Client, res *[]any) error {
-				if len(*res) < 3 {
-					*res = make([]any, 3)
-				}
+				*res = util.SliceClamp(*res, 3)
 				(*res)[0] = v.FirstName
 				(*res)[1] = v.LastName
 				(*res)[2] = v.Email

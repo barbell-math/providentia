@@ -3,6 +3,7 @@ package dal
 import (
 	"context"
 
+	"code.barbellmath.net/barbell-math/providentia/internal/util"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	"github.com/jackc/pgx/v5"
 )
@@ -35,9 +36,7 @@ func CreateExercisesWithID(
 			Columns:   []string{"id", "name", "kind_id", "focus_id"},
 			Data:      exercises,
 			ValueGetter: func(v *types.IdWrapper[types.Exercise], res *[]any) error {
-				if len(*res) < 4 {
-					*res = make([]any, 4)
-				}
+				*res = util.SliceClamp(*res, 4)
 				(*res)[0] = v.Id
 				(*res)[1] = v.Val.Name
 				(*res)[2] = v.Val.KindId
@@ -61,9 +60,7 @@ func CreateExercises(
 			Columns:   []string{"name", "kind_id", "focus_id"},
 			Data:      exercises,
 			ValueGetter: func(v *types.Exercise, res *[]any) error {
-				if len(*res) < 3 {
-					*res = make([]any, 3)
-				}
+				*res = util.SliceClamp(*res, 3)
 				(*res)[0] = v.Name
 				(*res)[1] = v.KindId
 				(*res)[2] = v.FocusId

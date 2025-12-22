@@ -21,6 +21,18 @@ type (
 		Err         error
 	}
 
+	genericCreateReturningIdVal[T any] struct {
+		Val *T
+		Id  *int64
+	}
+	genericCreateReturningIdOpts[T any] struct {
+		Data        []genericCreateReturningIdVal[T]
+		ValueGetter func(v *genericCreateReturningIdVal[T], res *[]any) error
+		TableName   string
+		Columns     []string
+		Err         error
+	}
+
 	genericReadTotalNumOpts struct {
 		TableName string
 		Res       *int64
@@ -61,6 +73,10 @@ SELECT SETVAL(
 	pg_get_serial_sequence('providentia.%s', 'id'),
 	(SELECT MAX(id) FROM providentia.%s) + 1
 );
+`
+
+	createReturningIdSql = `
+INSERT INTO providentia.%s (%s) VALUES (%s) RETURNING id;
 `
 
 	ensureExistSql = `
@@ -133,6 +149,58 @@ func genericCreate[T any](
 		fmt.Sprintf("DAL: Created new %s entries", opts.TableName),
 		"NumRows", len(opts.Data),
 	)
+	return nil
+}
+
+func genericCreateReturningId[T any](
+	ctxt context.Context,
+	state *types.State,
+	tx pgx.Tx,
+	opts *genericCreateReturningIdOpts[T],
+) error {
+	commaSepCols := strings.Join(opts.Columns, ", ")
+	sql := fmt.Sprintf(
+		createReturningIdSql,
+		opts.TableName, commaSepCols, dollarList(len(opts.Columns)), commaSepCols,
+	)
+	cpy := CpyFromSlice[genericCreateReturningIdVal[T]]{
+		Data: opts.Data, ValueGetter: opts.ValueGetter,
+	}
+	for start, end := range batchIndexes(opts.Data, int(state.Global.BatchSize)) {
+		select {
+		case <-ctxt.Done():
+			return ctxt.Err()
+		default:
+		}
+
+		b := pgx.Batch{}
+		for i := start; i < end; i++ {
+			vals, err := cpy.Values()
+			if err != nil {
+				return sberr.AppendError(opts.Err, err)
+			}
+			b.Queue(sql, vals...)
+			cpy.Next()
+		}
+		results := tx.SendBatch(ctxt, &b)
+
+		for i := start; i < end; i++ {
+			results := tx.SendBatch(ctxt, &b)
+			for range b.Len() {
+				row := results.QueryRow()
+				if err := row.Scan(opts.Data[start+i].Id); err != nil {
+					return sberr.AppendError(opts.Err, err)
+				}
+			}
+		}
+		results.Close()
+
+		state.Log.Log(
+			ctxt, sblog.VLevel(3),
+			fmt.Sprintf("DAL: Created new %s entries returning id", opts.TableName),
+			"NumRows", end-start,
+		)
+	}
 	return nil
 }
 

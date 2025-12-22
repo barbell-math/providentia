@@ -3,109 +3,75 @@ package dal
 import (
 	"context"
 
+	"code.barbellmath.net/barbell-math/providentia/internal/util"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
-	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
-	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
 	"github.com/jackc/pgx/v5"
 )
 
-type (
-	createPhysicsDataReturningIdVals struct {
-		*types.PhysicsData
-		*int64
-	}
-)
-
 const (
-	createPhysicsDataReturningIdsSql = `
-INSERT INTO providentia.physics_data (
-	path, bar_path_calc_id, bar_path_track_id,
-
-	time, position, velocity, acceleration, jerk,
-	force, impulse, work, power,
-
-	rep_splits,
-
-	min_vel, max_vel,
-	min_acc, max_acc,
-	min_force, max_force,
-	min_impulse, max_impulse,
-	avg_work, min_work, max_work,
-	avg_power, min_power, max_power
-) VALUES (
-	$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
-	$18, $19, $20, $21, $22, $23, $24, $25, $26, $27
-) RETURNING id;
-`
+	physicsDataTableName = "physics_data"
 )
 
-func CreatePhysicsDataReturningIds(
+// TODO - make sure this work through workout tests in the tests dir
+// NOTE - id selection is WRONG - need to make sub queries that lookup id based
+// on model id and version
+func createPhysicsDataReturningIds(
 	ctxt context.Context,
 	state *types.State,
 	tx pgx.Tx,
-	data []createPhysicsDataReturningIdVals,
+	data []genericCreateReturningIdVal[types.PhysicsData],
 ) error {
-	cntr := 0
-	b := pgx.Batch{}
-	for _, iterPhysData := range data {
-		select {
-		case <-ctxt.Done():
-			return ctxt.Err()
-		default:
-		}
-
-		b.Queue(
-			createPhysicsDataReturningIdsSql,
-			iterPhysData.PhysicsData.VideoPath,
-			iterPhysData.PhysicsData.BarPathCalcVersion,
-			iterPhysData.PhysicsData.BarPathTrackerVersion,
-			iterPhysData.PhysicsData.Time,
-			iterPhysData.PhysicsData.Position,
-			iterPhysData.PhysicsData.Velocity,
-			iterPhysData.PhysicsData.Acceleration,
-			iterPhysData.PhysicsData.Jerk,
-			iterPhysData.PhysicsData.Force,
-			iterPhysData.PhysicsData.Impulse,
-			iterPhysData.PhysicsData.Work,
-			iterPhysData.PhysicsData.Power,
-			iterPhysData.PhysicsData.RepSplits,
-			iterPhysData.PhysicsData.MinVel,
-			iterPhysData.PhysicsData.MaxVel,
-			iterPhysData.PhysicsData.MinAcc,
-			iterPhysData.PhysicsData.MaxAcc,
-			iterPhysData.PhysicsData.MinForce,
-			iterPhysData.PhysicsData.MaxForce,
-			iterPhysData.PhysicsData.MinImpulse,
-			iterPhysData.PhysicsData.MaxImpulse,
-			iterPhysData.PhysicsData.AvgWork,
-			iterPhysData.PhysicsData.MinWork,
-			iterPhysData.PhysicsData.MaxWork,
-			iterPhysData.PhysicsData.AvgPower,
-			iterPhysData.PhysicsData.MinPower,
-			iterPhysData.PhysicsData.MaxPower,
-		)
-
-		if uint(b.Len()) >= state.Global.BatchSize {
-			results := tx.SendBatch(ctxt, &b)
-			for range b.Len() {
-				row := results.QueryRow()
-				if err := row.Scan(data[cntr]); err != nil {
-					return sberr.AppendError(
-						types.CouldNotCreateAllPhysicsDataErr, err,
-					)
-				}
-				cntr++
-			}
-
-			results.Close()
-			b = pgx.Batch{}
-		}
-	}
-
-	state.Log.Log(
-		ctxt, sblog.VLevel(3),
-		"DAL: Created new physics_data entries",
-		"NumRows", len(data),
+	return genericCreateReturningId(
+		ctxt, state, tx, &genericCreateReturningIdOpts[types.PhysicsData]{
+			TableName: physicsDataTableName,
+			Columns: []string{
+				"video_path", "bar_path_calc_version", "bar_path_tracker_version",
+				"time",
+				"position", "velocity", "acceleration", "jerk",
+				"force", "impulse", "work", "power",
+				"rep_splits",
+				"min_vel", "max_vel",
+				"min_acc", "max_acc",
+				"min_force", "max_force",
+				"min_impulse", "max_impulse",
+				"avg_work", "min_work", "max_work",
+				"avg_power", "min_power", "max_power",
+			},
+			ValueGetter: func(
+				v *genericCreateReturningIdVal[types.PhysicsData],
+				res *[]any,
+			) error {
+				*res = util.SliceClamp(*res, 27)
+				(*res)[0] = v.Val.VideoPath
+				(*res)[1] = v.Val.BarPathCalcVersion
+				(*res)[2] = v.Val.BarPathTrackerVersion
+				(*res)[3] = v.Val.Time
+				(*res)[4] = v.Val.Position
+				(*res)[5] = v.Val.Velocity
+				(*res)[6] = v.Val.Acceleration
+				(*res)[7] = v.Val.Jerk
+				(*res)[8] = v.Val.Force
+				(*res)[9] = v.Val.Impulse
+				(*res)[10] = v.Val.Work
+				(*res)[11] = v.Val.Position
+				(*res)[12] = v.Val.RepSplits
+				(*res)[13] = v.Val.MinVel
+				(*res)[14] = v.Val.MaxVel
+				(*res)[15] = v.Val.MinAcc
+				(*res)[16] = v.Val.MaxAcc
+				(*res)[17] = v.Val.MinForce
+				(*res)[18] = v.Val.MaxForce
+				(*res)[19] = v.Val.MinImpulse
+				(*res)[20] = v.Val.MaxImpulse
+				(*res)[21] = v.Val.AvgWork
+				(*res)[22] = v.Val.MinWork
+				(*res)[23] = v.Val.MaxWork
+				(*res)[24] = v.Val.AvgPower
+				(*res)[25] = v.Val.MinPower
+				(*res)[26] = v.Val.MaxPower
+				return nil
+			},
+			Data: data,
+		},
 	)
-	return nil
 }
