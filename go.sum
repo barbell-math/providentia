@@ -1,3 +1,5 @@
+code.barbellmath.net/barbell-math/smoothbrain-arena v0.0.0-20251224055001-fa25c182f38a h1:JlkwT2w3qXSGqKssnzjVWPhUa3LFArfyWRYw/TxwslU=
+code.barbellmath.net/barbell-math/smoothbrain-arena v0.0.0-20251224055001-fa25c182f38a/go.mod h1:rs+8gDuETI3giOdOHz8QznMOfz9bv3Hplwdlh+lkn/g=
 code.barbellmath.net/barbell-math/smoothbrain-argparse v0.0.0-20251214093131-51ce1b0487fa h1:LaF6CgNnNqpsbl0YDpUqE0Vo4obIE3P0jAEoNNPkOMQ=
 code.barbellmath.net/barbell-math/smoothbrain-argparse v0.0.0-20251214093131-51ce1b0487fa/go.mod h1:Twk6vSfEzOasU7GkUXfHW6fT0GnR0Bocjoo/y7uz8i4=
 code.barbellmath.net/barbell-math/smoothbrain-bs v0.0.0-20251215024822-7f96e5ae4642 h1:e5jcLgywd/oYsCOsr+beEK5rAsKvf4hzS0b5p9NtfIA=
@@ -40,8 +42,8 @@ github.com/stretchr/testify v1.8.1 h1:w7B6lhMri9wdJUVmEZPGGhZzrYTPvgJArz7wNPgYKs
 github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
 golang.org/x/crypto v0.46.0 h1:cKRW/pmt1pKAfetfu+RCEvjvZkA9RimPbh7bhFjGVBU=
 golang.org/x/crypto v0.46.0/go.mod h1:Evb/oLKmMraqjZ2iQTwDwvCtJkczlDuTmdJXoZVzqU0=
-golang.org/x/exp v0.0.0-20251209150349-8475f28825e9 h1:MDfG8Cvcqlt9XXrmEiD4epKn7VJHZO84hejP9Jmp0MM=
-golang.org/x/exp v0.0.0-20251209150349-8475f28825e9/go.mod h1:EPRbTFwzwjXj9NpYyyrvenVh9Y+GFeEvMNh7Xuz7xgU=
+golang.org/x/exp v0.0.0-20251219203646-944ab1f22d93 h1:fQsdNF2N+/YewlRZiricy4P1iimyPKZ/xwniHj8Q2a0=
+golang.org/x/exp v0.0.0-20251219203646-944ab1f22d93/go.mod h1:EPRbTFwzwjXj9NpYyyrvenVh9Y+GFeEvMNh7Xuz7xgU=
 golang.org/x/sync v0.19.0 h1:vV+1eWNmZ5geRlYjzm2adRgW2/mcpevXNg50YZtPCE4=
 golang.org/x/sync v0.19.0/go.mod h1:9KTHXmSnoGruLpwFjVSX0lNNA75CykiMECbovNTZqGI=
 golang.org/x/text v0.32.0 h1:ZD01bjUt1FQ9WJ0ClOL5vxgxOI/sVCNgX1YtKwcY0mU=

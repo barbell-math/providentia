@@ -125,7 +125,6 @@ CREATE TABLE IF NOT EXISTS providentia.training_log_to_physics_data (
 	training_log_id INT8 NOT NULL REFERENCES providentia.training_log(id) ON DELETE CASCADE,
 	physics_id INT8 NOT NULL REFERENCES providentia.training_log(id) ON DELETE CASCADE,
 	set_num INT4 NOT NULL,
-	rep_num INT4 NOT NULL,
 
 	PRIMARY KEY (training_log_id, physics_id, set_num, rep_num)
 );

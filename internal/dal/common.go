@@ -51,10 +51,22 @@ func batchIndexes[S ~[]E, E any](s S, step int) iter.Seq2[int, int] {
 	}
 }
 
-func dollarList(n int) string {
+func defaultValuePlaceholder(num int) string {
+	return fmt.Sprintf("$%d", num)
+}
+
+func defaultValuePlaceholders(n int) []string {
+	rv := make([]string, n)
+	for i := range n {
+		rv[i] = fmt.Sprintf("$%d", i)
+	}
+	return rv
+}
+
+func defaultValuePlaceholdersJoined(n int) string {
 	var sb strings.Builder
 	for i := range n {
-		sb.WriteString(fmt.Sprintf("$%d", i+1))
+		sb.WriteString(defaultValuePlaceholder(i + 1))
 		if i+1 < n {
 			sb.WriteString(", ")
 		}

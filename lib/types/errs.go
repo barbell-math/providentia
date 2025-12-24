@@ -48,6 +48,15 @@ var (
 	CouldNotDeleteAllExercisesErr = errors.New("Could not delete all exercises")
 )
 
+// [Workout] errors
+var (
+	CouldNotCreateAllWorkoutsErr = errors.New("Could not create all workouts")
+
+	CouldNotCreateAllPhysicsDataErr                    = errors.New("Could not create all physics data entries")
+	CouldNotCreateAllTrainingLogsErr                   = errors.New("Could not create all training log entries")
+	CouldNotCreateAllTrainingLogPhysicsDataMappingsErr = errors.New("Could not create all training log to physics data mappings")
+)
+
 // [Hyperparams] errors
 var (
 	InvalidBarPathCalcErr    = errors.New("Invalid bar path calc conf")
@@ -64,11 +73,6 @@ var (
 	CouldNotReadAllHyperparamsErr   = errors.New("Could not read all hyperparams")
 	CouldNotUpdateAllHyperparamsErr = errors.New("Could not update all hyperparams")
 	CouldNotDeleteAllHyperparamsErr = errors.New("Could not delete all hyperparams")
-)
-
-// [PhysicsData] errors
-var (
-	CouldNotCreateAllPhysicsDataErr = errors.New("Could not create all physics data entries")
 )
 
 // CSV loader job queue errors

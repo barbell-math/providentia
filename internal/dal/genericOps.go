@@ -22,15 +22,16 @@ type (
 	}
 
 	genericCreateReturningIdVal[T any] struct {
-		Val *T
-		Id  *int64
+		Val T
+		Id  int64
 	}
 	genericCreateReturningIdOpts[T any] struct {
-		Data        []genericCreateReturningIdVal[T]
-		ValueGetter func(v *genericCreateReturningIdVal[T], res *[]any) error
-		TableName   string
-		Columns     []string
-		Err         error
+		Data                    []genericCreateReturningIdVal[T]
+		ValueGetter             func(v *genericCreateReturningIdVal[T], res *[]any) error
+		TableName               string
+		Columns                 []string
+		ModifyValuePlaceholders func(placeholders []string) []string
+		Err                     error
 	}
 
 	genericReadTotalNumOpts struct {
@@ -161,7 +162,10 @@ func genericCreateReturningId[T any](
 	commaSepCols := strings.Join(opts.Columns, ", ")
 	sql := fmt.Sprintf(
 		createReturningIdSql,
-		opts.TableName, commaSepCols, dollarList(len(opts.Columns)), commaSepCols,
+		opts.TableName, commaSepCols,
+		strings.Join(opts.ModifyValuePlaceholders(
+			defaultValuePlaceholders(len(opts.Columns)),
+		), ", "),
 	)
 	cpy := CpyFromSlice[genericCreateReturningIdVal[T]]{
 		Data: opts.Data, ValueGetter: opts.ValueGetter,
@@ -213,7 +217,8 @@ func genericEnsureExists[T any](
 	commaSepCols := strings.Join(opts.Columns, ", ")
 	sql := fmt.Sprintf(
 		ensureExistSql,
-		opts.TableName, commaSepCols, dollarList(len(opts.Columns)), commaSepCols,
+		opts.TableName, commaSepCols,
+		defaultValuePlaceholdersJoined(len(opts.Columns)), commaSepCols,
 	)
 	cpy := CpyFromSlice[T]{Data: opts.Data, ValueGetter: opts.ValueGetter}
 	for start, end := range batchIndexes(opts.Data, int(state.Global.BatchSize)) {

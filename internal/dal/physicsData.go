@@ -2,6 +2,7 @@ package dal
 
 import (
 	"context"
+	"fmt"
 
 	"code.barbellmath.net/barbell-math/providentia/internal/util"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
@@ -10,22 +11,40 @@ import (
 
 const (
 	physicsDataTableName = "physics_data"
+
+	barPathCalcIdSelectSql = `
+(
+	SELECT providentia.model.id FROM providentia.hyperparams
+	JOIN providentia.model
+		ON providentia.model.id = providentia.hyperparams.model_id
+	WHERE providentia.model.name='%s'
+		AND providentia.hyperparams.version=$2
+)
+`
+
+	barPathTrackerIdSelectSql = `
+(
+	SELECT providentia.model.id FROM providentia.hyperparams
+	JOIN providentia.model
+		ON providentia.model.id = providentia.hyperparams.model_id
+	WHERE providentia.model.name='%s'
+		AND providentia.hyperparams.version=$3
+)
+`
 )
 
 // TODO - make sure this work through workout tests in the tests dir
-// NOTE - id selection is WRONG - need to make sub queries that lookup id based
-// on model id and version
 func createPhysicsDataReturningIds(
 	ctxt context.Context,
 	state *types.State,
 	tx pgx.Tx,
-	data []genericCreateReturningIdVal[types.PhysicsData],
+	data []genericCreateReturningIdVal[*types.PhysicsData],
 ) error {
 	return genericCreateReturningId(
-		ctxt, state, tx, &genericCreateReturningIdOpts[types.PhysicsData]{
+		ctxt, state, tx, &genericCreateReturningIdOpts[*types.PhysicsData]{
 			TableName: physicsDataTableName,
 			Columns: []string{
-				"video_path", "bar_path_calc_version", "bar_path_tracker_version",
+				"video_path", "bar_path_calc_id", "bar_path_tracker_id",
 				"time",
 				"position", "velocity", "acceleration", "jerk",
 				"force", "impulse", "work", "power",
@@ -38,7 +57,7 @@ func createPhysicsDataReturningIds(
 				"avg_power", "min_power", "max_power",
 			},
 			ValueGetter: func(
-				v *genericCreateReturningIdVal[types.PhysicsData],
+				v *genericCreateReturningIdVal[*types.PhysicsData],
 				res *[]any,
 			) error {
 				*res = util.SliceClamp(*res, 27)
@@ -71,7 +90,17 @@ func createPhysicsDataReturningIds(
 				(*res)[26] = v.Val.MaxPower
 				return nil
 			},
+			ModifyValuePlaceholders: func(placeholders []string) []string {
+				placeholders[1] = fmt.Sprintf(
+					barPathCalcIdSelectSql, types.BarPathCalc,
+				)
+				placeholders[2] = fmt.Sprintf(
+					barPathTrackerIdSelectSql, types.BarPathTracker,
+				)
+				return placeholders
+			},
 			Data: data,
+			Err:  types.CouldNotCreateAllPhysicsDataErr,
 		},
 	)
 }
