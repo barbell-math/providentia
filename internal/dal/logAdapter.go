@@ -14,14 +14,30 @@ type (
 	}
 )
 
+func NewTracelogWithAdapter(logger *slog.Logger, level int) *tracelog.TraceLog {
+	return &tracelog.TraceLog{
+		Logger:   &PgxLogAdapter{Logger: logger},
+		LogLevel: translateLogLevel(level),
+	}
+}
+
+func translateLogLevel(level int) tracelog.LogLevel {
+	if level < 4 {
+		// Always log warnings and errors, even if supplied level is 0
+		return tracelog.LogLevelWarn
+	}
+	if level < 5 {
+		return tracelog.LogLevelInfo
+	}
+	return tracelog.LogLevelDebug
+}
+
 func (p *PgxLogAdapter) Log(
 	ctxt context.Context,
 	level tracelog.LogLevel,
 	msg string,
 	data map[string]any,
 ) {
-	// TODO - try to make smarter so that the list is only created if the log
-	// level is high enough
 	args := make([]any, len(data)*2)
 	cntr := 0
 	for k, v := range data {

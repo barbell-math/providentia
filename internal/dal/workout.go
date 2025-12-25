@@ -48,6 +48,19 @@ type (
 		types.AbstractData
 		types.PhysicsData
 	}
+
+	findworkoutBetweenDatesSqlResult struct {
+		DatePerformed time.Time
+		Session       uint16
+		ExerciseName  string
+		Weight        types.Kilogram
+		Sets          float64
+		CurSet        int
+		Reps          int32
+		Effort        types.RPE
+		types.AbstractData
+		types.PhysicsData
+	}
 )
 
 const (
@@ -62,7 +75,7 @@ SELECT COUNT(*) FROM (
 ) AS result;
 `
 
-	readWorkoutsByIdSql = `
+	workoutByIdSql = `
 SELECT
 	providentia.exercise.name,
 	providentia.training_log.weight,
@@ -114,6 +127,62 @@ WHERE
 	inter_session_cntr = $2 AND
 	date_performed = $3
 ORDER BY inter_workout_cntr, cur_set ASC;
+`
+
+	workoutsBetweenDatesSql = `
+SELECT
+	providentia.training_log.date_performed,
+	providentia.training_log.inter_session_cntr,
+	providentia.exercise.name,
+	providentia.training_log.weight,
+	providentia.training_log.sets,
+	COALESCE(providentia.training_log_to_physics_data.set_num+1, 0) AS cur_set,
+	providentia.training_log.reps,
+	providentia.training_log.effort,
+	providentia.training_log.volume,
+	providentia.training_log.exertion,
+	providentia.training_log.total_reps,
+	COALESCE(providentia.physics_data.bar_path_calc_id, 0),
+	COALESCE(providentia.physics_data.bar_path_track_id, 0),
+	COALESCE(providentia.physics_data.path, ''),
+	providentia.physics_data.time,
+	providentia.physics_data.position,
+	providentia.physics_data.velocity,
+	providentia.physics_data.acceleration,
+	providentia.physics_data.jerk,
+	providentia.physics_data.force,
+	providentia.physics_data.impulse,
+	providentia.physics_data.work,
+	providentia.physics_data.power,
+	providentia.physics_data.rep_splits,
+	providentia.physics_data.min_vel,
+	providentia.physics_data.max_vel,
+	providentia.physics_data.max_acc,
+	providentia.physics_data.max_acc,
+	providentia.physics_data.max_force,
+	providentia.physics_data.max_force,
+	providentia.physics_data.max_impulse,
+	providentia.physics_data.max_impulse,
+	providentia.physics_data.avg_work,
+	providentia.physics_data.max_work,
+	providentia.physics_data.max_work,
+	providentia.physics_data.avg_power,
+	providentia.physics_data.max_power,
+	providentia.physics_data.max_power
+FROM providentia.training_log
+JOIN providentia.client
+	ON providentia.client.id = providentia.training_log.client_id
+JOIN providentia.exercise
+	ON providentia.exercise.id = providentia.training_log.exercise_id
+LEFT JOIN providentia.training_log_to_physics_data
+	ON providentia.training_log_to_physics_data.training_log_id = providentia.training_log.id
+LEFT JOIN providentia.physics_data
+	ON providentia.training_log_to_physics_data.physics_id = providentia.physics_data.id
+WHERE
+	email = $1 AND
+	date_performed >= $2 AND
+	date_performed < $3
+ORDER BY date_performed, inter_workout_cntr, cur_set ASC;
 `
 )
 
@@ -300,8 +369,7 @@ func readSingleWorkout(
 ) (bool, error) {
 	rows, err := tx.Query(
 		ctxt,
-		readWorkoutsByIdSql,
-		id.ClientEmail, id.Session, id.DatePerformed,
+		workoutByIdSql, id.ClientEmail, id.Session, id.DatePerformed,
 	)
 	if err != nil {
 		return false, err
@@ -391,5 +459,113 @@ func FindWorkoutsInDateRange(
 	tx pgx.Tx,
 	opts FindWorkoutsInDateRangeOpts,
 ) error {
+	found := 0
+	*opts.Res = (*opts.Res)[:0]
 
+	rows, err := tx.Query(
+		ctxt,
+		workoutsBetweenDatesSql, opts.Email, opts.Start, opts.End,
+	)
+	if err != nil {
+		return sberr.AppendError(types.CouldNotReadAllWorkoutsErr, err)
+	}
+
+	var iterW *types.Workout
+	var iterE *types.ExerciseData
+	for rows.Next() {
+		iterResult := findworkoutBetweenDatesSqlResult{}
+		if err := rows.Scan(
+			&iterResult.DatePerformed,
+			&iterResult.Session,
+			&iterResult.ExerciseName,
+			&iterResult.Weight,
+			&iterResult.Sets,
+			&iterResult.CurSet,
+			&iterResult.Reps,
+			&iterResult.Effort,
+			&iterResult.Volume,
+			&iterResult.Exertion,
+			&iterResult.TotalReps,
+			&iterResult.BarPathCalcVersion,
+			&iterResult.BarPathTrackerVersion,
+			&iterResult.VideoPath,
+			&iterResult.Time,
+			(*[]genericPoint)(unsafe.Pointer(&iterResult.Position)),
+			(*[]genericPoint)(unsafe.Pointer(&iterResult.Velocity)),
+			(*[]genericPoint)(unsafe.Pointer(&iterResult.Acceleration)),
+			(*[]genericPoint)(unsafe.Pointer(&iterResult.Jerk)),
+			(*[]genericPoint)(unsafe.Pointer(&iterResult.Force)),
+			(*[]genericPoint)(unsafe.Pointer(&iterResult.Impulse)),
+			&iterResult.Work,
+			&iterResult.Power,
+			(*[]genericPoint)(unsafe.Pointer(&iterResult.RepSplits)),
+			(*[]genericPoint)(unsafe.Pointer(&iterResult.MinVel)),
+			(*[]genericPoint)(unsafe.Pointer(&iterResult.MaxVel)),
+			(*[]genericPoint)(unsafe.Pointer(&iterResult.MinAcc)),
+			(*[]genericPoint)(unsafe.Pointer(&iterResult.MaxAcc)),
+			(*[]genericPoint)(unsafe.Pointer(&iterResult.MinForce)),
+			(*[]genericPoint)(unsafe.Pointer(&iterResult.MaxForce)),
+			(*[]genericPoint)(unsafe.Pointer(&iterResult.MinImpulse)),
+			(*[]genericPoint)(unsafe.Pointer(&iterResult.MaxImpulse)),
+			&iterResult.AvgWork,
+			(*[]genericPoint)(unsafe.Pointer(&iterResult.MinWork)),
+			(*[]genericPoint)(unsafe.Pointer(&iterResult.MaxWork)),
+			&iterResult.AvgPower,
+			(*[]genericPoint)(unsafe.Pointer(&iterResult.MinPower)),
+			(*[]genericPoint)(unsafe.Pointer(&iterResult.MaxPower)),
+		); err != nil {
+			rows.Close()
+			return sberr.AppendError(types.CouldNotReadAllWorkoutsErr, err)
+		}
+
+		iterWorkoutId := types.WorkoutId{
+			ClientEmail:   opts.Email,
+			Session:       iterResult.Session,
+			DatePerformed: iterResult.DatePerformed,
+		}
+		if iterW == nil || iterW.WorkoutId != iterWorkoutId {
+			*opts.Res = append(*opts.Res, types.Workout{
+				WorkoutId: iterWorkoutId,
+			})
+			iterW = &(*opts.Res)[len(*opts.Res)-1]
+			found++
+		}
+		if iterE == nil || iterE.Name != iterResult.ExerciseName {
+			iterW.Exercises = append(
+				iterW.Exercises, types.ExerciseData{
+					Name:   iterResult.ExerciseName,
+					Weight: iterResult.Weight,
+					Sets:   iterResult.Sets,
+					Reps:   iterResult.Reps,
+					Effort: iterResult.Effort,
+					AbstractData: types.Optional[types.AbstractData]{
+						Present: true,
+						Value:   iterResult.AbstractData,
+					},
+					PhysData: make(
+						[]types.Optional[types.PhysicsData],
+						int(math.Ceil(iterResult.Sets)),
+					),
+				},
+			)
+			iterE = &iterW.Exercises[len(iterW.Exercises)-1]
+		}
+
+		if iterResult.CurSet > 0 {
+			iterE.PhysData[iterResult.CurSet-1] = types.Optional[types.PhysicsData]{
+				Present: len(iterResult.Time) > 0,
+				Value:   iterResult.PhysicsData,
+			}
+		}
+	}
+	rows.Close()
+
+	state.Log.Log(
+		ctxt, sblog.VLevel(3),
+		fmt.Sprintf(
+			"DAL: Found workouts in date range (%s, %s]", opts.Start, opts.End,
+		),
+		"Found", found,
+	)
+	return nil
 }

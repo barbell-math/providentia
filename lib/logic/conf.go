@@ -15,7 +15,6 @@ import (
 	sbjobqueue "code.barbellmath.net/barbell-math/smoothbrain-jobQueue"
 	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jackc/pgx/v5/tracelog"
 )
 
 // Returns a [types.Conf] struct with sensible default values. Can be passed to
@@ -382,10 +381,10 @@ func ConfToState(
 	)); err != nil {
 		return
 	}
-	poolConf.ConnConfig.Tracer = &tracelog.TraceLog{
-		Logger:   &dal.PgxLogAdapter{Logger: state.Log},
-		LogLevel: tracelog.LogLevelDebug,
-	}
+	poolConf.ConnConfig.Tracer = dal.NewTracelogWithAdapter(
+		state.Log, c.Logging.Verbosity,
+	)
+
 	if state.DB, err = pgxpool.NewWithConfig(ctxt, poolConf); err != nil {
 		return
 	}

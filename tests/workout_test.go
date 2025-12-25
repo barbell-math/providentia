@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"code.barbellmath.net/barbell-math/providentia/internal/util"
 	"code.barbellmath.net/barbell-math/providentia/lib/logic"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	sbtest "code.barbellmath.net/barbell-math/smoothbrain-test"
@@ -109,7 +110,11 @@ func workoutsEqual(
 	sbtest.Eq(t, len(l), len(r))
 
 	for i := range len(l) {
-		sbtest.Eq(t, l[i].WorkoutId, r[i].WorkoutId)
+		sbtest.Eq(t, l[i].WorkoutId.ClientEmail, r[i].WorkoutId.ClientEmail)
+		sbtest.Eq(t, l[i].WorkoutId.Session, r[i].WorkoutId.Session)
+		sbtest.True(t, util.DateEqual(
+			l[i].WorkoutId.DatePerformed, r[i].WorkoutId.DatePerformed,
+		))
 		sbtest.Eq(t, len(l[i].Exercises), len(r[i].Exercises))
 
 		for j := range len(l[i].Exercises) {
@@ -196,6 +201,7 @@ func TestWorkout(t *testing.T) {
 	t.Run("createReadPhysData", workoutCreateReadPhysData)
 	t.Run("createFindNoPhysData", workoutCreateFindNoPhysData)
 	t.Run("createFindPhysData", workoutCreateFindPhysData)
+	t.Run("createFindBetweenDates", workoutCreateFindBetweenDates)
 }
 
 func workoutCreateReadNoPhysData(t *testing.T) {
@@ -442,4 +448,112 @@ func workoutCreateFindPhysData(t *testing.T) {
 	n, err = logic.ReadNumWorkoutsForClient(ctxt, "email@email.com")
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, 1, n)
+}
+
+func workoutCreateFindBetweenDates(t *testing.T) {
+	ctxt, cleanup := resetApp(t, context.Background())
+	t.Cleanup(cleanup)
+
+	err := logic.CreateClients(ctxt, types.Client{
+		FirstName: "FName",
+		LastName:  "LName",
+		Email:     "email@email.com",
+	})
+	sbtest.Nil(t, err)
+
+	workouts := []types.Workout{
+		{
+			WorkoutId: types.WorkoutId{
+				ClientEmail:   "email@email.com",
+				Session:       1,
+				DatePerformed: time.Now(),
+			},
+			Exercises: []types.ExerciseData{
+				{
+					Name:   "Squat",
+					Weight: 365,
+					Sets:   2,
+					Reps:   2,
+					Effort: 10,
+					PhysData: []types.Optional[types.PhysicsData]{
+						{Present: true, Value: testPhysicsData1},
+						{Present: true, Value: testPhysicsData2},
+					},
+				},
+			},
+		},
+		{
+			WorkoutId: types.WorkoutId{
+				ClientEmail:   "email@email.com",
+				Session:       1,
+				DatePerformed: time.Now().Add(24 * time.Hour),
+			},
+			Exercises: []types.ExerciseData{
+				{
+					Name:   "Bench",
+					Weight: 225,
+					Sets:   1,
+					Reps:   1,
+					Effort: 10,
+					PhysData: []types.Optional[types.PhysicsData]{
+						{Present: true, Value: testPhysicsData1},
+					},
+				},
+			},
+		},
+		{
+			WorkoutId: types.WorkoutId{
+				ClientEmail:   "email@email.com",
+				Session:       1,
+				DatePerformed: time.Now().Add(48 * time.Hour),
+			},
+			Exercises: []types.ExerciseData{
+				{
+					Name:   "Deadlift",
+					Weight: 405,
+					Sets:   1,
+					Reps:   1,
+					Effort: 10,
+				},
+			},
+		},
+	}
+	err = logic.CreateWorkouts(ctxt, workouts...)
+	sbtest.Nil(t, err)
+
+	res, err := logic.FindWorkoutsInDateRange(
+		ctxt, workouts[0].WorkoutId.ClientEmail,
+		time.Now(), time.Now().Add(50*time.Hour),
+	)
+	sbtest.Nil(t, err)
+	workoutsEqual(t, workouts, res)
+
+	res, err = logic.FindWorkoutsInDateRange(
+		ctxt, workouts[0].WorkoutId.ClientEmail,
+		time.Now(), time.Now().Add(48*time.Hour),
+	)
+	sbtest.Nil(t, err)
+	workoutsEqual(t, workouts[:2], res)
+
+	res, err = logic.FindWorkoutsInDateRange(
+		ctxt, workouts[0].WorkoutId.ClientEmail,
+		time.Now().Add(24*time.Hour), time.Now().Add(48*time.Hour),
+	)
+	sbtest.Nil(t, err)
+	workoutsEqual(t, workouts[1:2], res)
+
+	res, err = logic.FindWorkoutsInDateRange(
+		ctxt, workouts[0].WorkoutId.ClientEmail,
+		time.Now().Add(24*time.Hour), time.Now().Add(50*time.Hour),
+	)
+	sbtest.Nil(t, err)
+	workoutsEqual(t, workouts[1:], res)
+
+	n, err := logic.ReadNumClients(ctxt)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 1, n)
+
+	n, err = logic.ReadNumWorkoutsForClient(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 3, n)
 }
