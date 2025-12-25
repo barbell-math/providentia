@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS providentia.hyperparams (
 
 CREATE TABLE IF NOT EXISTS providentia.physics_data (
 	id SERIAL8 NOT NULL PRIMARY KEY,
-	path TEXT[] UNIQUE,
+	path TEXT, -- UNIQUE, TODO - reinstate
 	bar_path_calc_id INT4 NOT NULL REFERENCES providentia.hyperparams(id) ON DELETE CASCADE,
 	bar_path_track_id INT4 REFERENCES providentia.hyperparams(id) ON DELETE CASCADE,
 
@@ -123,10 +123,10 @@ CREATE TABLE IF NOT EXISTS providentia.training_log (
 
 CREATE TABLE IF NOT EXISTS providentia.training_log_to_physics_data (
 	training_log_id INT8 NOT NULL REFERENCES providentia.training_log(id) ON DELETE CASCADE,
-	physics_id INT8 NOT NULL REFERENCES providentia.training_log(id) ON DELETE CASCADE,
+	physics_id INT8 NOT NULL REFERENCES providentia.physics_data(id) ON DELETE CASCADE,
 	set_num INT4 NOT NULL,
 
-	PRIMARY KEY (training_log_id, physics_id, set_num, rep_num)
+	PRIMARY KEY (training_log_id, physics_id, set_num)
 );
 
 CREATE TABLE IF NOT EXISTS providentia.model_state (
@@ -152,3 +152,9 @@ CREATE TABLE IF NOT EXISTS providentia.model_state (
 
 	UNIQUE (training_log_id, hyperparams_id)
 );
+
+CREATE AGGREGATE array_accum (anycompatiblearray) (
+    sfunc = array_cat,
+    stype = anycompatiblearray,
+    initcond = '{}'
+); 

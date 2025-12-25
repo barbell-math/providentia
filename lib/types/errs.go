@@ -51,6 +51,9 @@ var (
 // [Workout] errors
 var (
 	CouldNotCreateAllWorkoutsErr = errors.New("Could not create all workouts")
+	CouldNotReadAllWorkoutsErr   = errors.New("Could not read all workouts")
+	CouldNotUpdateAllWorkoutsErr = errors.New("Could not update all workouts")
+	CouldNotDeleteAllWorkoutsErr = errors.New("Could not delete all workouts")
 
 	CouldNotCreateAllPhysicsDataErr                    = errors.New("Could not create all physics data entries")
 	CouldNotCreateAllTrainingLogsErr                   = errors.New("Could not create all training log entries")

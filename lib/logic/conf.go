@@ -8,12 +8,14 @@ import (
 	"runtime"
 	"strings"
 
+	"code.barbellmath.net/barbell-math/providentia/internal/dal"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	sbargp "code.barbellmath.net/barbell-math/smoothbrain-argparse"
 	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
 	sbjobqueue "code.barbellmath.net/barbell-math/smoothbrain-jobQueue"
 	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/tracelog"
 )
 
 // Returns a [types.Conf] struct with sensible default values. Can be passed to
@@ -379,6 +381,10 @@ func ConfToState(
 		c.DB.Host, c.DB.Port, c.DB.User, c.DB.PswdEnvVar, c.DB.Name,
 	)); err != nil {
 		return
+	}
+	poolConf.ConnConfig.Tracer = &tracelog.TraceLog{
+		Logger:   &dal.PgxLogAdapter{Logger: state.Log},
+		LogLevel: tracelog.LogLevelDebug,
 	}
 	if state.DB, err = pgxpool.NewWithConfig(ctxt, poolConf); err != nil {
 		return

@@ -16,7 +16,6 @@ require (
 	code.barbellmath.net/barbell-math/smoothbrain-test v0.0.0-20251219050905-f51a8750587a
 	github.com/jackc/pgx/v5 v5.7.6
 	golang.org/x/exp v0.0.0-20251219203646-944ab1f22d93
-	golang.org/x/sync v0.19.0
 )
 
 require (
@@ -25,5 +24,6 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	golang.org/x/crypto v0.46.0 // indirect
+	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
 )

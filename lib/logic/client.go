@@ -119,9 +119,6 @@ func EnsureClientsExistFromCSV(
 //
 // The context must have a [types.State] variable.
 //
-// Clients will be read in batches that respect the size set in the
-// [State.BatchSize] variable.
-//
 // No changes will be made to the database.
 func ReadNumClients(ctxt context.Context) (res int64, opErr error) {
 	opErr = runOp(ctxt, dal.ReadNumClients, &res)

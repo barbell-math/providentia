@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"code.barbellmath.net/barbell-math/providentia/internal/util"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	"github.com/jackc/pgx/v5"
 )
@@ -29,16 +28,14 @@ const (
 	clientIdSelectSql = `
 (
 	SELECT providentia.client.id FROM providentia.client
-	WHERE providentia.client.email='$1'
-)
-`
+	WHERE providentia.client.email=$1
+)`
 
 	exerciseIdSelectSql = `
 (
 	SELECT providentia.exercise.id FROM providentia.exercise
-	WHERE providentia.exercise.name='$2'
-)
-`
+	WHERE providentia.exercise.name=$2
+)`
 )
 
 func createTrainingLogsReturningIds(
@@ -59,9 +56,9 @@ func createTrainingLogsReturningIds(
 				v *genericCreateReturningIdVal[trainingLog],
 				res *[]any,
 			) error {
-				*res = util.SliceClamp(*res, 9)
-				(*res)[0] = v.Val.ExerciseName
-				(*res)[1] = v.Val.ClientEmail
+				*res = make([]any, 9)
+				(*res)[0] = v.Val.ClientEmail
+				(*res)[1] = v.Val.ExerciseName
 				(*res)[2] = v.Val.InterSessionCntr
 				(*res)[3] = v.Val.InterWorkoutCntr
 				(*res)[4] = v.Val.DatePerformed

@@ -10,9 +10,15 @@ import (
 	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
 	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type (
+	genericPoint struct {
+		X float64
+		Y float64
+	}
+
 	genericCreateOpts[T any] struct {
 		Data        []T
 		ValueGetter func(v *T, res *[]any) error
@@ -100,12 +106,25 @@ WITH ORDINALITY t(%s, ord) USING (%s) ORDER BY ord;
 	deleteByUniqueIdSql = `DELETE FROM providentia.%s WHERE %s = $1;`
 )
 
+func (v *genericPoint) ScanPoint(newVal pgtype.Point) error {
+	*v = genericPoint{X: newVal.P.X, Y: newVal.P.Y}
+	return nil
+}
+
+func (v genericPoint) PointValue() (pgtype.Point, error) {
+	return pgtype.Point{P: pgtype.Vec2{X: v.X, Y: v.Y}, Valid: true}, nil
+}
+
 func genericCreateWithId[T any](
 	ctxt context.Context,
 	state *types.State,
 	tx pgx.Tx,
 	opts *genericCreateOpts[T],
 ) error {
+	if len(opts.Data) == 0 {
+		return nil
+	}
+
 	genericCreate(ctxt, state, tx, opts)
 
 	if _, err := tx.Exec(ctxt, fmt.Sprintf(
@@ -130,6 +149,10 @@ func genericCreate[T any](
 	tx pgx.Tx,
 	opts *genericCreateOpts[T],
 ) error {
+	if len(opts.Data) == 0 {
+		return nil
+	}
+
 	cpy := CpyFromSlice[T]{Data: opts.Data, ValueGetter: opts.ValueGetter}
 	if n, err := tx.CopyFrom(
 		ctxt, pgx.Identifier{"providentia", opts.TableName},
@@ -159,6 +182,10 @@ func genericCreateReturningId[T any](
 	tx pgx.Tx,
 	opts *genericCreateReturningIdOpts[T],
 ) error {
+	if len(opts.Data) == 0 {
+		return nil
+	}
+
 	commaSepCols := strings.Join(opts.Columns, ", ")
 	sql := fmt.Sprintf(
 		createReturningIdSql,
@@ -189,12 +216,9 @@ func genericCreateReturningId[T any](
 		results := tx.SendBatch(ctxt, &b)
 
 		for i := start; i < end; i++ {
-			results := tx.SendBatch(ctxt, &b)
-			for range b.Len() {
-				row := results.QueryRow()
-				if err := row.Scan(opts.Data[start+i].Id); err != nil {
-					return sberr.AppendError(opts.Err, err)
-				}
+			if err := results.QueryRow().Scan(&opts.Data[start+i].Id); err != nil {
+				results.Close()
+				return sberr.AppendError(opts.Err, err)
 			}
 		}
 		results.Close()
@@ -214,6 +238,10 @@ func genericEnsureExists[T any](
 	tx pgx.Tx,
 	opts *genericCreateOpts[T],
 ) error {
+	if len(opts.Data) == 0 {
+		return nil
+	}
+
 	commaSepCols := strings.Join(opts.Columns, ", ")
 	sql := fmt.Sprintf(
 		ensureExistSql,
@@ -386,6 +414,10 @@ func genericDeleteByUniqueId[T any](
 	tx pgx.Tx,
 	opts *genericDeleteByUniqueIdOpts[T],
 ) error {
+	if len(opts.Ids) == 0 {
+		return nil
+	}
+
 	// Deleting all referenced/referencing data is handled by cascade rules
 
 	sql := fmt.Sprintf(deleteByUniqueIdSql, opts.TableName, opts.UniqueCol)

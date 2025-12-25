@@ -57,8 +57,8 @@ func defaultValuePlaceholder(num int) string {
 
 func defaultValuePlaceholders(n int) []string {
 	rv := make([]string, n)
-	for i := range n {
-		rv[i] = fmt.Sprintf("$%d", i)
+	for i := 1; i < n+1; i++ {
+		rv[i-1] = fmt.Sprintf("$%d", i)
 	}
 	return rv
 }

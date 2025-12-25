@@ -75,9 +75,9 @@ type (
 
 	// Higher order data that can be calculated from the basic user provided data.
 	AbstractData struct {
-		Volume    float64 // Weight*sets*reps
-		Exertion  float64 // Effort*sets*reps
-		TotalReps float64 // Sets*reps
+		Volume    Kilogram // Weight*sets*reps
+		Exertion  RPE      // Effort*sets*reps
+		TotalReps float64  // Sets*reps
 	}
 
 	// Physics data calculated from either [RawTimeSeriesData] or a video.
@@ -124,7 +124,7 @@ type (
 	}
 
 	// A unique identifier for a workout in the database
-	WorkoutID struct {
+	WorkoutId struct {
 		ClientEmail   string    // The clients unique email
 		Session       uint16    // The session of the workout
 		DatePerformed time.Time // The date the workout was done one
@@ -133,7 +133,7 @@ type (
 	// Represents a fill workout performed by a lifter with all provided and
 	// calculated data.
 	Workout struct {
-		WorkoutID
+		WorkoutId
 		Exercises []ExerciseData
 	}
 )
