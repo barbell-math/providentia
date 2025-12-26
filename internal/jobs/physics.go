@@ -28,6 +28,7 @@ type (
 	}
 
 	PhysicsOpts struct {
+		Batch                *sbjobqueue.Batch
 		BarPathCalcParams    *types.BarPathCalcHyperparams
 		BarTrackerCalcParams *types.BarPathTrackerHyperparams
 		RawData              []types.BarPathVariant
@@ -57,7 +58,12 @@ func RunPhysicsJobs(
 		)
 	}
 
-	batch, _ := sbjobqueue.BatchWithContext(ctxt)
+	wait := false
+	if opts.Batch == nil {
+		wait = true
+		opts.Batch, _ = sbjobqueue.BatchWithContext(ctxt)
+	}
+
 	if len(opts.ExerciseData.PhysData) < len(opts.RawData) {
 		opts.ExerciseData.PhysData = make(
 			[]types.Optional[types.PhysicsData], len(opts.RawData),
@@ -88,7 +94,7 @@ func RunPhysicsJobs(
 			expReps = max(int32((opts.ExerciseData.Sets-floorSets)*float64(opts.ExerciseData.Reps)), 1)
 		}
 		state.PhysicsJobQueue.Schedule(&physics{
-			B:                    batch,
+			B:                    opts.Batch,
 			S:                    state,
 			Tx:                   tx,
 			UID:                  UID_CNTR.Add(1),
@@ -108,7 +114,10 @@ func RunPhysicsJobs(
 		iterPhysData.Position = iterPhysData.Position[:0]
 	}
 
-	return batch.Wait()
+	if wait {
+		return opts.Batch.Wait()
+	}
+	return nil
 }
 
 func (p *physics) JobType(_ types.PhysicsJob) {}

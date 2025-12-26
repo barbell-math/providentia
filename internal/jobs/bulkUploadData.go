@@ -26,7 +26,7 @@ func resolveCreateFunc[T dal.AvailableTypes](
 }
 
 func getFilesInDirFunc(dir string) iter.Seq2[string, error] {
-	return util.GetCSVFilesInDir(dir, util.GetCSVFilesInDirOpts{Strict: true})
+	return util.FilesWithExtInDir(dir, ".csv", util.FilesWithExtInDirOpts{})
 }
 
 func hyperparamFilterFunc(extension string) func(v *string, e *error) bool {
@@ -40,14 +40,6 @@ func hyperparamFilterFunc(extension string) func(v *string, e *error) bool {
 			*e = sberr.Wrap(
 				types.UnknownFileInDataDirErr,
 				"Invalid hyperparam file. File name must have the following format: <file name>.<hyperparam type>.csv\nGot: %s",
-				*v,
-			)
-			return true
-		}
-		if split[2] != "csv" {
-			*e = sberr.Wrap(
-				types.UnknownFileInDataDirErr,
-				"All hyperparam files must end in 'csv'. File: %s",
 				*v,
 			)
 			return true
@@ -150,8 +142,15 @@ func BulkUploadData(
 		return sberr.AppendError(types.BulkDataUploadErr, err)
 	}
 
-	// TODO - bulk upload workout logic...
-	return nil
+	if err := UploadWorkoutsFromCSV(ctxt, state, tx, &CSVWorkoutLoaderOpts{
+		Opts:                      &opts.Opts,
+		Files:                     getFilesInDirFunc(opts.WorkoutDir),
+		Batch:                     batch,
+		BarPathCalcHyperparams:    opts.BarPathCalcHyperparams,
+		BarPathTrackerHyperparams: opts.BarPathTrackerHyperparams,
+	}); err != nil {
+		return sberr.AppendError(types.BulkDataUploadErr, err)
+	}
 
-	// return batch.Wait()
+	return batch.Wait()
 }

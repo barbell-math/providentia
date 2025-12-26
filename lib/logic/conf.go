@@ -38,7 +38,7 @@ func ConfDefaults() *types.Conf {
 		PhysicsJobQueue: sbjobqueue.Opts{
 			QueueLen:       10,
 			MaxNumWorkers:  uint32(runtime.NumCPU()),
-			MaxJobsPerPoll: 1,
+			MaxJobsPerPoll: uint32(runtime.NumCPU()),
 		},
 		VideoJobQueue: sbjobqueue.Opts{
 			QueueLen:       10,
@@ -48,12 +48,7 @@ func ConfDefaults() *types.Conf {
 		CSVLoaderJobQueue: sbjobqueue.Opts{
 			QueueLen:       10,
 			MaxNumWorkers:  uint32(runtime.NumCPU()),
-			MaxJobsPerPoll: 1,
-		},
-		GPJobQueue: sbjobqueue.Opts{
-			QueueLen:       10,
-			MaxNumWorkers:  uint32(runtime.NumCPU()),
-			MaxJobsPerPoll: 1,
+			MaxJobsPerPoll: uint32(runtime.NumCPU()),
 		},
 		ClientCSVFileChunks: sbcsv.ChunkFileOpts{
 			PredictedAvgRowSizeInBytes: 100,
@@ -80,7 +75,7 @@ func ConfDefaults() *types.Conf {
 			// help loading data with sparse physics data, which will be the
 			// more typical use case, but won't speed up loading data with dense
 			// physics data. - TODO - what???
-			MinChunkRows:       1e2,
+			MinChunkRows:       1000,
 			MaxChunkRows:       math.MaxInt,
 			RequestedNumChunks: runtime.NumCPU(),
 		},
@@ -125,9 +120,6 @@ func ConfDefaultRequiredArgs() []string {
 //   - <longArgStart>.CSVLoaderJobQueue.QueueLen
 //   - <longArgStart>.CSVLoaderJobQueue.MaxNumWorkers
 //   - <longArgStart>.CSVLoaderJobQueue.MaxJobsPerPoll
-//   - <longArgStart>.GPJobQueue.QueueLen
-//   - <longArgStart>.GPJobQueue.MaxNumWorkers
-//   - <longArgStart>.GPJobQueue.MaxJobsPerPoll
 //   - <longArgStart>.ClientCSVFileChunks.PredictedAvgRowSizeInBytes
 //   - <longArgStart>.ClientCSVFileChunks.NumRowSamples
 //   - <longArgStart>.ClientCSVFileChunks.MinChunkRows
@@ -187,10 +179,6 @@ func ConfParser(
 	jobQueueArguments(
 		fs, startStr, "CSVLoader",
 		&val.CSVLoaderJobQueue, &_default.CSVLoaderJobQueue,
-	)
-	jobQueueArguments(
-		fs, startStr, "GPJobQueue",
-		&val.GPJobQueue, &_default.GPJobQueue,
 	)
 
 	csvFileChunks(
@@ -353,11 +341,6 @@ func ConfToState(
 	}
 	if state.CSVLoaderJobQueue, err = sbjobqueue.NewJobQueue[types.CSVLoaderJob](
 		&c.CSVLoaderJobQueue,
-	); err != nil {
-		return
-	}
-	if state.GPJobQueue, err = sbjobqueue.NewJobQueue[types.GeneralPurposeJob](
-		&c.GPJobQueue,
 	); err != nil {
 		return
 	}

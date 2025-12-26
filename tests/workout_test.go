@@ -463,8 +463,7 @@ func workoutCreateFindBetweenDates(t *testing.T) {
 	})
 	sbtest.Nil(t, err)
 
-	startTime := time.Now()
-
+	startTime := time.Now().Truncate(24 * time.Hour)
 	workouts := []types.Workout{
 		{
 			WorkoutId: types.WorkoutId{
@@ -527,28 +526,28 @@ func workoutCreateFindBetweenDates(t *testing.T) {
 
 	res, err := logic.FindWorkoutsInDateRange(
 		ctxt, workouts[0].WorkoutId.ClientEmail,
-		time.Now().Add(-1*time.Hour), startTime.Add(72*time.Hour),
+		startTime.Add(-1*time.Hour), startTime.Add(72*time.Hour),
 	)
 	sbtest.Nil(t, err)
 	workoutsEqual(t, workouts, res)
 
 	res, err = logic.FindWorkoutsInDateRange(
 		ctxt, workouts[0].WorkoutId.ClientEmail,
-		time.Now().Add(-1*time.Hour), time.Now().Add(48*time.Hour),
+		startTime.Add(-1*time.Hour), startTime.Add(48*time.Hour),
 	)
 	sbtest.Nil(t, err)
 	workoutsEqual(t, workouts[:2], res)
 
 	res, err = logic.FindWorkoutsInDateRange(
 		ctxt, workouts[0].WorkoutId.ClientEmail,
-		time.Now().Add(23*time.Hour), time.Now().Add(48*time.Hour),
+		startTime.Add(23*time.Hour), startTime.Add(48*time.Hour),
 	)
 	sbtest.Nil(t, err)
 	workoutsEqual(t, workouts[1:2], res)
 
 	res, err = logic.FindWorkoutsInDateRange(
 		ctxt, workouts[0].WorkoutId.ClientEmail,
-		time.Now().Add(23*time.Hour), time.Now().Add(72*time.Hour),
+		startTime.Add(23*time.Hour), startTime.Add(72*time.Hour),
 	)
 	sbtest.Nil(t, err)
 	workoutsEqual(t, workouts[1:], res)
@@ -646,12 +645,13 @@ func workoutCreateDeleteBetweenDates(t *testing.T) {
 	})
 	sbtest.Nil(t, err)
 
+	startTime := time.Now().Truncate(24 * time.Hour)
 	workouts := []types.Workout{
 		{
 			WorkoutId: types.WorkoutId{
 				ClientEmail:   "email@email.com",
 				Session:       1,
-				DatePerformed: time.Now(),
+				DatePerformed: startTime,
 			},
 			Exercises: []types.ExerciseData{
 				{
@@ -677,7 +677,7 @@ func workoutCreateDeleteBetweenDates(t *testing.T) {
 
 	_, err = logic.DeleteWorkoutsInDateRange(
 		ctxt, "email@email.com",
-		time.Now().Add(24*time.Hour), time.Now().Add(48*time.Hour),
+		startTime.Add(24*time.Hour), startTime.Add(48*time.Hour),
 	)
 	sbtest.ContainsError(t, types.CouldNotDeleteAllWorkoutsErr, err)
 	sbtest.ContainsError(
@@ -687,7 +687,7 @@ func workoutCreateDeleteBetweenDates(t *testing.T) {
 
 	res, err := logic.DeleteWorkoutsInDateRange(
 		ctxt, "email@email.com",
-		time.Now().Add(-1*time.Hour), time.Now().Add(24*time.Hour),
+		startTime.Add(-1*time.Hour), startTime.Add(24*time.Hour),
 	)
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, res, 1)

@@ -12,8 +12,8 @@ code.barbellmath.net/barbell-math/smoothbrain-csv v0.0.0-20251214092924-4bc2bcdc
 code.barbellmath.net/barbell-math/smoothbrain-csv v0.0.0-20251214092924-4bc2bcdcf726/go.mod h1:odmho/rHPropAwJpLtmJWKEn2g3uPpA5InXOG4YjMr8=
 code.barbellmath.net/barbell-math/smoothbrain-errs v0.0.0-20251214092612-fc98d8585e15 h1:eLoGMKNpL5Ylkky3cTOJ7buppgxE7lN/UTt9Mm38QZk=
 code.barbellmath.net/barbell-math/smoothbrain-errs v0.0.0-20251214092612-fc98d8585e15/go.mod h1:R8k7/ldgG/w7007p0+UWRgq5EqMYtH5wkXSL/TRhZoE=
-code.barbellmath.net/barbell-math/smoothbrain-jobQueue v0.0.0-20251214092757-9b122b518fea h1:YkL8d02cGYIIQh1h6Wl4sD3RCEbtZUMii+O+0eENDpA=
-code.barbellmath.net/barbell-math/smoothbrain-jobQueue v0.0.0-20251214092757-9b122b518fea/go.mod h1:Jf5Icpy9nt2WaMBV4vvss7UI92C2yRHXX4plfbadIOQ=
+code.barbellmath.net/barbell-math/smoothbrain-jobQueue v0.0.0-20251226210359-024b18a3f9f4 h1:nUbxn4rVKgIxG3cMEVOG+2yhiubvsdZS/cYGRd0Z50g=
+code.barbellmath.net/barbell-math/smoothbrain-jobQueue v0.0.0-20251226210359-024b18a3f9f4/go.mod h1:lMoUwqySRAXb6FSpXkWsvLYt2bfVVbPqsB+zYYZukNU=
 code.barbellmath.net/barbell-math/smoothbrain-logging v0.0.0-20251214091108-38f7f10ecc50 h1:zjpXil4NjlO6K2DVVkVj5j+IRlcrCO6Ug++AVY3kkGk=
 code.barbellmath.net/barbell-math/smoothbrain-logging v0.0.0-20251214091108-38f7f10ecc50/go.mod h1:ouTebENuyJUZDDJVUJJhHFo/6CVu0DCI3fhk9X27kvQ=
 code.barbellmath.net/barbell-math/smoothbrain-sqlmigrate v0.0.0-20251219074219-9b844eb6a153 h1:T6Z0bM7IEjqWPJIdrx402l2mZdFriooHRbNwOAQ306w=

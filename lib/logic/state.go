@@ -69,12 +69,6 @@ func ValidateState(s *types.State) error {
 			"The CSVLoaderJobQueue field must not be nil",
 		)
 	}
-	if s.GPJobQueue == nil {
-		return sberr.Wrap(
-			types.InvalidGPJobQueueErr,
-			"The GPJobQueue field must not be nil",
-		)
-	}
 	return nil
 }
 

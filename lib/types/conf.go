@@ -37,12 +37,6 @@ type (
 		// files on disk, verifying that data, and uploading it to the database.
 		// Refer to: http://code.barbellmath.net/barbell-math/smoothbrain-jobQueue#Opts
 		CSVLoaderJobQueue sbjobqueue.Opts
-		// Configuration that is used when setting up the general purpose job
-		// queue. This job queue will be used for miscelanious tasks that would
-		// benefit from parallel execution but do not warrent an entirely
-		// separate job queue.
-		// Refer to: http://code.barbellmath.net/barbell-math/smoothbrain-jobQueue#Opts
-		GPJobQueue sbjobqueue.Opts
 
 		// Configuration for how client csv files get chunked up to allow the
 		// chunks to be processed in parallel by the CSVLoaderJobQueue.

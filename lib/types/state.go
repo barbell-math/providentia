@@ -24,7 +24,6 @@ type (
 		PhysicsJobQueue   *sbjobqueue.JobQueue[PhysicsJob]
 		VideoJobQueue     *sbjobqueue.JobQueue[VideoJob]
 		CSVLoaderJobQueue *sbjobqueue.JobQueue[CSVLoaderJob]
-		GPJobQueue        *sbjobqueue.JobQueue[GeneralPurposeJob]
 
 		ClientCSVFileChunks     sbcsv.ChunkFileOpts
 		ExerciseCSVFileChunks   sbcsv.ChunkFileOpts

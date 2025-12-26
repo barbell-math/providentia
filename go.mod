@@ -10,7 +10,7 @@ require (
 	code.barbellmath.net/barbell-math/smoothbrain-cgoTest v0.0.0-20251214093713-893bb710a8bc
 	code.barbellmath.net/barbell-math/smoothbrain-csv v0.0.0-20251214092924-4bc2bcdcf726
 	code.barbellmath.net/barbell-math/smoothbrain-errs v0.0.0-20251214092612-fc98d8585e15
-	code.barbellmath.net/barbell-math/smoothbrain-jobQueue v0.0.0-20251214092757-9b122b518fea
+	code.barbellmath.net/barbell-math/smoothbrain-jobQueue v0.0.0-20251226210359-024b18a3f9f4
 	code.barbellmath.net/barbell-math/smoothbrain-logging v0.0.0-20251214091108-38f7f10ecc50
 	code.barbellmath.net/barbell-math/smoothbrain-sqlmigrate v0.0.0-20251219074219-9b844eb6a153
 	code.barbellmath.net/barbell-math/smoothbrain-test v0.0.0-20251219050905-f51a8750587a

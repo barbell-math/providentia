@@ -12,13 +12,14 @@ import (
 )
 
 type (
-	GetCSVFilesInDirOpts struct {
-		Strict bool
+	FilesWithExtInDirOpts struct {
+		DirsAllowed           bool
+		OtherFileTypesAllowed bool
 	}
 )
 
 var (
-	GetCSVFilesInDirErr = errors.New("Could not get csv files in dir")
+	FilesWithExtInDirErr = errors.New("Could not get files in dir")
 )
 
 func SliceClamp[S []T, T any, U constraints.Integer](s S, _len U) S {
@@ -57,9 +58,10 @@ func DateEqual(date1 time.Time, date2 time.Time) bool {
 	return y1 == y2 && m1 == m2 && d1 == d2
 }
 
-func GetCSVFilesInDir(
+func FilesWithExtInDir(
 	dir string,
-	opts GetCSVFilesInDirOpts,
+	ext string,
+	opts FilesWithExtInDirOpts,
 ) iter.Seq2[string, error] {
 	var err error
 	var dirEntries []os.DirEntry
@@ -69,14 +71,14 @@ func GetCSVFilesInDir(
 
 	return func(yield func(string, error) bool) {
 		if err != nil {
-			yield("", sberr.AppendError(GetCSVFilesInDirErr, err))
+			yield("", sberr.AppendError(FilesWithExtInDirErr, err))
 			return
 		}
 		for _, entry := range dirEntries {
 			if entry.IsDir() {
-				if opts.Strict {
+				if !opts.DirsAllowed {
 					yield("", sberr.Wrap(
-						GetCSVFilesInDirErr,
+						FilesWithExtInDirErr,
 						"Supplied dir (%s) contained a directory",
 						dir,
 					))
@@ -86,11 +88,11 @@ func GetCSVFilesInDir(
 			}
 
 			name := entry.Name()
-			if path.Ext(name) != ".csv" {
-				if opts.Strict {
+			if path.Ext(name) != ext {
+				if !opts.OtherFileTypesAllowed {
 					yield("", sberr.Wrap(
-						GetCSVFilesInDirErr,
-						"Supplied dir (%s) contained non-csv files in strict mode",
+						FilesWithExtInDirErr,
+						"Supplied dir (%s) contained non-csv files",
 						dir,
 					))
 					return
@@ -98,7 +100,7 @@ func GetCSVFilesInDir(
 				continue
 			}
 
-			if !yield(entry.Name(), nil) {
+			if !yield(path.Join(dir, entry.Name()), nil) {
 				return
 			}
 		}
