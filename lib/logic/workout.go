@@ -40,39 +40,6 @@ func CreateWorkouts(
 	return runOp(ctxt, dal.CreateWorkouts, workouts)
 }
 
-// // Adds the clients supplied in the csv files to the database. Has the same
-// // behavior as [CreateClients] other than getting the clients from csv files.
-// // The csv files are expected to have column names on the first row and the
-// // following columns must be present as identified by the column name on the
-// // first row. More columns may be present, they will be ignored.
-// //   - FirstName (string): the first name of the client
-// //   - LastName (string): the last name of the client
-// //   - Email (string): the email of the client
-// //
-// // For performance it is recommended to set the `ReuseRecord` variable to `true`
-// // in the [sbcsv.Opts] struct. This will reduce the number of allocations made.
-// //
-// // The context must have a [types.State] variable.
-// //
-// // Clients will be uploaded in batches that respect the size set in the
-// // [State.BatchSize] variable.
-// //
-// // If any error occurs no changes will be made to the database.
-// func CreateClientsFromCSV(
-// 	ctxt context.Context,
-// 	opts *sbcsv.Opts,
-// 	files ...string,
-// ) (opErr error) {
-// 	if len(files) == 0 {
-// 		return
-// 	}
-// 	return runOp(ctxt, jobs.RunCSVLoaderJobs, jobs.CSVLoaderOpts[types.Client]{
-// 		Opts:    opts,
-// 		Files:   files,
-// 		Creator: dal.CreateClients,
-// 	})
-// }
-
 // Gets the total number of workouts in the database for a given client.
 //
 // The context must have a [types.State] variable.

@@ -1,6 +1,10 @@
 package types
 
-import "time"
+import (
+	"time"
+
+	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
+)
 
 // Basic types
 type (
@@ -47,6 +51,23 @@ type (
 		Name    string        `db:"name"`     // The exercise name
 		KindId  ExerciseKind  `db:"kind_id"`  // The kind of exercise
 		FocusId ExerciseFocus `db:"focus_id"` // The focus of the exercise
+	}
+)
+
+const (
+	// The second file extension for a CSV file that holds bar path calc data.
+	// The file is expected to follow the format: <file name>.barPathCalc.csv
+	BarPathCalcFileExt = "barPathCalc"
+	// The second file extension for a CSV file that holds bar path tracker data.
+	// The file is expected to follow the format: <file name>.barPathTracker.csv
+	BarPathTrackerFileExt = "barPathTracker"
+)
+
+var (
+	// A map of all second hyperparam file extenstions.
+	HyperparamFileNames = map[string]struct{}{
+		BarPathCalcFileExt:    {},
+		BarPathTrackerFileExt: {},
 	}
 )
 
@@ -130,10 +151,26 @@ type (
 		DatePerformed time.Time // The date the workout was done one
 	}
 
-	// Represents a fill workout performed by a lifter with all provided and
+	// Represents a full workout performed by a lifter with all provided and
 	// calculated data.
 	Workout struct {
 		WorkoutId
 		Exercises []ExerciseData
+	}
+)
+
+// Aggregate types
+type (
+	BulkUploadDataOpts struct {
+		sbcsv.Opts
+		*BarPathCalcHyperparams
+		*BarPathTrackerHyperparams
+		ClientCreateType      CreateFuncType
+		ClientDir             string
+		ExerciseCreateType    CreateFuncType
+		ExerciseDir           string
+		HyperparamsCreateType CreateFuncType
+		HyperparamsDir        string
+		WorkoutDir            string
 	}
 )

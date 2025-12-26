@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"io"
+	"iter"
 
 	"code.barbellmath.net/barbell-math/providentia/internal/dal"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
@@ -14,7 +15,11 @@ import (
 )
 
 type (
-	genericCSVLoader[T dal.AvailableTypes] struct {
+	genericCSVAvailableTypes interface {
+		types.Client | types.Exercise | types.Hyperparams
+	}
+
+	genericCSVLoader[T genericCSVAvailableTypes] struct {
 		B         *sbjobqueue.Batch
 		S         *types.State
 		Tx        pgx.Tx
@@ -24,51 +29,80 @@ type (
 		WriteFunc dal.CreateFunc[T]
 	}
 
-	CSVLoaderOpts[T dal.AvailableTypes] struct {
+	CSVLoaderOpts[T genericCSVAvailableTypes] struct {
 		*sbcsv.Opts
 		Creator dal.CreateFunc[T]
-		Files   []string
+		Files   iter.Seq2[string, error]
+		Batch   *sbjobqueue.Batch
 	}
 )
 
-func RunCSVLoaderJobs[T dal.AvailableTypes](
+func UploadFromCSV[T genericCSVAvailableTypes](
 	ctxt context.Context,
 	state *types.State,
 	tx pgx.Tx,
-	opts CSVLoaderOpts[T],
+	opts *CSVLoaderOpts[T],
 ) (opErr error) {
-	batch, _ := sbjobqueue.BatchWithContext(ctxt)
+	wait := false
+	if opts.Batch == nil {
+		wait = true
+		opts.Batch, _ = sbjobqueue.BatchWithContext(ctxt)
+	}
 
-	for _, file := range opts.Files {
-		select {
-		case <-ctxt.Done():
-			return ctxt.Err()
-		default:
-		}
-
-		var fileChunks []*sbcsv.BasicFileChunk
-		if fileChunks, opErr = sbcsv.ChunkFile(
-			file, sbcsv.NewBasicFileChunk, state.ClientCSVFileChunks,
-		); opErr != nil {
+	var file string
+	for file, opErr = range opts.Files {
+		if opErr != nil {
 			return
 		}
-		for _, chunk := range fileChunks {
-			if len(chunk.Data) == 0 {
-				continue
-			}
-			state.CSVLoaderJobQueue.Schedule(&genericCSVLoader[T]{
-				S:         state,
-				Tx:        tx,
-				B:         batch,
-				UID:       UID_CNTR.Add(1),
-				FileChunk: chunk,
-				Opts:      opts.Opts,
-				WriteFunc: opts.Creator,
-			})
+		state.Log.Log(
+			ctxt, sblog.VLevel(3),
+			"JOB: UploadFromCSV: Processing data file", "File", file,
+		)
+		if opErr = uploadFile(ctxt, state, tx, file, opts); opErr != nil {
+			return
 		}
 	}
 
-	return batch.Wait()
+	if wait {
+		return opts.Batch.Wait()
+	}
+	return nil
+}
+
+func uploadFile[T genericCSVAvailableTypes](
+	ctxt context.Context,
+	state *types.State,
+	tx pgx.Tx,
+	file string,
+	opts *CSVLoaderOpts[T],
+) (opErr error) {
+	select {
+	case <-ctxt.Done():
+		return ctxt.Err()
+	default:
+	}
+
+	var fileChunks []*sbcsv.BasicFileChunk
+	if fileChunks, opErr = sbcsv.ChunkFile(
+		file, sbcsv.NewBasicFileChunk, state.ClientCSVFileChunks,
+	); opErr != nil {
+		return
+	}
+	for _, chunk := range fileChunks {
+		if len(chunk.Data) == 0 {
+			continue
+		}
+		state.CSVLoaderJobQueue.Schedule(&genericCSVLoader[T]{
+			S:         state,
+			Tx:        tx,
+			B:         opts.Batch,
+			UID:       UID_CNTR.Add(1),
+			FileChunk: chunk,
+			Opts:      opts.Opts,
+			WriteFunc: opts.Creator,
+		})
+	}
+	return nil
 }
 
 func (w *genericCSVLoader[T]) JobType(_ types.CSVLoaderJob) {}

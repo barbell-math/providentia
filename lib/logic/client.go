@@ -5,6 +5,7 @@ import (
 
 	"code.barbellmath.net/barbell-math/providentia/internal/dal"
 	"code.barbellmath.net/barbell-math/providentia/internal/jobs"
+	"code.barbellmath.net/barbell-math/providentia/internal/util"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
 )
@@ -76,9 +77,9 @@ func CreateClientsFromCSV(
 	if len(files) == 0 {
 		return
 	}
-	return runOp(ctxt, jobs.RunCSVLoaderJobs, jobs.CSVLoaderOpts[types.Client]{
+	return runOp(ctxt, jobs.UploadFromCSV, &jobs.CSVLoaderOpts[types.Client]{
 		Opts:    opts,
-		Files:   files,
+		Files:   util.SliceSeq2Err(files),
 		Creator: dal.CreateClients,
 	})
 }
@@ -108,9 +109,9 @@ func EnsureClientsExistFromCSV(
 	if len(files) == 0 {
 		return
 	}
-	return runOp(ctxt, jobs.RunCSVLoaderJobs, jobs.CSVLoaderOpts[types.Client]{
+	return runOp(ctxt, jobs.UploadFromCSV, &jobs.CSVLoaderOpts[types.Client]{
 		Opts:    opts,
-		Files:   files,
+		Files:   util.SliceSeq2Err(files),
 		Creator: dal.EnsureClientsExist,
 	})
 }

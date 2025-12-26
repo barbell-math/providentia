@@ -5,6 +5,7 @@ import (
 
 	"code.barbellmath.net/barbell-math/providentia/internal/dal"
 	"code.barbellmath.net/barbell-math/providentia/internal/jobs"
+	"code.barbellmath.net/barbell-math/providentia/internal/util"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
 )
@@ -88,9 +89,9 @@ func CreateHyperparamsFromCSV[T types.Hyperparams](
 	if len(files) == 0 {
 		return
 	}
-	return runOp(ctxt, jobs.RunCSVLoaderJobs, jobs.CSVLoaderOpts[T]{
+	return runOp(ctxt, jobs.UploadFromCSV, &jobs.CSVLoaderOpts[T]{
 		Opts:    opts,
-		Files:   files,
+		Files:   util.SliceSeq2Err(files),
 		Creator: dal.CreateHyperparams[T],
 	})
 }
@@ -120,9 +121,9 @@ func EnsureHyperparamsExistFromCSV[T types.Hyperparams](
 	if len(files) == 0 {
 		return
 	}
-	return runOp(ctxt, jobs.RunCSVLoaderJobs, jobs.CSVLoaderOpts[T]{
+	return runOp(ctxt, jobs.UploadFromCSV, &jobs.CSVLoaderOpts[T]{
 		Opts:    opts,
-		Files:   files,
+		Files:   util.SliceSeq2Err(files),
 		Creator: dal.EnsureHyperparamsExist[T],
 	})
 }

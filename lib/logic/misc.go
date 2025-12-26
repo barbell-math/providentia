@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"code.barbellmath.net/barbell-math/providentia/internal/dal/migrations"
+	"code.barbellmath.net/barbell-math/providentia/internal/jobs"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 )
 
@@ -16,4 +17,11 @@ func RunMigrations(ctxt context.Context) (opErr error) {
 	var state *types.State
 	state, opErr = getState(ctxt)
 	return migrations.RunMigrations(ctxt, state)
+}
+
+func BulkUploadData(
+	ctxt context.Context,
+	opts *types.BulkUploadDataOpts,
+) (opErr error) {
+	return runOp(ctxt, jobs.BulkUploadData, opts)
 }

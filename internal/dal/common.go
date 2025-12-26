@@ -12,14 +12,14 @@ import (
 
 type (
 	AvailableTypes interface {
-		types.Client | types.Exercise | types.Hyperparams // TODO - add more types here as created
+		types.Client | types.Exercise | types.Hyperparams | types.Workout
 	}
 
 	CreateFunc[T AvailableTypes] func(
 		ctxt context.Context,
 		state *types.State,
 		tx pgx.Tx,
-		clients []T,
+		data []T,
 	) error
 
 	CpyFromSlice[T any] struct {

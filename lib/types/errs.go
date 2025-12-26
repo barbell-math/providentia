@@ -93,3 +93,10 @@ var (
 	TimeSeriesDecreaseErr     = errors.New("Time series data must not decrease")
 	TimeSeriesNotMonotonicErr = errors.New("Time series must increase mononically")
 )
+
+// Bulk upload errors
+var (
+	BulkDataUploadErr       = errors.New("Could not bulk upload data")
+	InvalidDataDirErr       = errors.New("Invalid data dir")
+	UnknownFileInDataDirErr = errors.New("Unknown file in data dir")
+)

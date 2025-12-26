@@ -5,6 +5,7 @@ import (
 
 	"code.barbellmath.net/barbell-math/providentia/internal/dal"
 	"code.barbellmath.net/barbell-math/providentia/internal/jobs"
+	"code.barbellmath.net/barbell-math/providentia/internal/util"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
 )
@@ -80,9 +81,9 @@ func CreateExercisesFromCSV(
 	if len(files) == 0 {
 		return
 	}
-	return runOp(ctxt, jobs.RunCSVLoaderJobs, jobs.CSVLoaderOpts[types.Exercise]{
+	return runOp(ctxt, jobs.UploadFromCSV, &jobs.CSVLoaderOpts[types.Exercise]{
 		Opts:    opts,
-		Files:   files,
+		Files:   util.SliceSeq2Err(files),
 		Creator: dal.CreateExercises,
 	})
 }
@@ -112,9 +113,9 @@ func EnsureExercisesExistFromCSV(
 	if len(files) == 0 {
 		return
 	}
-	return runOp(ctxt, jobs.RunCSVLoaderJobs, jobs.CSVLoaderOpts[types.Exercise]{
+	return runOp(ctxt, jobs.UploadFromCSV, &jobs.CSVLoaderOpts[types.Exercise]{
 		Opts:    opts,
-		Files:   files,
+		Files:   util.SliceSeq2Err(files),
 		Creator: dal.EnsureExercisesExist,
 	})
 }
