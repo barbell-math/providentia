@@ -3,8 +3,9 @@ package logic
 import (
 	"context"
 
-	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
-	"code.barbellmath.net/barbell-math/providentia/internal/ops"
+	"code.barbellmath.net/barbell-math/providentia/internal/dal"
+	"code.barbellmath.net/barbell-math/providentia/internal/jobs"
+	"code.barbellmath.net/barbell-math/providentia/internal/util"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
 )
@@ -28,9 +29,6 @@ import (
 //
 // The context must have a [types.State] variable.
 //
-// Hyperparameters will be uploaded in batches that respect the size set in the
-// [State.BatchSize] variable.
-//
 // If any error occurs no changes will be made to the database.
 func CreateHyperparams[T types.Hyperparams](
 	ctxt context.Context,
@@ -39,11 +37,7 @@ func CreateHyperparams[T types.Hyperparams](
 	if len(params) == 0 {
 		return
 	}
-	return runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			return ops.CreateHyperparams(ctxt, state, queries, params...)
-		},
-	})
+	return runOp(ctxt, dal.CreateHyperparams[T], params)
 }
 
 // Checks that the supplied hyperparams are present in the database and adds
@@ -69,11 +63,7 @@ func EnsureHyperparamsExist[T types.Hyperparams](
 	if len(params) == 0 {
 		return
 	}
-	return runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			return ops.EnsureHyperparamsExist(ctxt, state, queries, params...)
-		},
-	})
+	return runOp(ctxt, dal.EnsureHyperparamsExist[T], params)
 }
 
 // Adds the hyperparams supplied in the csv files to the database. Has the same
@@ -93,36 +83,48 @@ func EnsureHyperparamsExist[T types.Hyperparams](
 // If any error occurs no changes will be made to the database.
 func CreateHyperparamsFromCSV[T types.Hyperparams](
 	ctxt context.Context,
-	opts sbcsv.Opts,
+	opts *sbcsv.Opts,
 	files ...string,
 ) (opErr error) {
 	if len(files) == 0 {
 		return
 	}
-	return runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			return ops.UploadHyperparamsFromCSV[T](
-				ctxt, state, queries, ops.CreateHyperparams[T], opts, files...,
-			)
-		},
+	return runOp(ctxt, jobs.UploadFromCSV, &jobs.CSVLoaderOpts[T]{
+		Opts:    opts,
+		Files:   util.SliceSeq2Err(files),
+		Creator: dal.CreateHyperparams[T],
 	})
 }
 
-// TODO - docs,test
+// Checks that the supplied hyperparams are present in the database and adds
+// them if they are not present. In order for the supplied hyperparams to be be
+// considered already present the model type, version number, and parameter
+// fields must all match. Any newly created hyperparams must satisfy the
+// uniqueness constraints outlined by [CreateHyperparams]. All csv files must be
+// valid as outlined by [CreateHyperparamsFromCSV].
+//
+// This function will be slower than [CreateHyperparams], so if you are working
+// with large amounts of data and are ok with erroring on duplicated hyperparams
+// consider using [CreateHyperparams].
+//
+// The context must have a [types.State] variable.
+//
+// Hyperparams will be uploaded in batches that respect the size set in the
+// [State.BatchSize] variable.
+//
+// If any error occurs no changes will be made to the database.
 func EnsureHyperparamsExistFromCSV[T types.Hyperparams](
 	ctxt context.Context,
-	opts sbcsv.Opts,
+	opts *sbcsv.Opts,
 	files ...string,
 ) (opErr error) {
 	if len(files) == 0 {
 		return
 	}
-	return runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			return ops.UploadHyperparamsFromCSV[T](
-				ctxt, state, queries, ops.EnsureHyperparamsExist[T], opts, files...,
-			)
-		},
+	return runOp(ctxt, jobs.UploadFromCSV, &jobs.CSVLoaderOpts[T]{
+		Opts:    opts,
+		Files:   util.SliceSeq2Err(files),
+		Creator: dal.EnsureHyperparamsExist[T],
 	})
 }
 
@@ -133,12 +135,7 @@ func EnsureHyperparamsExistFromCSV[T types.Hyperparams](
 //
 // No changes will be made to the database.
 func ReadNumHyperparams(ctxt context.Context) (res int64, opErr error) {
-	opErr = runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			res, err = ops.ReadNumHyperparams(ctxt, state, queries)
-			return err
-		},
-	})
+	opErr = runOp(ctxt, dal.ReadNumHyperparams, &res)
 	return
 }
 
@@ -151,12 +148,7 @@ func ReadNumHyperparams(ctxt context.Context) (res int64, opErr error) {
 func ReadNumHyperparamsFor[T types.Hyperparams](
 	ctxt context.Context,
 ) (res int64, opErr error) {
-	opErr = runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			res, err = ops.ReadNumHyperparamsFor[T](ctxt, state, queries)
-			return err
-		},
-	})
+	opErr = runOp(ctxt, dal.ReadNumHyperparamsFor[T], &res)
 	return
 }
 
@@ -175,14 +167,13 @@ func ReadHyperparamsByVersionFor[T types.Hyperparams](
 	if len(versions) == 0 {
 		return
 	}
-	opErr = runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			res, err = ops.ReadHyperparamsByVersionFor[T](
-				ctxt, state, queries, versions...,
-			)
-			return
+	opErr = runOp(
+		ctxt, dal.ReadHyperparamsByVersionFor[T],
+		dal.ReadHyperparamsByVersionForOpts[T]{
+			Versions: versions,
+			Params:   &res,
 		},
-	})
+	)
 	return
 }
 
@@ -197,12 +188,7 @@ func ReadHyperparamsByVersionFor[T types.Hyperparams](
 func ReadDefaultHyperparamsFor[T types.Hyperparams](
 	ctxt context.Context,
 ) (res T, opErr error) {
-	opErr = runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			res, err = ops.ReadDefaultHyperparamsFor[T](ctxt, state, queries)
-			return
-		},
-	})
+	opErr = runOp(ctxt, dal.ReadDefaultHyperparamsFor[T], &res)
 	return
 }
 
@@ -224,14 +210,13 @@ func FindHyperparamsByVersionFor[T types.Hyperparams](
 	if len(versions) == 0 {
 		return
 	}
-	opErr = runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			res, err = ops.FindHyperparamsByVersionFor[T](
-				ctxt, state, queries, versions...,
-			)
-			return
+	opErr = runOp(
+		ctxt, dal.FindHyperparamsByVersionFor[T],
+		dal.FindHyperparamsByVersionForOpts[T]{
+			Versions: versions,
+			Params:   &res,
 		},
-	})
+	)
 	return
 }
 
@@ -249,9 +234,5 @@ func DeleteHyperparams[T types.Hyperparams](
 	if len(versions) == 0 {
 		return
 	}
-	return runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			return ops.DeleteHyperparams[T](ctxt, state, queries, versions...)
-		},
-	})
+	return runOp(ctxt, dal.DeleteHyperparams[T], versions)
 }

@@ -3,8 +3,9 @@ package logic
 import (
 	"context"
 
-	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
-	"code.barbellmath.net/barbell-math/providentia/internal/ops"
+	"code.barbellmath.net/barbell-math/providentia/internal/dal"
+	"code.barbellmath.net/barbell-math/providentia/internal/jobs"
+	"code.barbellmath.net/barbell-math/providentia/internal/util"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
 )
@@ -16,19 +17,12 @@ import (
 //
 // The context must have a [types.State] variable.
 //
-// Clients will be uploaded in batches that respect the size set in the
-// [State.BatchSize] variable.
-//
 // If any error occurs no changes will be made to the database.
 func CreateClients(ctxt context.Context, clients ...types.Client) (opErr error) {
 	if len(clients) == 0 {
 		return
 	}
-	return runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) error {
-			return ops.CreateClients(ctxt, state, queries, clients...)
-		},
-	})
+	return runOp(ctxt, dal.CreateClients, clients)
 }
 
 // Checks that the supplied clients are present in the database and adds them if
@@ -54,11 +48,7 @@ func EnsureClientsExist(
 	if len(clients) == 0 {
 		return
 	}
-	return runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			return ops.EnsureClientsExist(ctxt, state, queries, clients...)
-		},
-	})
+	return runOp(ctxt, dal.EnsureClientsExist, clients)
 }
 
 // Adds the clients supplied in the csv files to the database. Has the same
@@ -70,8 +60,8 @@ func EnsureClientsExist(
 //   - LastName (string): the last name of the client
 //   - Email (string): the email of the client
 //
-// The `ReuseRecord` field on opts will be set to true before loading the csv
-// file. All other options are left alone.
+// For performance it is recommended to set the `ReuseRecord` variable to `true`
+// in the [sbcsv.Opts] struct. This will reduce the number of allocations made.
 //
 // The context must have a [types.State] variable.
 //
@@ -81,36 +71,48 @@ func EnsureClientsExist(
 // If any error occurs no changes will be made to the database.
 func CreateClientsFromCSV(
 	ctxt context.Context,
-	opts sbcsv.Opts,
+	opts *sbcsv.Opts,
 	files ...string,
 ) (opErr error) {
 	if len(files) == 0 {
 		return
 	}
-	return runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			return ops.UploadClientsFromCSV(
-				ctxt, state, queries, ops.CreateClients, opts, files...,
-			)
-		},
+	return runOp(ctxt, jobs.UploadFromCSV, &jobs.CSVLoaderOpts[types.Client]{
+		Opts:    opts,
+		Files:   util.SliceSeq2Err(files),
+		Creator: dal.CreateClients,
 	})
 }
 
-// TODO - comment, test?
+// Checks that the supplied clients are present in the database and adds them if
+// they are not present. In order for the supplied clients to be be considered
+// already present the first name, last name, and email fields must all match.
+// Any newly created clients must satisfy the uniqueness constraints outlined by
+// [CreateClients]. All csv files must be valid as outlined by
+// [CreateClientsFromCSV].
+//
+// This function will be slower than [CreateClients], so if you are working with
+// large amounts of data and are ok with erroring on duplicated clients consider
+// using [CreateClients].
+//
+// The context must have a [types.State] variable.
+//
+// Clients will be uploaded in batches that respect the size set in the
+// [State.BatchSize] variable.
+//
+// If any error occurs no changes will be made to the database.
 func EnsureClientsExistFromCSV(
 	ctxt context.Context,
-	opts sbcsv.Opts,
+	opts *sbcsv.Opts,
 	files ...string,
 ) (opErr error) {
 	if len(files) == 0 {
 		return
 	}
-	return runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			return ops.UploadClientsFromCSV(
-				ctxt, state, queries, ops.EnsureClientsExist, opts, files...,
-			)
-		},
+	return runOp(ctxt, jobs.UploadFromCSV, &jobs.CSVLoaderOpts[types.Client]{
+		Opts:    opts,
+		Files:   util.SliceSeq2Err(files),
+		Creator: dal.EnsureClientsExist,
 	})
 }
 
@@ -120,12 +122,7 @@ func EnsureClientsExistFromCSV(
 //
 // No changes will be made to the database.
 func ReadNumClients(ctxt context.Context) (res int64, opErr error) {
-	opErr = runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			res, err = ops.ReadNumClients(ctxt, state, queries)
-			return err
-		},
-	})
+	opErr = runOp(ctxt, dal.ReadNumClients, &res)
 	return
 }
 
@@ -143,11 +140,9 @@ func ReadClientsByEmail(
 	if len(emails) == 0 {
 		return
 	}
-	opErr = runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			res, err = ops.ReadClientsByEmail(ctxt, state, queries, emails...)
-			return
-		},
+	opErr = runOp(ctxt, dal.ReadClientsByEmail, dal.ReadClientByEmailOpts{
+		Emails:  emails,
+		Clients: &res,
 	})
 	return
 }
@@ -169,11 +164,9 @@ func FindClientsByEmail(
 	if len(emails) == 0 {
 		return
 	}
-	opErr = runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			res, err = ops.FindClientsByEmail(ctxt, state, queries, emails...)
-			return
-		},
+	opErr = runOp(ctxt, dal.FindClientsByEmail, dal.FindClientByEmailOpts{
+		Emails:  emails,
+		Clients: &res,
 	})
 	return
 }
@@ -190,15 +183,12 @@ func UpdateClients(ctxt context.Context, clients ...types.Client) (opErr error) 
 	if len(clients) == 0 {
 		return
 	}
-	return runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			return ops.UpdateClients(ctxt, state, queries, clients...)
-		},
-	})
+	return runOp(ctxt, dal.UpdateClients, clients)
 }
 
 // Deletes the supplied clients, as identified by their email. All data
-// associated with the client will be deleted.
+// associated with the client will be deleted. If a client does not exist in the
+// database an error will be returned.
 //
 // The context must have a [types.State] variable.
 //
@@ -207,9 +197,5 @@ func DeleteClients(ctxt context.Context, emails ...string) (opErr error) {
 	if len(emails) == 0 {
 		return
 	}
-	return runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			return ops.DeleteClients(ctxt, state, queries, emails...)
-		},
-	})
+	return runOp(ctxt, dal.DeleteClients, emails)
 }

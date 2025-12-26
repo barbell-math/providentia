@@ -25,6 +25,8 @@ void heapHelper(T s, size_t curIdx, bool(*cmp)(U l, U r)) {
 
 template <typename T, typename U>
 void Max(T s) {
+	if (s.Len()==1) { return; }
+
 	int startNode=(s.Len()/2)-1;
 	auto op=[](U a, U b) { return a>b; };
 	for (size_t i=startNode; i>0; i--) {
@@ -35,6 +37,8 @@ void Max(T s) {
 
 template <typename T, typename U>
 void Min(T s) {
+	if (s.Len()==1) { return; }
+
 	int startNode=(s.Len()/2)-1;
 	auto op=[](U a, U b) { return a<b; };
 	for (size_t i=startNode; i>0; i--) {

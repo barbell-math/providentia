@@ -22,6 +22,21 @@ extern "C" bool TestMaxHeap(void) {
 	return true;
 }
 
+extern "C" bool TestMaxHeapSingleElementSlice(void) {
+	double data[1]={9};
+	
+	Slice<double> s(data, 1);
+	Heap::Max(s);
+	
+	double tmp[1]={9};
+	for (int i=0; i<1; i++) {
+		EQ(data[i], tmp[i]);
+		EQ(s[i], tmp[i]);
+	}
+
+	return true;
+}
+
 extern "C" bool TestMinHeap(void) {
 	double data[10]={};
 	for (int i=0; i<10; i++) {
@@ -33,6 +48,21 @@ extern "C" bool TestMinHeap(void) {
 
 	double tmp[10]={1, 2, 4, 3, 6, 5, 8, 10, 7, 9};
 	for (int i=0; i<10; i++) {
+		EQ(data[i], tmp[i]);
+		EQ(s[i], tmp[i]);
+	}
+
+	return true;
+}
+
+extern "C" bool TestMinHeapSingleElementSlice(void) {
+	double data[1]={9};
+	
+	Slice<double> s(data, 1);
+	Heap::Min(s);
+	
+	double tmp[1]={9};
+	for (int i=0; i<1; i++) {
 		EQ(data[i], tmp[i]);
 		EQ(s[i], tmp[i]);
 	}

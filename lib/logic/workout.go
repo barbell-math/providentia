@@ -4,45 +4,25 @@ import (
 	"context"
 	"time"
 
-	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
-	"code.barbellmath.net/barbell-math/providentia/internal/ops"
+	"code.barbellmath.net/barbell-math/providentia/internal/dal"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
-	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
 )
 
-// Adds the supplied workouts to the database and calculates the physics
-// information associated with any exercise that provides either a video path or
-// time series data. The supplied workouts must have a valid workout ID and raw
-// data. A valid workout ID must:
+// Adds the supplied workouts to the database. The supplied workouts must have a
+// valid workout ID. A valid workout ID must:
 //
 //   - Have a valid client email already present in the database
 //   - Have a session number >0
 //   - Have a valid date time stamp
 //   - The workout ID must not already be present in the database
 //
-// Each raw data entry in the exercise list must:
+// Each exercise data in the exercise list must:
 //
 //   - Have a valid exercise name already present in the database
 //   - Have a weight >=0
 //   - Have sets >=0
 //   - Have reps >=0
 //   - Have effort in the range [0, 10]
-//   - Valid bar path data
-//
-// Bar path data can either be a path to a video file or time series data that
-// represents the bars position over time. Valid time series bar path data must:
-//
-//   - Have time data and position data of the same length
-//   - Have more than [state.PhysicsData.MinNumSamples] time samples
-//   - The time data must be monotonically increasing, with a variance less than
-//     [state.PhysicsData.TimeDeltaEps]
-//
-// Valid video bar path data must:
-//
-//   - Point to a valid path
-//   - Point to a video longer than [state.BarPathTracker.MinLength]
-//   - Point to a video file with a size greater than [state.BarPathTracker.MinSize]
-//   - Point to a video file with a size less than [state.BarPathTracker.MaxSize]
 //
 // The context must have a [types.State] variable.
 //
@@ -52,167 +32,12 @@ import (
 // If any error occurs no changes will be made to the database.
 func CreateWorkouts(
 	ctxt context.Context,
-	barPathCalcParams *types.BarPathCalcHyperparams,
-	barTrackerCalcParams *types.BarPathTrackerHyperparams,
-	workouts ...types.RawWorkout,
+	workouts ...types.Workout,
 ) (opErr error) {
 	if len(workouts) == 0 {
 		return
 	}
-	return runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) error {
-			return ops.CreateWorkouts(
-				ctxt, state, queries,
-				barPathCalcParams, barTrackerCalcParams,
-				workouts...,
-			)
-		},
-	})
-}
-
-// Checks that the supplied workouts are present in the database and adds them
-// if they are not present. In order for the supplied workouts to be be
-// considered already present all fields must match, including the physics time
-// series data and video paths. Any newly created workouts must satisfy the
-// uniqueness constraints outlined by [CreateWorkouts].
-//
-// This function will be slower than [CreateWorkouts] due to the large number of
-// network trips and non-trivial comparison logic. If you are working with large
-// amounts of data and are ok with erroring on duplicated clients consider using
-// [CreateWorkouts].
-//
-// The context must have a [types.State] variable.
-//
-// Workouts will be uploaded in batches that respect the size set in the
-// [State.BatchSize] variable.
-//
-// If any error occurs no changes will be made to the database.
-func EnsureWorkoutsExist(
-	ctxt context.Context,
-	barPathCalcParams *types.BarPathCalcHyperparams,
-	barTrackerCalcParams *types.BarPathTrackerHyperparams,
-	workouts ...types.RawWorkout,
-) (opErr error) {
-	if len(workouts) == 0 {
-		return
-	}
-	return runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			return ops.EnsureWorkoutsExist(
-				ctxt, state, queries,
-				barPathCalcParams, barTrackerCalcParams,
-				workouts...,
-			)
-		},
-	})
-}
-
-// Adds the workouts supplied in the csv files to the database. Has the same
-// behavior as [CreateWorkouts] other than getting the workouts from csv files.
-//
-// TODO - finish comment when done
-// The csv files are expected to have column names on the first row and the
-// following columns must be present as identified by the column name on the
-// first row. More columns may be present, they will be ignored.
-//   - FirstName (string): the first name of the client
-//   - LastName (string): the last name of the client
-//   - Email (string): the email of the client
-//
-// The `ReuseRecord` field on opts will be set to true before loading the csv
-// file. All other options are left alone.
-//
-// The context must have a [types.State] variable.
-//
-// Clients will be uploaded in batches that respect the size set in the
-// [State.BatchSize] variable.
-//
-// If any error occurs no changes will be made to the database.
-func CreateWorkoutsFromCSV(
-	ctxt context.Context,
-	barPathCalcParams *types.BarPathCalcHyperparams,
-	barTrackerCalcParams *types.BarPathTrackerHyperparams,
-	opts sbcsv.Opts,
-	files ...string,
-) (opErr error) {
-	if len(files) == 0 {
-		return
-	}
-	return runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			return ops.UploadWorkoutsFromCSV(
-				ctxt, state, queries,
-				barPathCalcParams, barTrackerCalcParams,
-				ops.CreateWorkouts,
-				opts, files...,
-			)
-		},
-	})
-}
-
-// TODO - test, doc
-func EnsureWorkoutsExistFromCSV(
-	ctxt context.Context,
-	barPathCalcParams *types.BarPathCalcHyperparams,
-	barTrackerCalcParams *types.BarPathTrackerHyperparams,
-	opts sbcsv.Opts,
-	files ...string,
-) (opErr error) {
-	if len(files) == 0 {
-		return
-	}
-	return runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			return ops.UploadWorkoutsFromCSV(
-				ctxt, state, queries,
-				barPathCalcParams, barTrackerCalcParams,
-				ops.CreateWorkouts,
-				opts, files...,
-			)
-		},
-	})
-}
-
-// Gets the total number of exercises across all workouts in the database for a
-// given client.
-//
-// The context must have a [types.State] variable.
-//
-// No changes will be made to the database.
-func ReadClientTotalNumTrainingLogEntries(
-	ctxt context.Context,
-	clientEmail string,
-) (res int64, opErr error) {
-	opErr = runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			res, err = ops.ReadClientTotalNumTrainingLogEntries(
-				ctxt, state, queries, clientEmail,
-			)
-			return err
-		},
-	})
-	return
-}
-
-// Gets the total number of physics entries across all workouts in the database
-// for a given client. Each exercise with physics data will correspond to a
-// single entry in the physics table.
-//
-// The context must have a [types.State] variable.
-//
-// No changes will be made to the database.
-func ReadClientTotalNumPhysEntries(
-	ctxt context.Context,
-	clientEmail string,
-) (res int64, opErr error) {
-	opErr = runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			res, err = ops.ReadClientTotalNumPhysEntries(
-				ctxt, state, queries, clientEmail,
-			)
-			return err
-		},
-	})
-	return
+	return runOp(ctxt, dal.CreateWorkouts, workouts)
 }
 
 // Gets the total number of workouts in the database for a given client.
@@ -220,16 +45,16 @@ func ReadClientTotalNumPhysEntries(
 // The context must have a [types.State] variable.
 //
 // No changes will be made to the database.
-func ReadClientNumWorkouts(
+func ReadNumWorkoutsForClient(
 	ctxt context.Context,
-	clientEmail string,
+	email string,
 ) (res int64, opErr error) {
-	opErr = runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			res, err = ops.ReadClientNumWorkouts(ctxt, state, queries, clientEmail)
-			return err
+	opErr = runOp(
+		ctxt, dal.ReadNumWorkoutsForClient, dal.ReadNumWorkoutsForClientOpts{
+			Email: email,
+			Res:   &res,
 		},
-	})
+	)
 	return
 }
 
@@ -240,19 +65,19 @@ func ReadClientNumWorkouts(
 // The context must have a [types.State] variable.
 //
 // No changes will be made to the database.
-func ReadWorkoutsByID(
+func ReadWorkoutsById(
 	ctxt context.Context,
-	ids ...types.WorkoutID,
+	ids ...types.WorkoutId,
 ) (res []types.Workout, opErr error) {
 	if len(ids) == 0 {
 		return
 	}
-	opErr = runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			res, err = ops.ReadWorkoutsByID(ctxt, state, queries, ids...)
-			return
+	opErr = runOp(
+		ctxt, dal.ReadWorkoutsById, dal.ReadWorkoutsByIdOpts{
+			Ids: ids,
+			Res: &res,
 		},
-	})
+	)
 	return
 }
 
@@ -266,47 +91,46 @@ func ReadWorkoutsByID(
 // The context must have a [types.State] variable.
 //
 // No changes will be made to the database.
-func FindWorkoutsByID(
+func FindWorkoutsById(
 	ctxt context.Context,
-	ids ...types.WorkoutID,
-) (res []types.Found[types.Workout], opErr error) {
+	ids ...types.WorkoutId,
+) (res []types.Optional[types.Workout], opErr error) {
 	if len(ids) == 0 {
 		return
 	}
-	opErr = runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			res, err = ops.FindWorkoutsByID(ctxt, state, queries, ids...)
-			return
+	opErr = runOp(
+		ctxt, dal.FindWorkoutsById, dal.FindWorkoutsByIdOpts{
+			Ids: ids,
+			Res: &res,
 		},
-	})
+	)
 	return
 }
 
 // Gets the workouts for the supplied client in the supplied date range. If the
 // supplied client does not exist no workouts will be returned and an error
 // will be returned. If `start` is after `end` no workouts will be returned and
-// an error will be returned. If no workouts exists between `start` and `end` an
-// error will be returned.
+// an error will be returned.
 //
-// Both `start` and `end` are inclusive.
+// `start` is inclusive and `end` is exclusive.
 //
 // The context must have a [types.State] variable.
 //
 // No changes will be made to the database.
-func ReadWorkoutsInDateRange(
+func FindWorkoutsInDateRange(
 	ctxt context.Context,
 	clientEmail string,
 	start time.Time,
 	end time.Time,
 ) (res []types.Workout, opErr error) {
-	opErr = runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			res, err = ops.ReadWorkoutsInDateRange(
-				ctxt, state, queries, clientEmail, start, end,
-			)
-			return err
+	opErr = runOp(
+		ctxt, dal.FindWorkoutsInDateRange, dal.FindWorkoutsInDateRangeOpts{
+			Email: clientEmail,
+			Start: start,
+			End:   end,
+			Res:   &res,
 		},
-	})
+	)
 	return
 }
 
@@ -318,18 +142,12 @@ func ReadWorkoutsInDateRange(
 // If any error occurs no changes will be made to the database.
 func DeleteWorkouts(
 	ctxt context.Context,
-	ids ...types.WorkoutID,
+	ids ...types.WorkoutId,
 ) (opErr error) {
 	if len(ids) == 0 {
 		return
 	}
-	opErr = runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			err = ops.DeleteWorkouts(ctxt, state, queries, ids...)
-			return err
-		},
-	})
-	return
+	return runOp(ctxt, dal.DeleteWorkouts, ids)
 }
 
 // Deletes the workouts for the supplied client in the supplied date range
@@ -338,7 +156,7 @@ func DeleteWorkouts(
 // is after `end` no workouts will be deleted and an error will be returned. If
 // no workouts exists between `start` and `end` an error will be returned.
 //
-// Both `start` and `end` are inclusive.
+// `start` is inclusive and `end` is exclusive.
 //
 // The context must have a [types.State] variable.
 //
@@ -349,13 +167,13 @@ func DeleteWorkoutsInDateRange(
 	start time.Time,
 	end time.Time,
 ) (res int64, opErr error) {
-	opErr = runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			res, err = ops.DeleteWorkoutsInDateRange(
-				ctxt, state, queries, clientEmail, start, end,
-			)
-			return err
+	opErr = runOp(
+		ctxt, dal.DeleteWorkoutsInDateRange, dal.DeleteWorkoutsInDateRangeOpts{
+			Email: clientEmail,
+			Start: start,
+			End:   end,
+			Res:   &res,
 		},
-	})
+	)
 	return
 }

@@ -69,19 +69,13 @@ func ValidateState(s *types.State) error {
 			"The CSVLoaderJobQueue field must not be nil",
 		)
 	}
-	if s.GPJobQueue == nil {
-		return sberr.Wrap(
-			types.InvalidGPJobQueueErr,
-			"The GPJobQueue field must not be nil",
-		)
-	}
 	return nil
 }
 
 func checkStateGlobalConf(state *types.State) error {
 	if state.Global.BatchSize == 0 {
 		return sberr.AppendError(
-			types.InvalidGlobalErr,
+			types.InvalidGlobalConfErr,
 			sberr.Wrap(
 				types.InvalidBatchSizeErr,
 				"Must be >0. Got: %d", state.Global.BatchSize,

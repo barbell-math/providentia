@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strings"
 
+	"code.barbellmath.net/barbell-math/providentia/internal/dal"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	sbargp "code.barbellmath.net/barbell-math/smoothbrain-argparse"
 	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
@@ -32,13 +33,12 @@ func ConfDefaults() *types.Conf {
 			Port: 5432,
 		},
 		Global: types.GlobalConf{
-			BatchSize:             1e3,
-			PerRequestIdCacheSize: 1e2,
+			BatchSize: 1e3,
 		},
 		PhysicsJobQueue: sbjobqueue.Opts{
 			QueueLen:       10,
 			MaxNumWorkers:  uint32(runtime.NumCPU()),
-			MaxJobsPerPoll: 1,
+			MaxJobsPerPoll: uint32(runtime.NumCPU()),
 		},
 		VideoJobQueue: sbjobqueue.Opts{
 			QueueLen:       10,
@@ -48,28 +48,23 @@ func ConfDefaults() *types.Conf {
 		CSVLoaderJobQueue: sbjobqueue.Opts{
 			QueueLen:       10,
 			MaxNumWorkers:  uint32(runtime.NumCPU()),
-			MaxJobsPerPoll: 1,
-		},
-		GPJobQueue: sbjobqueue.Opts{
-			QueueLen:       10,
-			MaxNumWorkers:  uint32(runtime.NumCPU()),
-			MaxJobsPerPoll: 1,
+			MaxJobsPerPoll: uint32(runtime.NumCPU()),
 		},
 		ClientCSVFileChunks: sbcsv.ChunkFileOpts{
 			PredictedAvgRowSizeInBytes: 100,
-			MinChunkRows:               1e5,
+			MinChunkRows:               50000,
 			MaxChunkRows:               math.MaxInt,
 			RequestedNumChunks:         runtime.NumCPU(),
 		},
 		ExerciseCSVFileChunks: sbcsv.ChunkFileOpts{
 			PredictedAvgRowSizeInBytes: 100,
-			MinChunkRows:               1e5,
+			MinChunkRows:               50000,
 			MaxChunkRows:               math.MaxInt,
 			RequestedNumChunks:         runtime.NumCPU(),
 		},
 		HyperparamCSVFileChunks: sbcsv.ChunkFileOpts{
 			NumRowSamples:      2,
-			MinChunkRows:       1e5,
+			MinChunkRows:       50000,
 			MaxChunkRows:       math.MaxInt,
 			RequestedNumChunks: runtime.NumCPU(),
 		},
@@ -79,8 +74,8 @@ func ConfDefaults() *types.Conf {
 			// and video mainly) have a greater chance of being filled up. Can
 			// help loading data with sparse physics data, which will be the
 			// more typical use case, but won't speed up loading data with dense
-			// physics data.
-			MinChunkRows:       1e2,
+			// physics data. - TODO - what???
+			MinChunkRows:       1000,
 			MaxChunkRows:       math.MaxInt,
 			RequestedNumChunks: runtime.NumCPU(),
 		},
@@ -115,7 +110,6 @@ func ConfDefaultRequiredArgs() []string {
 //   - <longArgStart>.DB.Name
 //   - <longArgStart>.Global.BatchSize
 //   - <longArgStart>.Global.PerRequestIdCacheSize
-//   - <longArgStart>.PhysicsData.MinNumSamples
 //   - <longArgStart>.PhysicsData.TimeDeltaEps
 //   - <longArgStart>.PhysicsJobQueue.QueueLen
 //   - <longArgStart>.PhysicsJobQueue.MaxNumWorkers
@@ -126,9 +120,6 @@ func ConfDefaultRequiredArgs() []string {
 //   - <longArgStart>.CSVLoaderJobQueue.QueueLen
 //   - <longArgStart>.CSVLoaderJobQueue.MaxNumWorkers
 //   - <longArgStart>.CSVLoaderJobQueue.MaxJobsPerPoll
-//   - <longArgStart>.GPJobQueue.QueueLen
-//   - <longArgStart>.GPJobQueue.MaxNumWorkers
-//   - <longArgStart>.GPJobQueue.MaxJobsPerPoll
 //   - <longArgStart>.ClientCSVFileChunks.PredictedAvgRowSizeInBytes
 //   - <longArgStart>.ClientCSVFileChunks.NumRowSamples
 //   - <longArgStart>.ClientCSVFileChunks.MinChunkRows
@@ -176,15 +167,6 @@ func ConfParser(
 			10,
 		),
 	)
-	fs.Func(
-		startStr("Global", "PerRequestIdCacheSize"),
-		"The maximum allowed cache size for each requests id caches. Smaller numbers will use less memory at the potential expense of more netowrk trips.",
-		sbargp.Uint(
-			&val.Global.PerRequestIdCacheSize,
-			_default.Global.PerRequestIdCacheSize,
-			10,
-		),
-	)
 
 	jobQueueArguments(
 		fs, startStr, "Physics",
@@ -197,10 +179,6 @@ func ConfParser(
 	jobQueueArguments(
 		fs, startStr, "CSVLoader",
 		&val.CSVLoaderJobQueue, &_default.CSVLoaderJobQueue,
-	)
-	jobQueueArguments(
-		fs, startStr, "GPJobQueue",
-		&val.GPJobQueue, &_default.GPJobQueue,
 	)
 
 	csvFileChunks(
@@ -366,11 +344,6 @@ func ConfToState(
 	); err != nil {
 		return
 	}
-	if state.GPJobQueue, err = sbjobqueue.NewJobQueue[types.GeneralPurposeJob](
-		&c.GPJobQueue,
-	); err != nil {
-		return
-	}
 
 	if state.Log, err = sblog.New(sblog.Opts{
 		CurVerbosityLevel: uint(c.Logging.Verbosity),
@@ -391,6 +364,10 @@ func ConfToState(
 	)); err != nil {
 		return
 	}
+	poolConf.ConnConfig.Tracer = dal.NewTracelogWithAdapter(
+		state.Log, c.Logging.Verbosity,
+	)
+
 	if state.DB, err = pgxpool.NewWithConfig(ctxt, poolConf); err != nil {
 		return
 	}

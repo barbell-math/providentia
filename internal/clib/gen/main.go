@@ -39,7 +39,7 @@ func main() {
 			reflect.TypeFor[types.PointInTime[types.Second, types.Joule]]().Name():        "joulePointInTime",
 			reflect.TypeFor[types.PointInTime[types.Second, types.Watt]]().Name():         "wattPointInTime",
 			reflect.TypeFor[types.Split]().Name():                                         "split",
-			reflect.TypeFor[barpathphysdata.Data]().Name():                                "barPathData",
+			reflect.TypeFor[barpathphysdata.CData]().Name():                               "barPathData",
 		},
 	})
 	sbcgoglue.RegisterEnum(
@@ -68,7 +68,7 @@ func main() {
 	sbcgoglue.RegisterStruct[types.PointInTime[types.Second, types.Watt]](g)
 
 	sbcgoglue.RegisterStruct[types.Split](g)
-	sbcgoglue.RegisterStruct[barpathphysdata.Data](g)
+	sbcgoglue.RegisterStruct[barpathphysdata.CData](g)
 	sbcgoglue.RegisterStruct[types.BarPathCalcHyperparams](g)
 	g.WriteTo("./glue.h")
 }

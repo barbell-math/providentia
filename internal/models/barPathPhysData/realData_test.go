@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"testing"
 
-	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	sbtest "code.barbellmath.net/barbell-math/smoothbrain-test"
 )
@@ -17,9 +16,9 @@ type args struct {
 	t           *testing.T
 	rawDataFile string
 	outFileName string
-	expCenters  [][]types.Split
+	expCenters  []types.Split
 	params      types.BarPathCalcHyperparams
-	baseData    dal.BulkCreateTrainingLogsParams
+	numReps     int32
 }
 
 func loadAndTestCsv(a *args) {
@@ -29,89 +28,29 @@ func loadAndTestCsv(a *args) {
 	rawData, err := csvReader.ReadAll()
 
 	samples := len(rawData) - 1
-	inputData := dal.CreatePhysicsDataParams{
-		Time: [][]types.Second{make([]types.Second, samples)},
-		Position: [][]types.Vec2[types.Meter, types.Meter]{
-			make([]types.Vec2[types.Meter, types.Meter], samples),
-		},
-		Velocity: [][]types.Vec2[types.MeterPerSec, types.MeterPerSec]{
-			[]types.Vec2[types.MeterPerSec, types.MeterPerSec]{},
-		},
-		Acceleration: [][]types.Vec2[types.MeterPerSec2, types.MeterPerSec2]{
-			[]types.Vec2[types.MeterPerSec2, types.MeterPerSec2]{},
-		},
-		Jerk: [][]types.Vec2[types.MeterPerSec3, types.MeterPerSec3]{
-			[]types.Vec2[types.MeterPerSec3, types.MeterPerSec3]{},
-		},
-		Impulse: [][]types.Vec2[types.NewtonSec, types.NewtonSec]{
-			[]types.Vec2[types.NewtonSec, types.NewtonSec]{},
-		},
-		Force: [][]types.Vec2[types.Newton, types.Newton]{
-			[]types.Vec2[types.Newton, types.Newton]{},
-		},
-		Work:      [][]types.Joule{[]types.Joule{}},
-		Power:     [][]types.Watt{[]types.Watt{}},
-		RepSplits: [][]types.Split{[]types.Split{}},
-		MinVel: [][]types.PointInTime[types.Second, types.MeterPerSec]{
-			[]types.PointInTime[types.Second, types.MeterPerSec]{},
-		},
-		MaxVel: [][]types.PointInTime[types.Second, types.MeterPerSec]{
-			[]types.PointInTime[types.Second, types.MeterPerSec]{},
-		},
-		MinAcc: [][]types.PointInTime[types.Second, types.MeterPerSec2]{
-			[]types.PointInTime[types.Second, types.MeterPerSec2]{},
-		},
-		MaxAcc: [][]types.PointInTime[types.Second, types.MeterPerSec2]{
-			[]types.PointInTime[types.Second, types.MeterPerSec2]{},
-		},
-		MinForce: [][]types.PointInTime[types.Second, types.Newton]{
-			[]types.PointInTime[types.Second, types.Newton]{},
-		},
-		MaxForce: [][]types.PointInTime[types.Second, types.Newton]{
-			[]types.PointInTime[types.Second, types.Newton]{},
-		},
-		MinImpulse: [][]types.PointInTime[types.Second, types.NewtonSec]{
-			[]types.PointInTime[types.Second, types.NewtonSec]{},
-		},
-		MaxImpulse: [][]types.PointInTime[types.Second, types.NewtonSec]{
-			[]types.PointInTime[types.Second, types.NewtonSec]{},
-		},
-		AvgWork: [][]types.Joule{[]types.Joule{}},
-		MinWork: [][]types.PointInTime[types.Second, types.Joule]{
-			[]types.PointInTime[types.Second, types.Joule]{},
-		},
-		MaxWork: [][]types.PointInTime[types.Second, types.Joule]{
-			[]types.PointInTime[types.Second, types.Joule]{},
-		},
-		AvgPower: [][]types.Watt{[]types.Watt{}},
-		MinPower: [][]types.PointInTime[types.Second, types.Watt]{
-			[]types.PointInTime[types.Second, types.Watt]{},
-		},
-		MaxPower: [][]types.PointInTime[types.Second, types.Watt]{
-			[]types.PointInTime[types.Second, types.Watt]{},
-		},
+	inputData := types.PhysicsData{
+		Time:     make([]types.Second, samples),
+		Position: make([]types.Vec2[types.Meter, types.Meter], samples),
 	}
 	for i := range samples {
 		rawTime, err := strconv.ParseFloat(rawData[i+1][1], 64)
 		sbtest.Nil(a.t, err)
-		inputData.Time[0][i] = types.Second(rawTime)
+		inputData.Time[i] = types.Second(rawTime)
 
 		rawXPos, err := strconv.ParseFloat(rawData[i+1][3], 64)
 		sbtest.Nil(a.t, err)
 		rawYPos, err := strconv.ParseFloat(rawData[i+1][2], 64)
 		sbtest.Nil(a.t, err)
-		inputData.Position[0][i] = types.Vec2[types.Meter, types.Meter]{
+		inputData.Position[i] = types.Vec2[types.Meter, types.Meter]{
 			X: types.Meter(rawXPos) / 100,
 			Y: types.Meter(rawYPos) / 100,
 		}
 	}
-	err = Calc(&a.baseData, &inputData, &a.params, 0)
+	err = Calc(&inputData, &a.params, 1, a.numReps)
 	sbtest.Nil(a.t, err)
 
 	sbtest.Eq(a.t, len(a.expCenters), len(inputData.RepSplits))
-	for i := range len(a.expCenters) {
-		sbtest.SlicesMatch(a.t, a.expCenters[i], inputData.RepSplits[i])
-	}
+	sbtest.SlicesMatch(a.t, a.expCenters, inputData.RepSplits)
 
 	if a.outFileName == "" {
 		return
@@ -144,25 +83,25 @@ func loadAndTestCsv(a *args) {
 	})
 	for i := range samples {
 		timeSeriesWriter.Write([]string{
-			fmt.Sprintf("%f", inputData.Time[0][i]),
-			fmt.Sprintf("%f", inputData.Position[0][i].X),
-			fmt.Sprintf("%f", inputData.Position[0][i].Y),
+			fmt.Sprintf("%f", inputData.Time[i]),
+			fmt.Sprintf("%f", inputData.Position[i].X),
+			fmt.Sprintf("%f", inputData.Position[i].Y),
 			rawData[i+1][5],
 			rawData[i+1][4],
-			fmt.Sprintf("%f", inputData.Velocity[0][i].X),
-			fmt.Sprintf("%f", inputData.Velocity[0][i].Y),
+			fmt.Sprintf("%f", inputData.Velocity[i].X),
+			fmt.Sprintf("%f", inputData.Velocity[i].Y),
 			rawData[i+1][7],
 			rawData[i+1][6],
-			fmt.Sprintf("%f", inputData.Acceleration[0][i].X),
-			fmt.Sprintf("%f", inputData.Acceleration[0][i].Y),
-			fmt.Sprintf("%f", inputData.Jerk[0][i].X),
-			fmt.Sprintf("%f", inputData.Jerk[0][i].Y),
-			fmt.Sprintf("%f", inputData.Force[0][i].X),
-			fmt.Sprintf("%f", inputData.Force[0][i].Y),
-			fmt.Sprintf("%f", inputData.Impulse[0][i].X),
-			fmt.Sprintf("%f", inputData.Impulse[0][i].Y),
-			fmt.Sprintf("%f", inputData.Work[0][i]),
-			fmt.Sprintf("%f", inputData.Power[0][i]),
+			fmt.Sprintf("%f", inputData.Acceleration[i].X),
+			fmt.Sprintf("%f", inputData.Acceleration[i].Y),
+			fmt.Sprintf("%f", inputData.Jerk[i].X),
+			fmt.Sprintf("%f", inputData.Jerk[i].Y),
+			fmt.Sprintf("%f", inputData.Force[i].X),
+			fmt.Sprintf("%f", inputData.Force[i].Y),
+			fmt.Sprintf("%f", inputData.Impulse[i].X),
+			fmt.Sprintf("%f", inputData.Impulse[i].Y),
+			fmt.Sprintf("%f", inputData.Work[i]),
+			fmt.Sprintf("%f", inputData.Power[i]),
 		})
 	}
 	timeSeriesWriter.Flush()
@@ -200,40 +139,40 @@ func loadAndTestCsv(a *args) {
 		"MaxPowerTime",
 		"MaxPower",
 	})
-	for i := range a.baseData.Reps {
+	for i := range a.numReps {
 		repSeriesWriter.Write([]string{
 			fmt.Sprintf("%d", i),
-			fmt.Sprintf("%f", inputData.MinVel[0][i].Time),
-			fmt.Sprintf("%f", inputData.MinVel[0][i].Value),
-			fmt.Sprintf("%f", inputData.MaxVel[0][i].Time),
-			fmt.Sprintf("%f", inputData.MaxVel[0][i].Value),
+			fmt.Sprintf("%f", inputData.MinVel[i].Time),
+			fmt.Sprintf("%f", inputData.MinVel[i].Value),
+			fmt.Sprintf("%f", inputData.MaxVel[i].Time),
+			fmt.Sprintf("%f", inputData.MaxVel[i].Value),
 
-			fmt.Sprintf("%f", inputData.MinAcc[0][i].Time),
-			fmt.Sprintf("%f", inputData.MinAcc[0][i].Value),
-			fmt.Sprintf("%f", inputData.MaxAcc[0][i].Time),
-			fmt.Sprintf("%f", inputData.MaxAcc[0][i].Value),
+			fmt.Sprintf("%f", inputData.MinAcc[i].Time),
+			fmt.Sprintf("%f", inputData.MinAcc[i].Value),
+			fmt.Sprintf("%f", inputData.MaxAcc[i].Time),
+			fmt.Sprintf("%f", inputData.MaxAcc[i].Value),
 
-			fmt.Sprintf("%f", inputData.MinForce[0][i].Time),
-			fmt.Sprintf("%f", inputData.MinForce[0][i].Value),
-			fmt.Sprintf("%f", inputData.MaxForce[0][i].Time),
-			fmt.Sprintf("%f", inputData.MaxForce[0][i].Value),
+			fmt.Sprintf("%f", inputData.MinForce[i].Time),
+			fmt.Sprintf("%f", inputData.MinForce[i].Value),
+			fmt.Sprintf("%f", inputData.MaxForce[i].Time),
+			fmt.Sprintf("%f", inputData.MaxForce[i].Value),
 
-			fmt.Sprintf("%f", inputData.MinImpulse[0][i].Time),
-			fmt.Sprintf("%f", inputData.MinImpulse[0][i].Value),
-			fmt.Sprintf("%f", inputData.MaxImpulse[0][i].Time),
-			fmt.Sprintf("%f", inputData.MaxImpulse[0][i].Value),
+			fmt.Sprintf("%f", inputData.MinImpulse[i].Time),
+			fmt.Sprintf("%f", inputData.MinImpulse[i].Value),
+			fmt.Sprintf("%f", inputData.MaxImpulse[i].Time),
+			fmt.Sprintf("%f", inputData.MaxImpulse[i].Value),
 
-			fmt.Sprintf("%f", inputData.AvgWork[0][i]),
-			fmt.Sprintf("%f", inputData.MinWork[0][i].Time),
-			fmt.Sprintf("%f", inputData.MinWork[0][i].Value),
-			fmt.Sprintf("%f", inputData.MaxWork[0][i].Time),
-			fmt.Sprintf("%f", inputData.MaxWork[0][i].Value),
+			fmt.Sprintf("%f", inputData.AvgWork[i]),
+			fmt.Sprintf("%f", inputData.MinWork[i].Time),
+			fmt.Sprintf("%f", inputData.MinWork[i].Value),
+			fmt.Sprintf("%f", inputData.MaxWork[i].Time),
+			fmt.Sprintf("%f", inputData.MaxWork[i].Value),
 
-			fmt.Sprintf("%f", inputData.AvgPower[0][i]),
-			fmt.Sprintf("%f", inputData.MinPower[0][i].Time),
-			fmt.Sprintf("%f", inputData.MinPower[0][i].Value),
-			fmt.Sprintf("%f", inputData.MaxPower[0][i].Time),
-			fmt.Sprintf("%f", inputData.MaxPower[0][i].Value),
+			fmt.Sprintf("%f", inputData.AvgPower[i]),
+			fmt.Sprintf("%f", inputData.MinPower[i].Time),
+			fmt.Sprintf("%f", inputData.MinPower[i].Value),
+			fmt.Sprintf("%f", inputData.MaxPower[i].Time),
+			fmt.Sprintf("%f", inputData.MaxPower[i].Value),
 		})
 	}
 	repSeriesWriter.Flush()
@@ -244,17 +183,16 @@ func TestSquatDataSecondOrder(t *testing.T) {
 		t:           t,
 		rawDataFile: "./testData/15_08_2025_squat.csv",
 		outFileName: "./testData/15_08_2025_squat.secondOrder",
-		expCenters: [][]types.Split{
-			[]types.Split{
-				{StartIdx: 311, EndIdx: 379},
-				{StartIdx: 437, EndIdx: 501},
-				{StartIdx: 548, EndIdx: 613},
-				{StartIdx: 655, EndIdx: 728},
-				{StartIdx: 780, EndIdx: 850},
-				{StartIdx: 911, EndIdx: 977},
-				{StartIdx: 1039, EndIdx: 1106},
-				{StartIdx: 1170, EndIdx: 1237},
-			},
+		numReps:     8,
+		expCenters: []types.Split{
+			{StartIdx: 311, EndIdx: 379},
+			{StartIdx: 437, EndIdx: 501},
+			{StartIdx: 548, EndIdx: 613},
+			{StartIdx: 655, EndIdx: 728},
+			{StartIdx: 780, EndIdx: 850},
+			{StartIdx: 911, EndIdx: 977},
+			{StartIdx: 1039, EndIdx: 1106},
+			{StartIdx: 1170, EndIdx: 1237},
 		},
 		params: types.BarPathCalcHyperparams{
 			ApproxErr:       types.SecondOrder,
@@ -268,11 +206,6 @@ func TestSquatDataSecondOrder(t *testing.T) {
 			TimeDeltaEps:    1e-2,
 			NoiseFilter:     3,
 		},
-		baseData: dal.BulkCreateTrainingLogsParams{
-			Weight: 1,
-			Reps:   8,
-			Sets:   1,
-		},
 	})
 }
 
@@ -281,17 +214,16 @@ func TestSquatDataFourthOrder(t *testing.T) {
 		t:           t,
 		rawDataFile: "./testData/15_08_2025_squat.csv",
 		outFileName: "./testData/15_08_2025_squat.fourthOrder",
-		expCenters: [][]types.Split{
-			[]types.Split{
-				{StartIdx: 311, EndIdx: 379},
-				{StartIdx: 438, EndIdx: 501},
-				{StartIdx: 548, EndIdx: 613},
-				{StartIdx: 655, EndIdx: 728},
-				{StartIdx: 780, EndIdx: 850},
-				{StartIdx: 911, EndIdx: 977},
-				{StartIdx: 1039, EndIdx: 1106},
-				{StartIdx: 1170, EndIdx: 1237},
-			},
+		numReps:     8,
+		expCenters: []types.Split{
+			{StartIdx: 311, EndIdx: 379},
+			{StartIdx: 438, EndIdx: 501},
+			{StartIdx: 548, EndIdx: 613},
+			{StartIdx: 655, EndIdx: 728},
+			{StartIdx: 780, EndIdx: 850},
+			{StartIdx: 911, EndIdx: 977},
+			{StartIdx: 1039, EndIdx: 1106},
+			{StartIdx: 1170, EndIdx: 1237},
 		},
 		params: types.BarPathCalcHyperparams{
 			ApproxErr:       types.FourthOrder,
@@ -304,11 +236,6 @@ func TestSquatDataFourthOrder(t *testing.T) {
 			MinNumSamples:   10,
 			TimeDeltaEps:    1e-2,
 			NoiseFilter:     3,
-		},
-		baseData: dal.BulkCreateTrainingLogsParams{
-			Weight: 1,
-			Reps:   8,
-			Sets:   1,
 		},
 	})
 }

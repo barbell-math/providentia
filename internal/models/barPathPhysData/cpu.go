@@ -5,12 +5,10 @@ package barpathphysdata
 // #include "cpu.h"
 import "C"
 import (
-	"errors"
-	"math"
 	"runtime"
 	"unsafe"
 
-	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
+	"code.barbellmath.net/barbell-math/providentia/internal/util"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
 )
@@ -26,7 +24,7 @@ type (
 	// )
 	BarPathCalcErrCode int64
 
-	Data struct {
+	CData struct {
 		mass    types.Kilogram
 		timeLen int64
 		time    *types.Second
@@ -59,95 +57,31 @@ type (
 	}
 )
 
-var (
-	InvalidRawDataIdxErr = errors.New("Invalid raw data index")
-	InvalidRawDataLenErr = errors.New("Invalid raw data length")
-)
-
-func InitBarPathCalcPhysicsData(
-	rawData *dal.CreatePhysicsDataParams,
-	barPathCalcParams *types.BarPathCalcHyperparams,
-	numSets int,
-) {
-	*rawData = dal.CreatePhysicsDataParams{
-		BarPathCalcParamsVersion: barPathCalcParams.Version,
-		Time:                     make([][]types.Second, numSets),
-		Position:                 make([][]types.Vec2[types.Meter, types.Meter], numSets),
-		Velocity:                 make([][]types.Vec2[types.MeterPerSec, types.MeterPerSec], numSets),
-		Acceleration:             make([][]types.Vec2[types.MeterPerSec2, types.MeterPerSec2], numSets),
-		Jerk:                     make([][]types.Vec2[types.MeterPerSec3, types.MeterPerSec3], numSets),
-		Force:                    make([][]types.Vec2[types.Newton, types.Newton], numSets),
-		Impulse:                  make([][]types.Vec2[types.NewtonSec, types.NewtonSec], numSets),
-		Work:                     make([][]types.Joule, numSets),
-		Power:                    make([][]types.Watt, numSets),
-		RepSplits:                make([][]types.Split, numSets),
-		MinVel:                   make([][]types.PointInTime[types.Second, types.MeterPerSec], numSets),
-		MaxVel:                   make([][]types.PointInTime[types.Second, types.MeterPerSec], numSets),
-		MinAcc:                   make([][]types.PointInTime[types.Second, types.MeterPerSec2], numSets),
-		MaxAcc:                   make([][]types.PointInTime[types.Second, types.MeterPerSec2], numSets),
-		MinForce:                 make([][]types.PointInTime[types.Second, types.Newton], numSets),
-		MaxForce:                 make([][]types.PointInTime[types.Second, types.Newton], numSets),
-		MinImpulse:               make([][]types.PointInTime[types.Second, types.NewtonSec], numSets),
-		MaxImpulse:               make([][]types.PointInTime[types.Second, types.NewtonSec], numSets),
-		AvgWork:                  make([][]types.Joule, numSets),
-		MinWork:                  make([][]types.PointInTime[types.Second, types.Joule], numSets),
-		MaxWork:                  make([][]types.PointInTime[types.Second, types.Joule], numSets),
-		AvgPower:                 make([][]types.Watt, numSets),
-		MinPower:                 make([][]types.PointInTime[types.Second, types.Watt], numSets),
-		MaxPower:                 make([][]types.PointInTime[types.Second, types.Watt], numSets),
-	}
-}
-
 func Calc(
-	tl *dal.BulkCreateTrainingLogsParams,
-	rawData *dal.CreatePhysicsDataParams,
+	rawData *types.PhysicsData,
 	barPathCalcParams *types.BarPathCalcHyperparams,
-	idx int,
+	weight types.Kilogram,
+	expNumReps int32,
 ) error {
-	ceilSets := math.Ceil(tl.Sets)
-	floorSets := math.Floor(tl.Sets)
-	if idx >= int(ceilSets) {
-		return sberr.Wrap(
-			InvalidRawDataIdxErr,
-			"Supplied index (%d) >= the ceiling of the number of sets (%f)",
-			idx, ceilSets,
-		)
-	}
-	if tl.Reps <= 0 {
-		return sberr.Wrap(
-			InvalidRawDataLenErr,
-			"Supplied data must have at least 1 rep",
-		)
-	}
-
-	if len(rawData.Time) <= idx {
-		return sberr.Wrap(
-			InvalidRawDataIdxErr,
-			"Supplied index (%d) outside allowed time range: [0, %d)",
-			idx, len(rawData.Time),
-		)
-	}
-	if len(rawData.Position) <= idx {
-		return sberr.Wrap(
-			InvalidRawDataIdxErr,
-			"Supplied index (%d) outside allowed position range: [0, %d)",
-			idx, len(rawData.Position),
-		)
-	}
-
-	expLen := len(rawData.Time[idx])
+	expLen := len(rawData.Time)
 	if expLen < int(barPathCalcParams.MinNumSamples) {
 		return sberr.Wrap(
-			InvalidRawDataLenErr,
-			"the minimum number of samples (%d) was not provided, got %d samples",
+			types.InvalidRawDataLenErr,
+			"The minimum number of samples (%d) was not provided, got %d samples",
 			barPathCalcParams.MinNumSamples, expLen,
 		)
 	}
-	if len(rawData.Position[idx]) != expLen {
+	if len(rawData.Position) != expLen {
 		return sberr.Wrap(
-			InvalidRawDataLenErr,
+			types.InvalidRawDataLenErr,
 			"Expected position slice of len %d, got len %d",
-			expLen, len(rawData.Position[idx]),
+			expLen, len(rawData.Position),
+		)
+	}
+	if expNumReps <= 0 {
+		return sberr.Wrap(
+			types.InvalidExpNumRepsErr,
+			"Must be >=0. Got: %d", expNumReps,
 		)
 	}
 
@@ -156,62 +90,58 @@ func Calc(
 	// [C.calcBarPathPhysData] func because those checks can be performance
 	// intensive operations.
 
-	expReps := tl.Reps
-	if ceilSets > tl.Sets && int(floorSets) == idx {
-		expReps = max(int32((tl.Sets-floorSets)*float64(tl.Reps)), 1)
-	}
+	rawData.BarPathCalcVersion = barPathCalcParams.Version
+	rawData.Velocity = util.SliceClamp(rawData.Velocity, expLen)
+	rawData.Acceleration = util.SliceClamp(rawData.Acceleration, expLen)
+	rawData.Jerk = util.SliceClamp(rawData.Jerk, expLen)
+	rawData.Impulse = util.SliceClamp(rawData.Impulse, expLen)
+	rawData.Force = util.SliceClamp(rawData.Force, expLen)
+	rawData.Work = util.SliceClamp(rawData.Work, expLen)
+	rawData.Power = util.SliceClamp(rawData.Power, expLen)
+	rawData.RepSplits = util.SliceClamp(rawData.RepSplits, expNumReps)
+	rawData.MinVel = util.SliceClamp(rawData.MinVel, expNumReps)
+	rawData.MaxVel = util.SliceClamp(rawData.MaxVel, expNumReps)
+	rawData.MinAcc = util.SliceClamp(rawData.MinAcc, expNumReps)
+	rawData.MaxAcc = util.SliceClamp(rawData.MaxAcc, expNumReps)
+	rawData.MinForce = util.SliceClamp(rawData.MinForce, expNumReps)
+	rawData.MaxForce = util.SliceClamp(rawData.MaxForce, expNumReps)
+	rawData.MinImpulse = util.SliceClamp(rawData.MinImpulse, expNumReps)
+	rawData.MaxImpulse = util.SliceClamp(rawData.MaxImpulse, expNumReps)
+	rawData.AvgWork = util.SliceClamp(rawData.AvgWork, expNumReps)
+	rawData.MinWork = util.SliceClamp(rawData.MinWork, expNumReps)
+	rawData.MaxWork = util.SliceClamp(rawData.MaxWork, expNumReps)
+	rawData.AvgPower = util.SliceClamp(rawData.AvgPower, expNumReps)
+	rawData.MinPower = util.SliceClamp(rawData.MinPower, expNumReps)
+	rawData.MaxPower = util.SliceClamp(rawData.MaxPower, expNumReps)
 
-	rawData.Velocity[idx] = make([]types.Vec2[types.MeterPerSec, types.MeterPerSec], expLen)
-	rawData.Acceleration[idx] = make([]types.Vec2[types.MeterPerSec2, types.MeterPerSec2], expLen)
-	rawData.Jerk[idx] = make([]types.Vec2[types.MeterPerSec3, types.MeterPerSec3], expLen)
-	rawData.Impulse[idx] = make([]types.Vec2[types.NewtonSec, types.NewtonSec], expLen)
-	rawData.Force[idx] = make([]types.Vec2[types.Newton, types.Newton], expLen)
-	rawData.Work[idx] = make([]types.Joule, expLen)
-	rawData.Power[idx] = make([]types.Watt, expLen)
-	rawData.RepSplits[idx] = make([]types.Split, expReps)
-	rawData.MinVel[idx] = make([]types.PointInTime[types.Second, types.MeterPerSec], expReps)
-	rawData.MaxVel[idx] = make([]types.PointInTime[types.Second, types.MeterPerSec], expReps)
-	rawData.MinAcc[idx] = make([]types.PointInTime[types.Second, types.MeterPerSec2], expReps)
-	rawData.MaxAcc[idx] = make([]types.PointInTime[types.Second, types.MeterPerSec2], expReps)
-	rawData.MinForce[idx] = make([]types.PointInTime[types.Second, types.Newton], expReps)
-	rawData.MaxForce[idx] = make([]types.PointInTime[types.Second, types.Newton], expReps)
-	rawData.MinImpulse[idx] = make([]types.PointInTime[types.Second, types.NewtonSec], expReps)
-	rawData.MaxImpulse[idx] = make([]types.PointInTime[types.Second, types.NewtonSec], expReps)
-	rawData.AvgWork[idx] = make([]types.Joule, expReps)
-	rawData.MinWork[idx] = make([]types.PointInTime[types.Second, types.Joule], expReps)
-	rawData.MaxWork[idx] = make([]types.PointInTime[types.Second, types.Joule], expReps)
-	rawData.AvgPower[idx] = make([]types.Watt, expReps)
-	rawData.MinPower[idx] = make([]types.PointInTime[types.Second, types.Watt], expReps)
-	rawData.MaxPower[idx] = make([]types.PointInTime[types.Second, types.Watt], expReps)
-
-	baseData := Data{
-		timeLen:    int64(len(rawData.Time[idx])),
-		mass:       tl.Weight,
-		time:       &rawData.Time[idx][0],
-		pos:        &rawData.Position[idx][0],
-		vel:        &rawData.Velocity[idx][0],
-		acc:        &rawData.Acceleration[idx][0],
-		jerk:       &rawData.Jerk[idx][0],
-		force:      &rawData.Force[idx][0],
-		impulse:    &rawData.Impulse[idx][0],
-		power:      &rawData.Power[idx][0],
-		work:       &rawData.Work[idx][0],
-		reps:       expReps,
-		repSplit:   &rawData.RepSplits[idx][0],
-		minVel:     &rawData.MinVel[idx][0],
-		maxVel:     &rawData.MaxVel[idx][0],
-		minAcc:     &rawData.MinAcc[idx][0],
-		maxAcc:     &rawData.MaxAcc[idx][0],
-		minForce:   &rawData.MinForce[idx][0],
-		maxForce:   &rawData.MaxForce[idx][0],
-		minImpulse: &rawData.MinImpulse[idx][0],
-		maxImpulse: &rawData.MaxImpulse[idx][0],
-		avgWork:    &rawData.AvgWork[idx][0],
-		minWork:    &rawData.MinWork[idx][0],
-		maxWork:    &rawData.MaxWork[idx][0],
-		avgPower:   &rawData.AvgPower[idx][0],
-		minPower:   &rawData.MinPower[idx][0],
-		maxPower:   &rawData.MaxPower[idx][0],
+	baseData := CData{
+		timeLen:    int64(len(rawData.Time)),
+		mass:       weight,
+		time:       &rawData.Time[0],
+		pos:        &rawData.Position[0],
+		vel:        &rawData.Velocity[0],
+		acc:        &rawData.Acceleration[0],
+		jerk:       &rawData.Jerk[0],
+		force:      &rawData.Force[0],
+		impulse:    &rawData.Impulse[0],
+		power:      &rawData.Power[0],
+		work:       &rawData.Work[0],
+		reps:       expNumReps,
+		repSplit:   &rawData.RepSplits[0],
+		minVel:     &rawData.MinVel[0],
+		maxVel:     &rawData.MaxVel[0],
+		minAcc:     &rawData.MinAcc[0],
+		maxAcc:     &rawData.MaxAcc[0],
+		minForce:   &rawData.MinForce[0],
+		maxForce:   &rawData.MaxForce[0],
+		minImpulse: &rawData.MinImpulse[0],
+		maxImpulse: &rawData.MaxImpulse[0],
+		avgWork:    &rawData.AvgWork[0],
+		minWork:    &rawData.MinWork[0],
+		maxWork:    &rawData.MaxWork[0],
+		avgPower:   &rawData.AvgPower[0],
+		minPower:   &rawData.MinPower[0],
+		maxPower:   &rawData.MaxPower[0],
 	}
 
 	pinner := runtime.Pinner{}

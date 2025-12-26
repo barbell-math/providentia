@@ -3,8 +3,9 @@ package logic
 import (
 	"context"
 
-	dal "code.barbellmath.net/barbell-math/providentia/internal/db/dataAccessLayer"
-	"code.barbellmath.net/barbell-math/providentia/internal/ops"
+	"code.barbellmath.net/barbell-math/providentia/internal/dal"
+	"code.barbellmath.net/barbell-math/providentia/internal/jobs"
+	"code.barbellmath.net/barbell-math/providentia/internal/util"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
 )
@@ -16,9 +17,6 @@ import (
 //
 // The context must have a [types.State] variable.
 //
-// Exercises will be uploaded in batches that respect the size set in the
-// [State.BatchSize] variable.
-//
 // If any error occurs no changes will be made to the database.
 func CreateExercises(
 	ctxt context.Context,
@@ -27,11 +25,7 @@ func CreateExercises(
 	if len(exercises) == 0 {
 		return
 	}
-	return runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) error {
-			return ops.CreateExercises(ctxt, state, queries, exercises...)
-		},
-	})
+	return runOp(ctxt, dal.CreateExercises, exercises)
 }
 
 // Checks that the supplied exercises are present in the database and adds them
@@ -57,11 +51,7 @@ func EnsureExercisesExist(
 	if len(exercises) == 0 {
 		return
 	}
-	return runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			return ops.EnsureExercisesExist(ctxt, state, queries, exercises...)
-		},
-	})
+	return runOp(ctxt, dal.EnsureExercisesExist, exercises)
 }
 
 // Adds the exercises supplied in the csv files to the database. Has the same
@@ -85,36 +75,48 @@ func EnsureExercisesExist(
 // If any error occurs no changes will be made to the database.
 func CreateExercisesFromCSV(
 	ctxt context.Context,
-	opts sbcsv.Opts,
+	opts *sbcsv.Opts,
 	files ...string,
 ) (opErr error) {
 	if len(files) == 0 {
 		return
 	}
-	return runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			return ops.UploadExercisesFromCSV(
-				ctxt, state, queries, ops.CreateExercises, opts, files...,
-			)
-		},
+	return runOp(ctxt, jobs.UploadFromCSV, &jobs.CSVLoaderOpts[types.Exercise]{
+		Opts:    opts,
+		Files:   util.SliceSeq2Err(files),
+		Creator: dal.CreateExercises,
 	})
 }
 
-// TODO - doc, test
+// Checks that the supplied exercises are present in the database and adds them
+// if they are not present. In order for the supplied exercises to be be
+// considered already present the name, kind, and focus fields must all match.
+// Any newly created exercises must satisfy the uniqueness constraints outlined
+// by [CreateExercises]. All csv files must be valid as outlined by
+// [EnsureExercisesExist].
+//
+// This function will be slower than [CreateExercises], so if you are working
+// with large amounts of data and are ok with erroring on duplicated exercises
+// consider using [CreateExercises].
+//
+// The context must have a [types.State] variable.
+//
+// Exercises will be uploaded in batches that respect the size set in the
+// [State.BatchSize] variable.
+//
+// If any error occurs no changes will be made to the database.
 func EnsureExercisesExistFromCSV(
 	ctxt context.Context,
-	opts sbcsv.Opts,
+	opts *sbcsv.Opts,
 	files ...string,
 ) (opErr error) {
 	if len(files) == 0 {
 		return
 	}
-	return runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			return ops.UploadExercisesFromCSV(
-				ctxt, state, queries, ops.EnsureExercisesExist, opts, files...,
-			)
-		},
+	return runOp(ctxt, jobs.UploadFromCSV, &jobs.CSVLoaderOpts[types.Exercise]{
+		Opts:    opts,
+		Files:   util.SliceSeq2Err(files),
+		Creator: dal.EnsureExercisesExist,
 	})
 }
 
@@ -124,12 +126,7 @@ func EnsureExercisesExistFromCSV(
 //
 // No changes will be made to the database.
 func ReadNumExercises(ctxt context.Context) (res int64, opErr error) {
-	opErr = runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			res, err = ops.ReadNumExercises(ctxt, state, queries)
-			return err
-		},
-	})
+	opErr = runOp(ctxt, dal.ReadNumExercises, &res)
 	return
 }
 
@@ -147,11 +144,9 @@ func ReadExercisesByName(
 	if len(names) == 0 {
 		return
 	}
-	opErr = runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			res, err = ops.ReadExercisesByName(ctxt, state, queries, names...)
-			return
-		},
+	opErr = runOp(ctxt, dal.ReadExercisesByName, dal.ReadExerciseByNameOpts{
+		Names:     names,
+		Exercises: &res,
 	})
 	return
 }
@@ -173,35 +168,11 @@ func FindExercisesByName(
 	if len(names) == 0 {
 		return
 	}
-	opErr = runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			res, err = ops.FindExercisesByName(ctxt, state, queries, names...)
-			return
-		},
+	opErr = runOp(ctxt, dal.FindExercisesByName, dal.FindExerciseByNameOpts{
+		Names:     names,
+		Exercises: &res,
 	})
 	return
-}
-
-// Updates the supplied exercises, as identified by their name, with the data
-// from the supplied structs. Names cannot be updated due to their uniqueness
-// constraint. If an exercise is supplied with a name that does not exist in the
-// database an error will be returned.
-//
-// The context must have a [types.State] variable.
-//
-// If any error occurs no changes will be made to the database.
-func UpdateExercises(
-	ctxt context.Context,
-	exercises ...types.Exercise,
-) (opErr error) {
-	if len(exercises) == 0 {
-		return
-	}
-	return runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			return ops.UpdateExercises(ctxt, state, queries, exercises...)
-		},
-	})
 }
 
 // Deletes the supplied exercises, as identified by their name. All data
@@ -214,9 +185,5 @@ func DeleteExercises(ctxt context.Context, names ...string) (opErr error) {
 	if len(names) == 0 {
 		return
 	}
-	return runOp(ctxt, opCalls{
-		op: func(state *types.State, queries *dal.SyncQueries) (err error) {
-			return ops.DeleteExercises(ctxt, state, queries, names...)
-		},
-	})
+	return runOp(ctxt, dal.DeleteExercises, names)
 }
