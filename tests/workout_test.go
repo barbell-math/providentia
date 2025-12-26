@@ -202,6 +202,8 @@ func TestWorkout(t *testing.T) {
 	t.Run("createFindNoPhysData", workoutCreateFindNoPhysData)
 	t.Run("createFindPhysData", workoutCreateFindPhysData)
 	t.Run("createFindBetweenDates", workoutCreateFindBetweenDates)
+	t.Run("createDeletePhysData", workoutCreateDeletePhysData)
+	t.Run("createDeleteBetweenDates", workoutCreateDeleteBetweenDates)
 }
 
 func workoutCreateReadNoPhysData(t *testing.T) {
@@ -240,7 +242,7 @@ func workoutCreateReadNoPhysData(t *testing.T) {
 	sbtest.Nil(t, err)
 	workoutsEqual(t, workouts, res)
 
-	n, err := logic.ReadNumClients(ctxt)
+	n, err := logic.ReadNumWorkoutsForClient(ctxt, "email@email.com")
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, 1, n)
 
@@ -306,7 +308,7 @@ func workoutCreateReadPhysData(t *testing.T) {
 	sbtest.Nil(t, err)
 	workoutsEqual(t, workouts, res)
 
-	n, err := logic.ReadNumClients(ctxt)
+	n, err := logic.ReadNumWorkoutsForClient(ctxt, "email@email.com")
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, 1, n)
 
@@ -371,7 +373,7 @@ func workoutCreateFindNoPhysData(t *testing.T) {
 	sbtest.Nil(t, err)
 	optionalWorkoutsEqual(t, workouts, res)
 
-	n, err := logic.ReadNumClients(ctxt)
+	n, err := logic.ReadNumWorkoutsForClient(ctxt, "email@email.com")
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, 1, n)
 
@@ -432,7 +434,7 @@ func workoutCreateFindPhysData(t *testing.T) {
 	sbtest.Nil(t, err)
 	optionalWorkoutsEqual(t, workouts, res)
 
-	n, err := logic.ReadNumClients(ctxt)
+	n, err := logic.ReadNumWorkoutsForClient(ctxt, "email@email.com")
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, 1, n)
 
@@ -461,12 +463,14 @@ func workoutCreateFindBetweenDates(t *testing.T) {
 	})
 	sbtest.Nil(t, err)
 
+	startTime := time.Now()
+
 	workouts := []types.Workout{
 		{
 			WorkoutId: types.WorkoutId{
 				ClientEmail:   "email@email.com",
 				Session:       1,
-				DatePerformed: time.Now(),
+				DatePerformed: startTime,
 			},
 			Exercises: []types.ExerciseData{
 				{
@@ -486,7 +490,7 @@ func workoutCreateFindBetweenDates(t *testing.T) {
 			WorkoutId: types.WorkoutId{
 				ClientEmail:   "email@email.com",
 				Session:       1,
-				DatePerformed: time.Now().Add(24 * time.Hour),
+				DatePerformed: startTime.Add(24 * time.Hour),
 			},
 			Exercises: []types.ExerciseData{
 				{
@@ -505,7 +509,7 @@ func workoutCreateFindBetweenDates(t *testing.T) {
 			WorkoutId: types.WorkoutId{
 				ClientEmail:   "email@email.com",
 				Session:       1,
-				DatePerformed: time.Now().Add(48 * time.Hour),
+				DatePerformed: startTime.Add(48 * time.Hour),
 			},
 			Exercises: []types.ExerciseData{
 				{
@@ -523,31 +527,39 @@ func workoutCreateFindBetweenDates(t *testing.T) {
 
 	res, err := logic.FindWorkoutsInDateRange(
 		ctxt, workouts[0].WorkoutId.ClientEmail,
-		time.Now(), time.Now().Add(50*time.Hour),
+		time.Now().Add(-1*time.Hour), startTime.Add(72*time.Hour),
 	)
 	sbtest.Nil(t, err)
 	workoutsEqual(t, workouts, res)
 
 	res, err = logic.FindWorkoutsInDateRange(
 		ctxt, workouts[0].WorkoutId.ClientEmail,
-		time.Now(), time.Now().Add(48*time.Hour),
+		time.Now().Add(-1*time.Hour), time.Now().Add(48*time.Hour),
 	)
 	sbtest.Nil(t, err)
 	workoutsEqual(t, workouts[:2], res)
 
 	res, err = logic.FindWorkoutsInDateRange(
 		ctxt, workouts[0].WorkoutId.ClientEmail,
-		time.Now().Add(24*time.Hour), time.Now().Add(48*time.Hour),
+		time.Now().Add(23*time.Hour), time.Now().Add(48*time.Hour),
 	)
 	sbtest.Nil(t, err)
 	workoutsEqual(t, workouts[1:2], res)
 
 	res, err = logic.FindWorkoutsInDateRange(
 		ctxt, workouts[0].WorkoutId.ClientEmail,
-		time.Now().Add(24*time.Hour), time.Now().Add(50*time.Hour),
+		time.Now().Add(23*time.Hour), time.Now().Add(72*time.Hour),
 	)
 	sbtest.Nil(t, err)
 	workoutsEqual(t, workouts[1:], res)
+
+	_, err = logic.FindWorkoutsInDateRange(
+		ctxt, "asdf", time.Now().Add(1*time.Hour), time.Now(),
+	)
+	sbtest.ContainsError(
+		t, types.CouldNotReadAllWorkoutsErr, err,
+		`Start date \(.*\) must be before end date \(.*\)`,
+	)
 
 	n, err := logic.ReadNumClients(ctxt)
 	sbtest.Nil(t, err)
@@ -556,4 +568,145 @@ func workoutCreateFindBetweenDates(t *testing.T) {
 	n, err = logic.ReadNumWorkoutsForClient(ctxt, "email@email.com")
 	sbtest.Nil(t, err)
 	sbtest.Eq(t, 3, n)
+}
+
+func workoutCreateDeletePhysData(t *testing.T) {
+	ctxt, cleanup := resetApp(t, context.Background())
+	t.Cleanup(cleanup)
+
+	err := logic.CreateClients(ctxt, types.Client{
+		FirstName: "FName",
+		LastName:  "LName",
+		Email:     "email@email.com",
+	})
+	sbtest.Nil(t, err)
+
+	workouts := []types.Workout{
+		{
+			WorkoutId: types.WorkoutId{
+				ClientEmail:   "email@email.com",
+				Session:       1,
+				DatePerformed: time.Now(),
+			},
+			Exercises: []types.ExerciseData{
+				{
+					Name:   "Squat",
+					Weight: 365,
+					Sets:   5,
+					Reps:   5,
+					Effort: 10,
+					PhysData: []types.Optional[types.PhysicsData]{
+						{Present: true, Value: testPhysicsData1},
+						{Present: true, Value: testPhysicsData2},
+					},
+				},
+			},
+		},
+	}
+	err = logic.CreateWorkouts(ctxt, workouts...)
+	sbtest.Nil(t, err)
+
+	n, err := logic.ReadNumWorkoutsForClient(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 1, n)
+
+	err = logic.DeleteWorkouts(ctxt, workouts[0].WorkoutId)
+	sbtest.Nil(t, err)
+
+	_, err = logic.ReadWorkoutsById(ctxt, workouts[0].WorkoutId)
+	sbtest.ContainsError(
+		t, types.CouldNotReadAllWorkoutsErr, err,
+		`Could not read entry with id '{ClientEmail:email@email.com Session:1 DatePerformed:.*}' \(Does id exist\?\)`,
+	)
+
+	err = logic.DeleteWorkouts(ctxt, types.WorkoutId{
+		ClientEmail:   "asdf",
+		Session:       1,
+		DatePerformed: time.Now(),
+	})
+	sbtest.ContainsError(t, types.CouldNotDeleteAllWorkoutsErr, err)
+	sbtest.ContainsError(
+		t, types.CouldNotDeleteAllTrainingLogsErr, err,
+		`Could not delete entry with id '{ClientEmail:asdf Session:1 DatePerformed:.*}' \(Does id exist\?\)`,
+	)
+
+	n, err = logic.ReadNumWorkoutsForClient(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 0, n)
+}
+
+func workoutCreateDeleteBetweenDates(t *testing.T) {
+	ctxt, cleanup := resetApp(t, context.Background())
+	t.Cleanup(cleanup)
+
+	err := logic.CreateClients(ctxt, types.Client{
+		FirstName: "FName",
+		LastName:  "LName",
+		Email:     "email@email.com",
+	})
+	sbtest.Nil(t, err)
+
+	workouts := []types.Workout{
+		{
+			WorkoutId: types.WorkoutId{
+				ClientEmail:   "email@email.com",
+				Session:       1,
+				DatePerformed: time.Now(),
+			},
+			Exercises: []types.ExerciseData{
+				{
+					Name:   "Squat",
+					Weight: 365,
+					Sets:   5,
+					Reps:   5,
+					Effort: 10,
+					PhysData: []types.Optional[types.PhysicsData]{
+						{Present: true, Value: testPhysicsData1},
+						{Present: true, Value: testPhysicsData2},
+					},
+				},
+			},
+		},
+	}
+	err = logic.CreateWorkouts(ctxt, workouts...)
+	sbtest.Nil(t, err)
+
+	n, err := logic.ReadNumWorkoutsForClient(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 1, n)
+
+	_, err = logic.DeleteWorkoutsInDateRange(
+		ctxt, "email@email.com",
+		time.Now().Add(24*time.Hour), time.Now().Add(48*time.Hour),
+	)
+	sbtest.ContainsError(t, types.CouldNotDeleteAllWorkoutsErr, err)
+	sbtest.ContainsError(
+		t, types.CouldNotDeleteAllTrainingLogsErr, err,
+		`no rows in result set`,
+	)
+
+	res, err := logic.DeleteWorkoutsInDateRange(
+		ctxt, "email@email.com",
+		time.Now().Add(-1*time.Hour), time.Now().Add(24*time.Hour),
+	)
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, res, 1)
+
+	_, err = logic.ReadWorkoutsById(ctxt, workouts[0].WorkoutId)
+	sbtest.ContainsError(
+		t, types.CouldNotReadAllWorkoutsErr, err,
+		`Could not read entry with id '{ClientEmail:email@email.com Session:1 DatePerformed:.*}' \(Does id exist\?\)`,
+	)
+
+	_, err = logic.DeleteWorkoutsInDateRange(
+		ctxt, "asdf", time.Now().Add(1*time.Hour), time.Now(),
+	)
+	sbtest.ContainsError(
+		t, types.CouldNotDeleteAllWorkoutsErr, err,
+		`Start date \(.*\) must be before end date \(.*\)`,
+	)
+
+	n, err = logic.ReadNumWorkoutsForClient(ctxt, "email@email.com")
+	sbtest.Nil(t, err)
+	sbtest.Eq(t, 0, n)
 }

@@ -2,10 +2,14 @@ package dal
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 	"unsafe"
 
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
+	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
+	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -27,9 +31,40 @@ const (
 	WHERE providentia.model.name='%s'
 		AND providentia.hyperparams.version=$3
 )`
+
+	deletePhysicsDataByIdSql = `
+DELETE FROM providentia.physics_data
+USING (
+	SELECT
+		providentia.client.email,
+		providentia.training_log.inter_session_cntr,
+		providentia.training_log.date_performed
+	FROM providentia.training_log
+	JOIN providentia.client
+		ON providentia.client.id = providentia.training_log.client_id
+) AS tmp WHERE
+	tmp.email = $1 AND
+	tmp.inter_session_cntr = $2 AND
+	tmp.date_performed = $3;
+`
+
+	deletePhysicsDataBetweenDatesSql = `
+DELETE FROM providentia.physics_data
+USING (
+	SELECT
+		providentia.client.email,
+		providentia.training_log.inter_session_cntr,
+		providentia.training_log.date_performed
+	FROM providentia.training_log
+	JOIN providentia.client
+		ON providentia.client.id = providentia.training_log.client_id
+) AS tmp WHERE
+	tmp.email = $1 AND
+	tmp.date_performed >= $2 AND
+	tmp.date_performed < $3;
+`
 )
 
-// TODO - make sure this work through workout tests in the tests dir
 func createPhysicsDataReturningIds(
 	ctxt context.Context,
 	state *types.State,
@@ -100,4 +135,75 @@ func createPhysicsDataReturningIds(
 			Err:  types.CouldNotCreateAllPhysicsDataErr,
 		},
 	)
+}
+
+func deletePhysicsDataById(
+	ctxt context.Context,
+	state *types.State,
+	tx pgx.Tx,
+	ids []types.WorkoutId,
+) error {
+	for start, end := range batchIndexes(ids, int(state.Global.BatchSize)) {
+		select {
+		case <-ctxt.Done():
+			return ctxt.Err()
+		default:
+		}
+
+		b := pgx.Batch{}
+		for i := start; i < end; i++ {
+			b.Queue(
+				deletePhysicsDataByIdSql,
+				ids[i].ClientEmail, ids[i].Session, ids[i].DatePerformed,
+			)
+		}
+		results := tx.SendBatch(ctxt, &b)
+
+		for i := start; i < end; i++ {
+			// It is possible there is no physics data associated with a workout
+			// That is ok, do not check cmdTag and do not return an error.
+			if _, err := results.Exec(); err != nil {
+				results.Close()
+				return sberr.AppendError(
+					types.CouldNotDeleteAllPhysicsDataErr, err,
+				)
+			}
+		}
+		results.Close()
+
+		state.Log.Log(
+			ctxt, sblog.VLevel(3),
+			"DAL: Deleted physics_data entries",
+			"NumRows", end-start,
+		)
+	}
+
+	return nil
+}
+
+func deletePhysicsDataInDateRange(
+	ctxt context.Context,
+	state *types.State,
+	tx pgx.Tx,
+	clientEmail string,
+	start time.Time,
+	end time.Time,
+	res *int64,
+) error {
+	cmdTag, err := tx.Exec(
+		ctxt, deletePhysicsDataBetweenDatesSql, clientEmail, start, end,
+	)
+	*res = cmdTag.RowsAffected()
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return sberr.AppendError(types.CouldNotDeleteAllPhysicsDataErr, err)
+	}
+	state.Log.Log(
+		ctxt, sblog.VLevel(3),
+		fmt.Sprintf(
+			"DAL: Deleted physics_data entries in date range (%s, %s]",
+			start, end,
+		),
+		"NumRows", *res,
+	)
+	return nil
 }

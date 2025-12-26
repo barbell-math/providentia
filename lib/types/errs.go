@@ -56,7 +56,9 @@ var (
 	CouldNotDeleteAllWorkoutsErr = errors.New("Could not delete all workouts")
 
 	CouldNotCreateAllPhysicsDataErr                    = errors.New("Could not create all physics data entries")
+	CouldNotDeleteAllPhysicsDataErr                    = errors.New("Could not delete all physics data entries")
 	CouldNotCreateAllTrainingLogsErr                   = errors.New("Could not create all training log entries")
+	CouldNotDeleteAllTrainingLogsErr                   = errors.New("Could not delete all training log entries")
 	CouldNotCreateAllTrainingLogPhysicsDataMappingsErr = errors.New("Could not create all training log to physics data mappings")
 )
 

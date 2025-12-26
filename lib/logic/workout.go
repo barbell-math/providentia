@@ -167,55 +167,46 @@ func FindWorkoutsInDateRange(
 	return
 }
 
-// // Gets the client data associated with the supplied emails if they exist. If a
-// // client exists it will be put in the returned slice and the found flag will be
-// // set to true. If a client does not exist the value in the slice will be a zero
-// // initialized client and the found flag will be set to false. No error will be
-// // returned if a client does not exist. The order of the returned clients will
-// // match the order of the supplied client emails.
-// //
-// // The context must have a [types.State] variable.
-// //
-// // No changes will be made to the database.
-// func FindClientsByEmail(
-// 	ctxt context.Context,
-// 	emails ...string,
-// ) (res []types.Found[types.Client], opErr error) {
-// 	if len(emails) == 0 {
-// 		return
-// 	}
-// 	opErr = runOp(ctxt, dal.FindClientsByEmail, dal.FindClientByEmailOpts{
-// 		Emails:  emails,
-// 		Clients: &res,
-// 	})
-// 	return
-// }
+// Deletes the workout data associated with the supplied ids if they exist. If
+// they do not exist an error will be returned.
 //
-// // Updates the supplied clients, as identified by their email, with the data
-// // from the supplied structs. Emails cannot be updated due to their uniqueness
-// // constraint. If a client is supplied with an email that does not exist in the
-// // database an error will be returned.
-// //
-// // The context must have a [types.State] variable.
-// //
-// // If any error occurs no changes will be made to the database.
-// func UpdateClients(ctxt context.Context, clients ...types.Client) (opErr error) {
-// 	if len(clients) == 0 {
-// 		return
-// 	}
-// 	return runOp(ctxt, dal.UpdateClients, clients)
-// }
+// The context must have a [types.State] variable.
 //
-// // Deletes the supplied clients, as identified by their email. All data
-// // associated with the client will be deleted. If a client does not exist in the
-// // database an error will be returned.
-// //
-// // The context must have a [types.State] variable.
-// //
-// // If any error occurs no changes will be made to the database.
-// func DeleteClients(ctxt context.Context, emails ...string) (opErr error) {
-// 	if len(emails) == 0 {
-// 		return
-// 	}
-// 	return runOp(ctxt, dal.DeleteClients, emails)
-// }
+// If any error occurs no changes will be made to the database.
+func DeleteWorkouts(
+	ctxt context.Context,
+	ids ...types.WorkoutId,
+) (opErr error) {
+	if len(ids) == 0 {
+		return
+	}
+	return runOp(ctxt, dal.DeleteWorkouts, ids)
+}
+
+// Deletes the workouts for the supplied client in the supplied date range
+// returning the number of deleted workouts. If the supplied client does not
+// exist no workouts will be deleted and an error will be returned. If `start`
+// is after `end` no workouts will be deleted and an error will be returned. If
+// no workouts exists between `start` and `end` an error will be returned.
+//
+// `start` is inclusive and `end` is exclusive.
+//
+// The context must have a [types.State] variable.
+//
+// If any error occurs no changes will be made to the database.
+func DeleteWorkoutsInDateRange(
+	ctxt context.Context,
+	clientEmail string,
+	start time.Time,
+	end time.Time,
+) (res int64, opErr error) {
+	opErr = runOp(
+		ctxt, dal.DeleteWorkoutsInDateRange, dal.DeleteWorkoutsInDateRangeOpts{
+			Email: clientEmail,
+			Start: start,
+			End:   end,
+			Res:   &res,
+		},
+	)
+	return
+}

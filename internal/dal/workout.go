@@ -38,6 +38,13 @@ type (
 		Res   *[]types.Workout
 	}
 
+	DeleteWorkoutsInDateRangeOpts struct {
+		Email string
+		Start time.Time
+		End   time.Time
+		Res   *int64
+	}
+
 	readWorkoutSqlResult struct {
 		ExerciseName string
 		Weight       types.Kilogram
@@ -459,6 +466,14 @@ func FindWorkoutsInDateRange(
 	tx pgx.Tx,
 	opts FindWorkoutsInDateRangeOpts,
 ) error {
+	if opts.End.Before(opts.Start) {
+		return sberr.Wrap(
+			types.CouldNotReadAllWorkoutsErr,
+			"Start date (%s) must be before end date (%s)",
+			opts.Start, opts.End,
+		)
+	}
+
 	found := 0
 	*opts.Res = (*opts.Res)[:0]
 
@@ -566,6 +581,69 @@ func FindWorkoutsInDateRange(
 			"DAL: Found workouts in date range (%s, %s]", opts.Start, opts.End,
 		),
 		"Found", found,
+	)
+	return nil
+}
+
+func DeleteWorkouts(
+	ctxt context.Context,
+	state *types.State,
+	tx pgx.Tx,
+	ids []types.WorkoutId,
+) error {
+	// Note - the order is important here. The physics data has to be deleted
+	// first otherwise it will not be able to be found using the provided ids.
+	if err := deletePhysicsDataById(ctxt, state, tx, ids); err != nil {
+		return sberr.AppendError(types.CouldNotDeleteAllWorkoutsErr, err)
+	}
+	if err := deleteTrainingLogsById(ctxt, state, tx, ids); err != nil {
+		return sberr.AppendError(types.CouldNotDeleteAllWorkoutsErr, err)
+	}
+
+	state.Log.Log(
+		ctxt, sblog.VLevel(3),
+		"DAL: Deleted workout entries",
+		"NumRows", len(ids),
+	)
+	return nil
+}
+
+func DeleteWorkoutsInDateRange(
+	ctxt context.Context,
+	state *types.State,
+	tx pgx.Tx,
+	opts DeleteWorkoutsInDateRangeOpts,
+) error {
+	if opts.End.Before(opts.Start) {
+		return sberr.Wrap(
+			types.CouldNotDeleteAllWorkoutsErr,
+			"Start date (%s) must be before end date (%s)",
+			opts.Start, opts.End,
+		)
+	}
+
+	// Note - the order is important here. The physics data has to be deleted
+	// first otherwise it will not be able to be found using the provided
+	// options.
+	var tmp int64
+	if err := deletePhysicsDataInDateRange(
+		ctxt, state, tx, opts.Email, opts.Start, opts.End, &tmp,
+	); err != nil {
+		return sberr.AppendError(types.CouldNotDeleteAllWorkoutsErr, err)
+	}
+	if err := deleteTrainingLogsInDateRange(
+		ctxt, state, tx, opts.Email, opts.Start, opts.End, opts.Res,
+	); err != nil {
+		return sberr.AppendError(types.CouldNotDeleteAllWorkoutsErr, err)
+	}
+
+	state.Log.Log(
+		ctxt, sblog.VLevel(3),
+		fmt.Sprintf(
+			"DAL: Deleted workout entries in date range (%s, %s]",
+			opts.Start, opts.End,
+		),
+		"NumRows", *opts.Res,
 	)
 	return nil
 }
