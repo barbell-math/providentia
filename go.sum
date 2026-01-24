@@ -2,8 +2,8 @@ code.barbellmath.net/barbell-math/smoothbrain-arena v0.0.0-20251224055001-fa25c1
 code.barbellmath.net/barbell-math/smoothbrain-arena v0.0.0-20251224055001-fa25c182f38a/go.mod h1:rs+8gDuETI3giOdOHz8QznMOfz9bv3Hplwdlh+lkn/g=
 code.barbellmath.net/barbell-math/smoothbrain-argparse v0.0.0-20251214093131-51ce1b0487fa h1:LaF6CgNnNqpsbl0YDpUqE0Vo4obIE3P0jAEoNNPkOMQ=
 code.barbellmath.net/barbell-math/smoothbrain-argparse v0.0.0-20251214093131-51ce1b0487fa/go.mod h1:Twk6vSfEzOasU7GkUXfHW6fT0GnR0Bocjoo/y7uz8i4=
-code.barbellmath.net/barbell-math/smoothbrain-bs v0.0.0-20260124074103-13b7adfa1c08 h1:zq8SwieNhWtYh+HiBjq9mmpkvBonU9NipI0z6ZaFv8k=
-code.barbellmath.net/barbell-math/smoothbrain-bs v0.0.0-20260124074103-13b7adfa1c08/go.mod h1:BFg3zJ/aCHtI131FpH/MKlVUnUMD2r590qPKr0afa2U=
+code.barbellmath.net/barbell-math/smoothbrain-bs v0.0.0-20260124090418-6a6dd20e981d h1:K9pytqX6/E52s+Pi1XRF4BYOFbMwc2whGuylxc73X4M=
+code.barbellmath.net/barbell-math/smoothbrain-bs v0.0.0-20260124090418-6a6dd20e981d/go.mod h1:BFg3zJ/aCHtI131FpH/MKlVUnUMD2r590qPKr0afa2U=
 code.barbellmath.net/barbell-math/smoothbrain-cgoGlue v0.0.0-20251214092157-27bc4b249d31 h1:f2Ed1hs4kkDPTlR7zWzLfDaUxd0g/KHyDGZsfWbV1ds=
 code.barbellmath.net/barbell-math/smoothbrain-cgoGlue v0.0.0-20251214092157-27bc4b249d31/go.mod h1:kOVfZh5E/G7KjfenBoSYEwPLyVv9zG7o94c8GQoUXqU=
 code.barbellmath.net/barbell-math/smoothbrain-cgoTest v0.0.0-20251214093713-893bb710a8bc h1:GKzKC5UC4AIuBCB/7iBQ/BrxZoavhgHRKduwyVEENQk=
