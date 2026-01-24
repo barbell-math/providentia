@@ -1,0 +1,14 @@
+prefix=/home/jack/Documents/providentia/_deps/ffmpeg
+exec_prefix=${prefix}
+libdir=/home/jack/Documents/providentia/_deps/ffmpeg/lib
+includedir=/home/jack/Documents/providentia/_deps/ffmpeg/include
+
+Name: libavcodec
+Description: FFmpeg codec library
+Version: 62.11.100
+Requires: libswresample >= 6.1.100, libavutil >= 60.8.100
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lavcodec -pthread -lm -latomic -llzma -lz -lva
+Libs.private: 
+Cflags: -I${includedir}
