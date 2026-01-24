@@ -1,0 +1,4 @@
+[submodule "_deps/ffmpeg/src"]
+	shallow = true
+	path = _deps/ffmpeg/src
+	url = https://github.com/FFmpeg/FFmpeg
