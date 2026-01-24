@@ -1,3 +1,4 @@
-[submodule "_deps/eigen"]
-	path = _deps/eigen
-	url = https://gitlab.com/libeigen/eigen
+[submodule "vendor/ffmpeg/src"]
+	shallow = true
+	path = vendor/ffmpeg/src
+	url = https://github.com/FFmpeg/FFmpeg

@@ -124,7 +124,7 @@ func (w *genericCSVLoader[T]) Run(ctxt context.Context) (opErr error) {
 
 	w.S.Log.Log(
 		ctxt, sblog.VLevel(3),
-		w.formatLogLine("Finished loading clients"),
+		w.formatLogLine("Finished loading data"),
 		"NumRows", len(params),
 	)
 	return

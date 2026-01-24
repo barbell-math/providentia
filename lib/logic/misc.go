@@ -19,6 +19,11 @@ func RunMigrations(ctxt context.Context) (opErr error) {
 	return migrations.RunMigrations(ctxt, state)
 }
 
+// Bulk uploads the data referenced by the [types.BulkUploadData] struct.
+//
+// The context must have a [types.State] variable.
+//
+// If any error occurs no changes will be made to the database.
 func BulkUploadData(
 	ctxt context.Context,
 	opts *types.BulkUploadDataOpts,
