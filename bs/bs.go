@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"runtime"
 	"strings"
@@ -13,7 +14,12 @@ import (
 
 var (
 	ffmpegConf = []string{
-		"--enable-gpl", "--enable-nonfree", "--enable-vaapi",
+		// For removing X11 depedency
+		"--disable-ffplay", "--disable-libxcb", "--disable-libxcb-shm", "--disable-libxcb-xfixes", "--disable-libxcb-shape", "--disable-sdl2",
+		// Enable things that are under a gpl license
+		"--enable-gpl",
+		// Enable vaapi for hw accel on linux
+		"--enable-vaapi",
 	}
 )
 
@@ -97,9 +103,15 @@ func setupBuildFFmpegTarget() {
 				}
 				defer f.Close()
 
+				clangDir, err := exec.LookPath("clang")
+				if err != nil {
+					return err
+				}
+
 				configureScript := fmt.Sprintf(
-					`./configure --prefix=%s %s`,
+					`./configure --prefix=%s --cc=%s %s`,
 					path.Join(repoRoot, "_deps", "ffmpeg"),
+					clangDir,
 					strings.Join(ffmpegConf, " "),
 				)
 				return sbbs.RunBashScript(ctxt, f, "", configureScript)

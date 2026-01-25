@@ -5,8 +5,9 @@ package barpathtracker
 // #cgo LDFLAGS: -lstdc++
 // #cgo LDFLAGS: -L../../../_deps/ffmpeg/lib
 // #cgo LDFLAGS: -lavcodec -lavutil -lavdevice -lswscale -lswresample
-// #cgo LDFLAGS: -lpthread -pthread -lz -lm -ldl
-// #cgo LDFLAGS: -lva -lva-wayland -lva-drm -ldrm -lX11 -lva-x11
+// #cgo LDFLAGS: -lpthread -pthread
+// #cgo LDFLAGS: -lz -lm -ldl
+// #cgo LDFLAGS: -lva -lva-drm -ldrm -lX11 -lva-x11
 // #include "cpu.h"
 import "C"
 import "code.barbellmath.net/barbell-math/providentia/lib/types"
