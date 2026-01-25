@@ -1,16 +1,18 @@
 package main
 
 import (
+	"fmt"
 	"reflect"
 
 	barpathphysdata "code.barbellmath.net/barbell-math/providentia/internal/models/barPathPhysData"
+	barpathtracker "code.barbellmath.net/barbell-math/providentia/internal/models/barPathTracker"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
-	sbcgoglue "code.barbellmath.net/barbell-math/smoothbrain-cgoGlue"
-	sbcgotest "code.barbellmath.net/barbell-math/smoothbrain-cgoTest"
+	testgen "code.barbellmath.net/barbell-math/smoothbrain-cgoGlue/testGen"
+	typegen "code.barbellmath.net/barbell-math/smoothbrain-cgoGlue/typeGen"
 )
 
 func main() {
-	sbcgotest.Generate(&sbcgotest.Opts{
+	testgen.Generate(&testgen.Opts{
 		ExitOnErr:       true,
 		SearchPath:      []string{"."},
 		OutputPath:      ".",
@@ -21,7 +23,7 @@ func main() {
 		GoPackage:       "clib",
 	})
 
-	g := sbcgoglue.New(sbcgoglue.Opts{
+	g := typegen.New(typegen.Opts{
 		ExitOnErr: true,
 		Rename: map[string]string{
 			reflect.TypeFor[types.BarPathCalcHyperparams]().Name():                        "barPathCalcHyperparams",
@@ -42,33 +44,40 @@ func main() {
 			reflect.TypeFor[barpathphysdata.CData]().Name():                               "barPathData",
 		},
 	})
-	sbcgoglue.RegisterEnum(
+	typegen.RegisterEnum(
 		g,
 		types.ApproximationErrorNames(),
 		types.ApproximationErrorValues(),
 	)
-	sbcgoglue.RegisterEnum(
+	typegen.RegisterEnum(
 		g,
 		barpathphysdata.BarPathCalcErrCodeNames(),
 		barpathphysdata.BarPathCalcErrCodeValues(),
 	)
-	sbcgoglue.RegisterStruct[types.Vec2[types.Meter, types.Meter]](g)
-	sbcgoglue.RegisterStruct[types.Vec2[types.MeterPerSec, types.MeterPerSec]](g)
-	sbcgoglue.RegisterStruct[types.Vec2[types.MeterPerSec2, types.MeterPerSec2]](g)
-	sbcgoglue.RegisterStruct[types.Vec2[types.MeterPerSec3, types.MeterPerSec3]](g)
-	sbcgoglue.RegisterStruct[types.Vec2[types.Newton, types.Newton]](g)
-	sbcgoglue.RegisterStruct[types.Vec2[types.NewtonSec, types.NewtonSec]](g)
+	typegen.RegisterEnum(
+		g,
+		barpathtracker.BarPathTrackerErrCodeNames(),
+		barpathtracker.BarPathTrackerErrCodeValues(),
+	)
+	typegen.RegisterStruct[types.Vec2[types.Meter, types.Meter]](g)
+	typegen.RegisterStruct[types.Vec2[types.MeterPerSec, types.MeterPerSec]](g)
+	typegen.RegisterStruct[types.Vec2[types.MeterPerSec2, types.MeterPerSec2]](g)
+	typegen.RegisterStruct[types.Vec2[types.MeterPerSec3, types.MeterPerSec3]](g)
+	typegen.RegisterStruct[types.Vec2[types.Newton, types.Newton]](g)
+	typegen.RegisterStruct[types.Vec2[types.NewtonSec, types.NewtonSec]](g)
 
-	sbcgoglue.RegisterStruct[types.PointInTime[types.Second, types.MeterPerSec]](g)
-	sbcgoglue.RegisterStruct[types.PointInTime[types.Second, types.MeterPerSec2]](g)
-	sbcgoglue.RegisterStruct[types.PointInTime[types.Second, types.MeterPerSec3]](g)
-	sbcgoglue.RegisterStruct[types.PointInTime[types.Second, types.Newton]](g)
-	sbcgoglue.RegisterStruct[types.PointInTime[types.Second, types.NewtonSec]](g)
-	sbcgoglue.RegisterStruct[types.PointInTime[types.Second, types.Joule]](g)
-	sbcgoglue.RegisterStruct[types.PointInTime[types.Second, types.Watt]](g)
+	typegen.RegisterStruct[types.PointInTime[types.Second, types.MeterPerSec]](g)
+	typegen.RegisterStruct[types.PointInTime[types.Second, types.MeterPerSec2]](g)
+	typegen.RegisterStruct[types.PointInTime[types.Second, types.MeterPerSec3]](g)
+	typegen.RegisterStruct[types.PointInTime[types.Second, types.Newton]](g)
+	typegen.RegisterStruct[types.PointInTime[types.Second, types.NewtonSec]](g)
+	typegen.RegisterStruct[types.PointInTime[types.Second, types.Joule]](g)
+	typegen.RegisterStruct[types.PointInTime[types.Second, types.Watt]](g)
 
-	sbcgoglue.RegisterStruct[types.Split](g)
-	sbcgoglue.RegisterStruct[barpathphysdata.CData](g)
-	sbcgoglue.RegisterStruct[types.BarPathCalcHyperparams](g)
+	typegen.RegisterStruct[types.Split](g)
+	typegen.RegisterStruct[barpathphysdata.CData](g)
+	typegen.RegisterStruct[types.BarPathCalcHyperparams](g)
 	g.WriteTo("./glue.h")
+
+	fmt.Println("Generated cgo-glue")
 }

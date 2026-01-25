@@ -2,12 +2,10 @@ code.barbellmath.net/barbell-math/smoothbrain-arena v0.0.0-20251224055001-fa25c1
 code.barbellmath.net/barbell-math/smoothbrain-arena v0.0.0-20251224055001-fa25c182f38a/go.mod h1:rs+8gDuETI3giOdOHz8QznMOfz9bv3Hplwdlh+lkn/g=
 code.barbellmath.net/barbell-math/smoothbrain-argparse v0.0.0-20251214093131-51ce1b0487fa h1:LaF6CgNnNqpsbl0YDpUqE0Vo4obIE3P0jAEoNNPkOMQ=
 code.barbellmath.net/barbell-math/smoothbrain-argparse v0.0.0-20251214093131-51ce1b0487fa/go.mod h1:Twk6vSfEzOasU7GkUXfHW6fT0GnR0Bocjoo/y7uz8i4=
-code.barbellmath.net/barbell-math/smoothbrain-bs v0.0.0-20260124090418-6a6dd20e981d h1:K9pytqX6/E52s+Pi1XRF4BYOFbMwc2whGuylxc73X4M=
-code.barbellmath.net/barbell-math/smoothbrain-bs v0.0.0-20260124090418-6a6dd20e981d/go.mod h1:BFg3zJ/aCHtI131FpH/MKlVUnUMD2r590qPKr0afa2U=
-code.barbellmath.net/barbell-math/smoothbrain-cgoGlue v0.0.0-20251214092157-27bc4b249d31 h1:f2Ed1hs4kkDPTlR7zWzLfDaUxd0g/KHyDGZsfWbV1ds=
-code.barbellmath.net/barbell-math/smoothbrain-cgoGlue v0.0.0-20251214092157-27bc4b249d31/go.mod h1:kOVfZh5E/G7KjfenBoSYEwPLyVv9zG7o94c8GQoUXqU=
-code.barbellmath.net/barbell-math/smoothbrain-cgoTest v0.0.0-20251214093713-893bb710a8bc h1:GKzKC5UC4AIuBCB/7iBQ/BrxZoavhgHRKduwyVEENQk=
-code.barbellmath.net/barbell-math/smoothbrain-cgoTest v0.0.0-20251214093713-893bb710a8bc/go.mod h1:2Ruvzoncpe/I8U9PIx/dD0QQ/lTDjT6p45WM/LIA1H0=
+code.barbellmath.net/barbell-math/smoothbrain-bs v0.0.0-20260125031349-6dd10effa444 h1:9PxMDC9N0j6REOuvu8MWAJalP3p/MetFiE+b22Lb50Q=
+code.barbellmath.net/barbell-math/smoothbrain-bs v0.0.0-20260125031349-6dd10effa444/go.mod h1:BFg3zJ/aCHtI131FpH/MKlVUnUMD2r590qPKr0afa2U=
+code.barbellmath.net/barbell-math/smoothbrain-cgoGlue v0.0.0-20260125045330-d146d9f62161 h1:DVNU6D8ajJfjIPDnfKry3tW8cdj0rPCjd32MvjtRcDI=
+code.barbellmath.net/barbell-math/smoothbrain-cgoGlue v0.0.0-20260125045330-d146d9f62161/go.mod h1:iMJp8h296iLSGHMtrzi09tovqigbChGHo/acw0FXsF8=
 code.barbellmath.net/barbell-math/smoothbrain-csv v0.0.0-20251214092924-4bc2bcdcf726 h1:/JvJHP05sNKGZ2k4RVLbcuIlIMY/KRENFDG8DoD+b1U=
 code.barbellmath.net/barbell-math/smoothbrain-csv v0.0.0-20251214092924-4bc2bcdcf726/go.mod h1:odmho/rHPropAwJpLtmJWKEn2g3uPpA5InXOG4YjMr8=
 code.barbellmath.net/barbell-math/smoothbrain-errs v0.0.0-20251214092612-fc98d8585e15 h1:eLoGMKNpL5Ylkky3cTOJ7buppgxE7lN/UTt9Mm38QZk=

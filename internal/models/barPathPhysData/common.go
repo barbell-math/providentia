@@ -1,6 +1,6 @@
 package barpathphysdata
 
-// #cgo CXXFLAGS: -O3 -Wall -Werror -march=native -std=c++23 -I../../../_deps/eigen  -I../../clib
+// #cgo CXXFLAGS: -O3 -Wall -Werror -march=native -std=c++23 -I../../clib
 // #cgo LDFLAGS: -lstdc++
 // #include "cpu.h"
 import "C"
@@ -17,7 +17,7 @@ import (
 
 type (
 	// ENUM(
-	//	NoErr
+	//	NoBarPathCalcErr
 	//	TimeSeriesNotIncreasingErr
 	//	TimeSeriesNotMonotonicErr
 	//	InvalidApproximationErrErr

@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	// NoErr is a BarPathCalcErrCode of type NoErr.
-	NoErr BarPathCalcErrCode = iota
+	// NoBarPathCalcErr is a BarPathCalcErrCode of type NoBarPathCalcErr.
+	NoBarPathCalcErr BarPathCalcErrCode = iota
 	// TimeSeriesNotIncreasingErr is a BarPathCalcErrCode of type TimeSeriesNotIncreasingErr.
 	TimeSeriesNotIncreasingErr
 	// TimeSeriesNotMonotonicErr is a BarPathCalcErrCode of type TimeSeriesNotMonotonicErr.
@@ -23,13 +23,13 @@ const (
 
 var ErrInvalidBarPathCalcErrCode = fmt.Errorf("not a valid BarPathCalcErrCode, try [%s]", strings.Join(_BarPathCalcErrCodeNames, ", "))
 
-const _BarPathCalcErrCodeName = "NoErrTimeSeriesNotIncreasingErrTimeSeriesNotMonotonicErrInvalidApproximationErrErr"
+const _BarPathCalcErrCodeName = "NoBarPathCalcErrTimeSeriesNotIncreasingErrTimeSeriesNotMonotonicErrInvalidApproximationErrErr"
 
 var _BarPathCalcErrCodeNames = []string{
-	_BarPathCalcErrCodeName[0:5],
-	_BarPathCalcErrCodeName[5:31],
-	_BarPathCalcErrCodeName[31:56],
-	_BarPathCalcErrCodeName[56:82],
+	_BarPathCalcErrCodeName[0:16],
+	_BarPathCalcErrCodeName[16:42],
+	_BarPathCalcErrCodeName[42:67],
+	_BarPathCalcErrCodeName[67:93],
 }
 
 // BarPathCalcErrCodeNames returns a list of possible string values of BarPathCalcErrCode.
@@ -42,7 +42,7 @@ func BarPathCalcErrCodeNames() []string {
 // BarPathCalcErrCodeValues returns a list of the values for BarPathCalcErrCode
 func BarPathCalcErrCodeValues() []BarPathCalcErrCode {
 	return []BarPathCalcErrCode{
-		NoErr,
+		NoBarPathCalcErr,
 		TimeSeriesNotIncreasingErr,
 		TimeSeriesNotMonotonicErr,
 		InvalidApproximationErrErr,
@@ -50,10 +50,10 @@ func BarPathCalcErrCodeValues() []BarPathCalcErrCode {
 }
 
 var _BarPathCalcErrCodeMap = map[BarPathCalcErrCode]string{
-	NoErr:                      _BarPathCalcErrCodeName[0:5],
-	TimeSeriesNotIncreasingErr: _BarPathCalcErrCodeName[5:31],
-	TimeSeriesNotMonotonicErr:  _BarPathCalcErrCodeName[31:56],
-	InvalidApproximationErrErr: _BarPathCalcErrCodeName[56:82],
+	NoBarPathCalcErr:           _BarPathCalcErrCodeName[0:16],
+	TimeSeriesNotIncreasingErr: _BarPathCalcErrCodeName[16:42],
+	TimeSeriesNotMonotonicErr:  _BarPathCalcErrCodeName[42:67],
+	InvalidApproximationErrErr: _BarPathCalcErrCodeName[67:93],
 }
 
 // String implements the Stringer interface.
@@ -72,14 +72,14 @@ func (x BarPathCalcErrCode) IsValid() bool {
 }
 
 var _BarPathCalcErrCodeValue = map[string]BarPathCalcErrCode{
-	_BarPathCalcErrCodeName[0:5]:                    NoErr,
-	strings.ToLower(_BarPathCalcErrCodeName[0:5]):   NoErr,
-	_BarPathCalcErrCodeName[5:31]:                   TimeSeriesNotIncreasingErr,
-	strings.ToLower(_BarPathCalcErrCodeName[5:31]):  TimeSeriesNotIncreasingErr,
-	_BarPathCalcErrCodeName[31:56]:                  TimeSeriesNotMonotonicErr,
-	strings.ToLower(_BarPathCalcErrCodeName[31:56]): TimeSeriesNotMonotonicErr,
-	_BarPathCalcErrCodeName[56:82]:                  InvalidApproximationErrErr,
-	strings.ToLower(_BarPathCalcErrCodeName[56:82]): InvalidApproximationErrErr,
+	_BarPathCalcErrCodeName[0:16]:                   NoBarPathCalcErr,
+	strings.ToLower(_BarPathCalcErrCodeName[0:16]):  NoBarPathCalcErr,
+	_BarPathCalcErrCodeName[16:42]:                  TimeSeriesNotIncreasingErr,
+	strings.ToLower(_BarPathCalcErrCodeName[16:42]): TimeSeriesNotIncreasingErr,
+	_BarPathCalcErrCodeName[42:67]:                  TimeSeriesNotMonotonicErr,
+	strings.ToLower(_BarPathCalcErrCodeName[42:67]): TimeSeriesNotMonotonicErr,
+	_BarPathCalcErrCodeName[67:93]:                  InvalidApproximationErrErr,
+	strings.ToLower(_BarPathCalcErrCodeName[67:93]): InvalidApproximationErrErr,
 }
 
 // ParseBarPathCalcErrCode attempts to convert a string to a BarPathCalcErrCode.

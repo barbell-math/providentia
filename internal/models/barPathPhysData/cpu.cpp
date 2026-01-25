@@ -72,7 +72,7 @@ enum BarPathCalcErrCode_t validateSuppliedData(
 		}
 	}
 
-	return NoErr;
+	return NoBarPathCalcErr;
 }
 
 enum BarPathCalcErrCode_t calcDerivatives(
@@ -104,7 +104,7 @@ enum BarPathCalcErrCode_t calcDerivatives(
 		return InvalidApproximationErrErr;
 	}
 
-	return NoErr;
+	return NoBarPathCalcErr;
 }
 
 enum BarPathCalcErrCode_t runSmoother(
@@ -135,7 +135,7 @@ enum BarPathCalcErrCode_t runSmoother(
 		FixedRing<Math::Vec2, 3>(_tmps)
 	);
 
-	return NoErr;
+	return NoBarPathCalcErr;
 }
 
 enum BarPathCalcErrCode_t calcHigherOrderData(
@@ -156,7 +156,7 @@ enum BarPathCalcErrCode_t calcHigherOrderData(
 		data->work[i]=(data->mass/2)*(vel[i].Dot(vel[i]));
 	}
 
-	return NoErr;
+	return NoBarPathCalcErr;
 }
 
 // TODO - see if the near zero filter can be removed.
@@ -202,7 +202,7 @@ enum BarPathCalcErrCode_t calcRepSplits(
 		}
 	}
 
-	return NoErr;
+	return NoBarPathCalcErr;
 }
 
 template <typename T, typename U>
@@ -297,7 +297,7 @@ enum BarPathCalcErrCode_t calcRepStats(
 		setRepAvgVal(power, repSplit, data->avgPower);
 		setRepAvgVal(work, repSplit, data->avgWork);
 	}
-	return NoErr;
+	return NoBarPathCalcErr;
 }
 
 
@@ -306,36 +306,36 @@ extern "C" enum BarPathCalcErrCode_t CalcBarPathPhysData(
 	barPathCalcHyperparams_t* opts
 ) {
 	BarPathCalcErrCode_t err = validateSuppliedData(data, opts);
-	if (err!=NoErr) {
+	if (err!=NoBarPathCalcErr) {
 		return  err;
 	}
 
 	err = calcDerivatives(data, opts);
-	if (err!=NoErr) {
+	if (err!=NoBarPathCalcErr) {
 		return  err;
 	}
 
 	err = runSmoother(data, opts);
-	if (err!=NoErr) {
+	if (err!=NoBarPathCalcErr) {
 		return  err;
 	}
 
 	err = calcHigherOrderData(data, opts);
-	if (err!=NoErr) {
+	if (err!=NoBarPathCalcErr) {
 		return  err;
 	}
 
 	err = calcRepSplits(data, opts);
-	if (err!=NoErr) {
+	if (err!=NoBarPathCalcErr) {
 		return  err;
 	}
 
 	err = calcRepStats(data, opts);
-	if (err!=NoErr) {
+	if (err!=NoBarPathCalcErr) {
 		return err;
 	}
 
-	return NoErr;
+	return NoBarPathCalcErr;
 }
 
 };

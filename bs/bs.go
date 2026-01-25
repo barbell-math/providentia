@@ -25,7 +25,7 @@ func main() {
 	sbbs.RegisterDepTargets()
 	sbbs.RegisterGoMarkDocTargets(sbbs.NewReadmeOpts().
 		SetRepoUrl("dummy").
-		SetDirToRead("./logic").
+		SetDirsToRead("./logic").
 		SetPostStages(sbbs.SedStage("dummy/blob/main", "", "README.md")),
 	)
 	sbbs.RegisterSqlcTargets()
