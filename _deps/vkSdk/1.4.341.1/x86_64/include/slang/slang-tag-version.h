@@ -1,0 +1,2 @@
+#define SLANG_TAG_VERSION "2026.1-52-gc8ddf20bb"
+#define SLANG_VERSION_NUMERIC "2026.1"

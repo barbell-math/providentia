@@ -9,6 +9,6 @@ Version: 62.11.100
 Requires: libswresample >= 6.1.100, libavutil >= 60.8.100
 Requires.private: 
 Conflicts:
-Libs: -L${libdir}  -lavcodec -pthread -lm -latomic -llzma -lz -lva
+Libs: -L${libdir}  -lavcodec -pthread -lm -latomic -llzma -lz
 Libs.private: 
 Cflags: -I${includedir}

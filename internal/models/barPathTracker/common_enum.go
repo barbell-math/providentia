@@ -13,14 +13,41 @@ import (
 const (
 	// NoBarPathTrackerErr is a BarPathTrackerErrCode of type NoBarPathTrackerErr.
 	NoBarPathTrackerErr BarPathTrackerErrCode = iota
+	// VAAPINotSupportedErr is a BarPathTrackerErrCode of type VAAPINotSupportedErr.
+	VAAPINotSupportedErr
+	// CouldNotAllocateAVPacketErr is a BarPathTrackerErrCode of type CouldNotAllocateAVPacketErr.
+	CouldNotAllocateAVPacketErr
+	// CouldNotOpenVideoFileErr is a BarPathTrackerErrCode of type CouldNotOpenVideoFileErr.
+	CouldNotOpenVideoFileErr
+	// CouldNotFindInputStreamInfoErr is a BarPathTrackerErrCode of type CouldNotFindInputStreamInfoErr.
+	CouldNotFindInputStreamInfoErr
+	// CouldNotFindVideoStreamErr is a BarPathTrackerErrCode of type CouldNotFindVideoStreamErr.
+	CouldNotFindVideoStreamErr
+	// DecoderDoesNotSupportVAAPIErr is a BarPathTrackerErrCode of type DecoderDoesNotSupportVAAPIErr.
+	DecoderDoesNotSupportVAAPIErr
+	// AVCodecParametersToCtxtErr is a BarPathTrackerErrCode of type AVCodecParametersToCtxtErr.
+	AVCodecParametersToCtxtErr
+	// CouldNotCreateHwDeviceErr is a BarPathTrackerErrCode of type CouldNotCreateHwDeviceErr.
+	CouldNotCreateHwDeviceErr
+	// CouldNotOpenCodecForStreamErr is a BarPathTrackerErrCode of type CouldNotOpenCodecForStreamErr.
+	CouldNotOpenCodecForStreamErr
 )
 
 var ErrInvalidBarPathTrackerErrCode = fmt.Errorf("not a valid BarPathTrackerErrCode, try [%s]", strings.Join(_BarPathTrackerErrCodeNames, ", "))
 
-const _BarPathTrackerErrCodeName = "NoBarPathTrackerErr"
+const _BarPathTrackerErrCodeName = "NoBarPathTrackerErrVAAPINotSupportedErrCouldNotAllocateAVPacketErrCouldNotOpenVideoFileErrCouldNotFindInputStreamInfoErrCouldNotFindVideoStreamErrDecoderDoesNotSupportVAAPIErrAVCodecParametersToCtxtErrCouldNotCreateHwDeviceErrCouldNotOpenCodecForStreamErr"
 
 var _BarPathTrackerErrCodeNames = []string{
 	_BarPathTrackerErrCodeName[0:19],
+	_BarPathTrackerErrCodeName[19:39],
+	_BarPathTrackerErrCodeName[39:66],
+	_BarPathTrackerErrCodeName[66:90],
+	_BarPathTrackerErrCodeName[90:120],
+	_BarPathTrackerErrCodeName[120:146],
+	_BarPathTrackerErrCodeName[146:175],
+	_BarPathTrackerErrCodeName[175:201],
+	_BarPathTrackerErrCodeName[201:226],
+	_BarPathTrackerErrCodeName[226:255],
 }
 
 // BarPathTrackerErrCodeNames returns a list of possible string values of BarPathTrackerErrCode.
@@ -34,11 +61,29 @@ func BarPathTrackerErrCodeNames() []string {
 func BarPathTrackerErrCodeValues() []BarPathTrackerErrCode {
 	return []BarPathTrackerErrCode{
 		NoBarPathTrackerErr,
+		VAAPINotSupportedErr,
+		CouldNotAllocateAVPacketErr,
+		CouldNotOpenVideoFileErr,
+		CouldNotFindInputStreamInfoErr,
+		CouldNotFindVideoStreamErr,
+		DecoderDoesNotSupportVAAPIErr,
+		AVCodecParametersToCtxtErr,
+		CouldNotCreateHwDeviceErr,
+		CouldNotOpenCodecForStreamErr,
 	}
 }
 
 var _BarPathTrackerErrCodeMap = map[BarPathTrackerErrCode]string{
-	NoBarPathTrackerErr: _BarPathTrackerErrCodeName[0:19],
+	NoBarPathTrackerErr:            _BarPathTrackerErrCodeName[0:19],
+	VAAPINotSupportedErr:           _BarPathTrackerErrCodeName[19:39],
+	CouldNotAllocateAVPacketErr:    _BarPathTrackerErrCodeName[39:66],
+	CouldNotOpenVideoFileErr:       _BarPathTrackerErrCodeName[66:90],
+	CouldNotFindInputStreamInfoErr: _BarPathTrackerErrCodeName[90:120],
+	CouldNotFindVideoStreamErr:     _BarPathTrackerErrCodeName[120:146],
+	DecoderDoesNotSupportVAAPIErr:  _BarPathTrackerErrCodeName[146:175],
+	AVCodecParametersToCtxtErr:     _BarPathTrackerErrCodeName[175:201],
+	CouldNotCreateHwDeviceErr:      _BarPathTrackerErrCodeName[201:226],
+	CouldNotOpenCodecForStreamErr:  _BarPathTrackerErrCodeName[226:255],
 }
 
 // String implements the Stringer interface.
@@ -57,8 +102,26 @@ func (x BarPathTrackerErrCode) IsValid() bool {
 }
 
 var _BarPathTrackerErrCodeValue = map[string]BarPathTrackerErrCode{
-	_BarPathTrackerErrCodeName[0:19]:                  NoBarPathTrackerErr,
-	strings.ToLower(_BarPathTrackerErrCodeName[0:19]): NoBarPathTrackerErr,
+	_BarPathTrackerErrCodeName[0:19]:                     NoBarPathTrackerErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[0:19]):    NoBarPathTrackerErr,
+	_BarPathTrackerErrCodeName[19:39]:                    VAAPINotSupportedErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[19:39]):   VAAPINotSupportedErr,
+	_BarPathTrackerErrCodeName[39:66]:                    CouldNotAllocateAVPacketErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[39:66]):   CouldNotAllocateAVPacketErr,
+	_BarPathTrackerErrCodeName[66:90]:                    CouldNotOpenVideoFileErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[66:90]):   CouldNotOpenVideoFileErr,
+	_BarPathTrackerErrCodeName[90:120]:                   CouldNotFindInputStreamInfoErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[90:120]):  CouldNotFindInputStreamInfoErr,
+	_BarPathTrackerErrCodeName[120:146]:                  CouldNotFindVideoStreamErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[120:146]): CouldNotFindVideoStreamErr,
+	_BarPathTrackerErrCodeName[146:175]:                  DecoderDoesNotSupportVAAPIErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[146:175]): DecoderDoesNotSupportVAAPIErr,
+	_BarPathTrackerErrCodeName[175:201]:                  AVCodecParametersToCtxtErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[175:201]): AVCodecParametersToCtxtErr,
+	_BarPathTrackerErrCodeName[201:226]:                  CouldNotCreateHwDeviceErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[201:226]): CouldNotCreateHwDeviceErr,
+	_BarPathTrackerErrCodeName[226:255]:                  CouldNotOpenCodecForStreamErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[226:255]): CouldNotOpenCodecForStreamErr,
 }
 
 // ParseBarPathTrackerErrCode attempts to convert a string to a BarPathTrackerErrCode.

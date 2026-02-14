@@ -4,10 +4,11 @@ package barpathtracker
 // #cgo CXXFLAGS: -I../../../_deps/ffmpeg/include
 // #cgo LDFLAGS: -lstdc++
 // #cgo LDFLAGS: -L../../../_deps/ffmpeg/lib
-// #cgo LDFLAGS: -lavcodec -lavutil -lavdevice -lswscale -lswresample
+// #cgo LDFLAGS: -lavformat -lavcodec -lavutil -lavdevice -lswscale -lswresample
 // #cgo LDFLAGS: -lpthread -pthread
-// #cgo LDFLAGS: -lz -lm -ldl
-// #cgo LDFLAGS: -lva -lva-drm -ldrm -lX11 -lva-x11
+// #cgo LDFLAGS: -lz -lm -ldl -llzma
+// #cgo LDFLAGS: -lva -lva-drm -lva-x11
+// #cgo LDFLAGS: -ldrm -lX11
 // #include "cpu.h"
 import "C"
 import "code.barbellmath.net/barbell-math/providentia/lib/types"
@@ -17,6 +18,15 @@ import "code.barbellmath.net/barbell-math/providentia/lib/types"
 type (
 	// ENUM(
 	//	NoBarPathTrackerErr
+	//	VAAPINotSupportedErr
+	//	CouldNotAllocateAVPacketErr
+	//	CouldNotOpenVideoFileErr
+	//	CouldNotFindInputStreamInfoErr
+	//	CouldNotFindVideoStreamErr
+	//	DecoderDoesNotSupportVAAPIErr
+	//	AVCodecParametersToCtxtErr
+	//	CouldNotCreateHwDeviceErr
+	//	CouldNotOpenCodecForStreamErr
 	// )
 	BarPathTrackerErrCode int64
 

@@ -27,7 +27,16 @@ extern "C" {
 	};
 
 	enum BarPathTrackerErrCode_t : int64_t {
-		NoBarPathTrackerErr = 0
+		NoBarPathTrackerErr = 0,
+		VAAPINotSupportedErr = 1,
+		CouldNotAllocateAVPacketErr = 2,
+		CouldNotOpenVideoFileErr = 3,
+		CouldNotFindInputStreamInfoErr = 4,
+		CouldNotFindVideoStreamErr = 5,
+		DecoderDoesNotSupportVAAPIErr = 6,
+		AVCodecParametersToCtxtErr = 7,
+		CouldNotCreateHwDeviceErr = 8,
+		CouldNotOpenCodecForStreamErr = 9
 	};
 
 	typedef struct accPointInTime{
