@@ -9,6 +9,6 @@ Version: 60.8.100
 Requires: 
 Requires.private: 
 Conflicts:
-Libs: -L${libdir}  -lavutil -lm -ldrm -latomic -pthread
+Libs: -L${libdir}  -lavutil -lm -ldrm -lvulkan -latomic -pthread
 Libs.private: 
 Cflags: -I${includedir}

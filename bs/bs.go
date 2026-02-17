@@ -20,9 +20,10 @@ var (
 		// enabling VAAPI will create wayland and x11 dependencies.
 		"--disable-vaapi", "--disable-xlib",
 		// Enable things that are under a gpl license as well as vulkan
-		"--enable-gpl", "--enable-vulkan",
+		"--enable-gpl", "--enable-vulkan", "--enable-libglslang", // "--enable-libx264",
 		`--extra-cflags="-I${VULKAN_SDK}/include"`,
 		`--extra-ldflags="-L${VULKAN_SDK}/lib"`,
+		"--enable-vulkan-static",
 		// Food for thought: might be useful one day for advanced vulkan filtering
 		// "--enable-libplacebo",
 	}

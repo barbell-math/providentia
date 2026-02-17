@@ -28,15 +28,30 @@ extern "C" {
 
 	enum BarPathTrackerErrCode_t : int64_t {
 		NoBarPathTrackerErr = 0,
-		VAAPINotSupportedErr = 1,
-		CouldNotAllocateAVPacketErr = 2,
-		CouldNotOpenVideoFileErr = 3,
-		CouldNotFindInputStreamInfoErr = 4,
-		CouldNotFindVideoStreamErr = 5,
-		DecoderDoesNotSupportVAAPIErr = 6,
-		AVCodecParametersToCtxtErr = 7,
-		CouldNotCreateHwDeviceErr = 8,
-		CouldNotOpenCodecForStreamErr = 9
+		CouldNotAllocFrameErr = 1,
+		CouldNotAllocPacketErr = 2,
+		CouldNotAllocDecoderCtxErr = 3,
+		CouldNotAllocFilterGraphErr = 4,
+		CouldNotOpenVideoFileErr = 5,
+		CouldNotFindInputStreamInfoErr = 6,
+		CouldNotFindVideoStreamErr = 7,
+		CouldNotOpenCodecForStreamErr = 8,
+		CouldNotCreateBufferSourceErr = 9,
+		CouldNotCreateBufferSinkErr = 10,
+		CouldNotSetSinkPixFmtErr = 11,
+		CouldNotInitBufferSinkErr = 12,
+		CouldNotParseFilterErr = 13,
+		CouldNotConfigureFilterErr = 14,
+		CouldNotAddFrameToFilterGraphErr = 15,
+		CouldNotGetFrameFromFilterGraphErr = 16,
+		VulkanNotSupportedErr = 17,
+		DecoderDoesNotSupportVulkanErr = 18,
+		AVCodecParametersToCtxtErr = 19,
+		CouldNotCreateHwDeviceErr = 20,
+		CouldNotReadFrameErr = 21,
+		CouldNotSendPacketErr = 22,
+		CouldNotReceiveFrameErr = 23,
+		CouldNotTransferDataFromGPUToCPUErr = 24
 	};
 
 	typedef struct accPointInTime{

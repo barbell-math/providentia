@@ -13,41 +13,86 @@ import (
 const (
 	// NoBarPathTrackerErr is a BarPathTrackerErrCode of type NoBarPathTrackerErr.
 	NoBarPathTrackerErr BarPathTrackerErrCode = iota
-	// VAAPINotSupportedErr is a BarPathTrackerErrCode of type VAAPINotSupportedErr.
-	VAAPINotSupportedErr
-	// CouldNotAllocateAVPacketErr is a BarPathTrackerErrCode of type CouldNotAllocateAVPacketErr.
-	CouldNotAllocateAVPacketErr
+	// CouldNotAllocFrameErr is a BarPathTrackerErrCode of type CouldNotAllocFrameErr.
+	CouldNotAllocFrameErr
+	// CouldNotAllocPacketErr is a BarPathTrackerErrCode of type CouldNotAllocPacketErr.
+	CouldNotAllocPacketErr
+	// CouldNotAllocDecoderCtxErr is a BarPathTrackerErrCode of type CouldNotAllocDecoderCtxErr.
+	CouldNotAllocDecoderCtxErr
+	// CouldNotAllocFilterGraphErr is a BarPathTrackerErrCode of type CouldNotAllocFilterGraphErr.
+	CouldNotAllocFilterGraphErr
 	// CouldNotOpenVideoFileErr is a BarPathTrackerErrCode of type CouldNotOpenVideoFileErr.
 	CouldNotOpenVideoFileErr
 	// CouldNotFindInputStreamInfoErr is a BarPathTrackerErrCode of type CouldNotFindInputStreamInfoErr.
 	CouldNotFindInputStreamInfoErr
 	// CouldNotFindVideoStreamErr is a BarPathTrackerErrCode of type CouldNotFindVideoStreamErr.
 	CouldNotFindVideoStreamErr
-	// DecoderDoesNotSupportVAAPIErr is a BarPathTrackerErrCode of type DecoderDoesNotSupportVAAPIErr.
-	DecoderDoesNotSupportVAAPIErr
+	// CouldNotOpenCodecForStreamErr is a BarPathTrackerErrCode of type CouldNotOpenCodecForStreamErr.
+	CouldNotOpenCodecForStreamErr
+	// CouldNotCreateBufferSourceErr is a BarPathTrackerErrCode of type CouldNotCreateBufferSourceErr.
+	CouldNotCreateBufferSourceErr
+	// CouldNotCreateBufferSinkErr is a BarPathTrackerErrCode of type CouldNotCreateBufferSinkErr.
+	CouldNotCreateBufferSinkErr
+	// CouldNotSetSinkPixFmtErr is a BarPathTrackerErrCode of type CouldNotSetSinkPixFmtErr.
+	CouldNotSetSinkPixFmtErr
+	// CouldNotInitBufferSinkErr is a BarPathTrackerErrCode of type CouldNotInitBufferSinkErr.
+	CouldNotInitBufferSinkErr
+	// CouldNotParseFilterErr is a BarPathTrackerErrCode of type CouldNotParseFilterErr.
+	CouldNotParseFilterErr
+	// CouldNotConfigureFilterErr is a BarPathTrackerErrCode of type CouldNotConfigureFilterErr.
+	CouldNotConfigureFilterErr
+	// CouldNotAddFrameToFilterGraphErr is a BarPathTrackerErrCode of type CouldNotAddFrameToFilterGraphErr.
+	CouldNotAddFrameToFilterGraphErr
+	// CouldNotGetFrameFromFilterGraphErr is a BarPathTrackerErrCode of type CouldNotGetFrameFromFilterGraphErr.
+	CouldNotGetFrameFromFilterGraphErr
+	// VulkanNotSupportedErr is a BarPathTrackerErrCode of type VulkanNotSupportedErr.
+	VulkanNotSupportedErr
+	// DecoderDoesNotSupportVulkanErr is a BarPathTrackerErrCode of type DecoderDoesNotSupportVulkanErr.
+	DecoderDoesNotSupportVulkanErr
 	// AVCodecParametersToCtxtErr is a BarPathTrackerErrCode of type AVCodecParametersToCtxtErr.
 	AVCodecParametersToCtxtErr
 	// CouldNotCreateHwDeviceErr is a BarPathTrackerErrCode of type CouldNotCreateHwDeviceErr.
 	CouldNotCreateHwDeviceErr
-	// CouldNotOpenCodecForStreamErr is a BarPathTrackerErrCode of type CouldNotOpenCodecForStreamErr.
-	CouldNotOpenCodecForStreamErr
+	// CouldNotReadFrameErr is a BarPathTrackerErrCode of type CouldNotReadFrameErr.
+	CouldNotReadFrameErr
+	// CouldNotSendPacketErr is a BarPathTrackerErrCode of type CouldNotSendPacketErr.
+	CouldNotSendPacketErr
+	// CouldNotReceiveFrameErr is a BarPathTrackerErrCode of type CouldNotReceiveFrameErr.
+	CouldNotReceiveFrameErr
+	// CouldNotTransferDataFromGPUToCPUErr is a BarPathTrackerErrCode of type CouldNotTransferDataFromGPUToCPUErr.
+	CouldNotTransferDataFromGPUToCPUErr
 )
 
 var ErrInvalidBarPathTrackerErrCode = fmt.Errorf("not a valid BarPathTrackerErrCode, try [%s]", strings.Join(_BarPathTrackerErrCodeNames, ", "))
 
-const _BarPathTrackerErrCodeName = "NoBarPathTrackerErrVAAPINotSupportedErrCouldNotAllocateAVPacketErrCouldNotOpenVideoFileErrCouldNotFindInputStreamInfoErrCouldNotFindVideoStreamErrDecoderDoesNotSupportVAAPIErrAVCodecParametersToCtxtErrCouldNotCreateHwDeviceErrCouldNotOpenCodecForStreamErr"
+const _BarPathTrackerErrCodeName = "NoBarPathTrackerErrCouldNotAllocFrameErrCouldNotAllocPacketErrCouldNotAllocDecoderCtxErrCouldNotAllocFilterGraphErrCouldNotOpenVideoFileErrCouldNotFindInputStreamInfoErrCouldNotFindVideoStreamErrCouldNotOpenCodecForStreamErrCouldNotCreateBufferSourceErrCouldNotCreateBufferSinkErrCouldNotSetSinkPixFmtErrCouldNotInitBufferSinkErrCouldNotParseFilterErrCouldNotConfigureFilterErrCouldNotAddFrameToFilterGraphErrCouldNotGetFrameFromFilterGraphErrVulkanNotSupportedErrDecoderDoesNotSupportVulkanErrAVCodecParametersToCtxtErrCouldNotCreateHwDeviceErrCouldNotReadFrameErrCouldNotSendPacketErrCouldNotReceiveFrameErrCouldNotTransferDataFromGPUToCPUErr"
 
 var _BarPathTrackerErrCodeNames = []string{
 	_BarPathTrackerErrCodeName[0:19],
-	_BarPathTrackerErrCodeName[19:39],
-	_BarPathTrackerErrCodeName[39:66],
-	_BarPathTrackerErrCodeName[66:90],
-	_BarPathTrackerErrCodeName[90:120],
-	_BarPathTrackerErrCodeName[120:146],
-	_BarPathTrackerErrCodeName[146:175],
-	_BarPathTrackerErrCodeName[175:201],
-	_BarPathTrackerErrCodeName[201:226],
-	_BarPathTrackerErrCodeName[226:255],
+	_BarPathTrackerErrCodeName[19:40],
+	_BarPathTrackerErrCodeName[40:62],
+	_BarPathTrackerErrCodeName[62:88],
+	_BarPathTrackerErrCodeName[88:115],
+	_BarPathTrackerErrCodeName[115:139],
+	_BarPathTrackerErrCodeName[139:169],
+	_BarPathTrackerErrCodeName[169:195],
+	_BarPathTrackerErrCodeName[195:224],
+	_BarPathTrackerErrCodeName[224:253],
+	_BarPathTrackerErrCodeName[253:280],
+	_BarPathTrackerErrCodeName[280:304],
+	_BarPathTrackerErrCodeName[304:329],
+	_BarPathTrackerErrCodeName[329:351],
+	_BarPathTrackerErrCodeName[351:377],
+	_BarPathTrackerErrCodeName[377:409],
+	_BarPathTrackerErrCodeName[409:443],
+	_BarPathTrackerErrCodeName[443:464],
+	_BarPathTrackerErrCodeName[464:494],
+	_BarPathTrackerErrCodeName[494:520],
+	_BarPathTrackerErrCodeName[520:545],
+	_BarPathTrackerErrCodeName[545:565],
+	_BarPathTrackerErrCodeName[565:586],
+	_BarPathTrackerErrCodeName[586:609],
+	_BarPathTrackerErrCodeName[609:644],
 }
 
 // BarPathTrackerErrCodeNames returns a list of possible string values of BarPathTrackerErrCode.
@@ -61,29 +106,59 @@ func BarPathTrackerErrCodeNames() []string {
 func BarPathTrackerErrCodeValues() []BarPathTrackerErrCode {
 	return []BarPathTrackerErrCode{
 		NoBarPathTrackerErr,
-		VAAPINotSupportedErr,
-		CouldNotAllocateAVPacketErr,
+		CouldNotAllocFrameErr,
+		CouldNotAllocPacketErr,
+		CouldNotAllocDecoderCtxErr,
+		CouldNotAllocFilterGraphErr,
 		CouldNotOpenVideoFileErr,
 		CouldNotFindInputStreamInfoErr,
 		CouldNotFindVideoStreamErr,
-		DecoderDoesNotSupportVAAPIErr,
+		CouldNotOpenCodecForStreamErr,
+		CouldNotCreateBufferSourceErr,
+		CouldNotCreateBufferSinkErr,
+		CouldNotSetSinkPixFmtErr,
+		CouldNotInitBufferSinkErr,
+		CouldNotParseFilterErr,
+		CouldNotConfigureFilterErr,
+		CouldNotAddFrameToFilterGraphErr,
+		CouldNotGetFrameFromFilterGraphErr,
+		VulkanNotSupportedErr,
+		DecoderDoesNotSupportVulkanErr,
 		AVCodecParametersToCtxtErr,
 		CouldNotCreateHwDeviceErr,
-		CouldNotOpenCodecForStreamErr,
+		CouldNotReadFrameErr,
+		CouldNotSendPacketErr,
+		CouldNotReceiveFrameErr,
+		CouldNotTransferDataFromGPUToCPUErr,
 	}
 }
 
 var _BarPathTrackerErrCodeMap = map[BarPathTrackerErrCode]string{
-	NoBarPathTrackerErr:            _BarPathTrackerErrCodeName[0:19],
-	VAAPINotSupportedErr:           _BarPathTrackerErrCodeName[19:39],
-	CouldNotAllocateAVPacketErr:    _BarPathTrackerErrCodeName[39:66],
-	CouldNotOpenVideoFileErr:       _BarPathTrackerErrCodeName[66:90],
-	CouldNotFindInputStreamInfoErr: _BarPathTrackerErrCodeName[90:120],
-	CouldNotFindVideoStreamErr:     _BarPathTrackerErrCodeName[120:146],
-	DecoderDoesNotSupportVAAPIErr:  _BarPathTrackerErrCodeName[146:175],
-	AVCodecParametersToCtxtErr:     _BarPathTrackerErrCodeName[175:201],
-	CouldNotCreateHwDeviceErr:      _BarPathTrackerErrCodeName[201:226],
-	CouldNotOpenCodecForStreamErr:  _BarPathTrackerErrCodeName[226:255],
+	NoBarPathTrackerErr:                 _BarPathTrackerErrCodeName[0:19],
+	CouldNotAllocFrameErr:               _BarPathTrackerErrCodeName[19:40],
+	CouldNotAllocPacketErr:              _BarPathTrackerErrCodeName[40:62],
+	CouldNotAllocDecoderCtxErr:          _BarPathTrackerErrCodeName[62:88],
+	CouldNotAllocFilterGraphErr:         _BarPathTrackerErrCodeName[88:115],
+	CouldNotOpenVideoFileErr:            _BarPathTrackerErrCodeName[115:139],
+	CouldNotFindInputStreamInfoErr:      _BarPathTrackerErrCodeName[139:169],
+	CouldNotFindVideoStreamErr:          _BarPathTrackerErrCodeName[169:195],
+	CouldNotOpenCodecForStreamErr:       _BarPathTrackerErrCodeName[195:224],
+	CouldNotCreateBufferSourceErr:       _BarPathTrackerErrCodeName[224:253],
+	CouldNotCreateBufferSinkErr:         _BarPathTrackerErrCodeName[253:280],
+	CouldNotSetSinkPixFmtErr:            _BarPathTrackerErrCodeName[280:304],
+	CouldNotInitBufferSinkErr:           _BarPathTrackerErrCodeName[304:329],
+	CouldNotParseFilterErr:              _BarPathTrackerErrCodeName[329:351],
+	CouldNotConfigureFilterErr:          _BarPathTrackerErrCodeName[351:377],
+	CouldNotAddFrameToFilterGraphErr:    _BarPathTrackerErrCodeName[377:409],
+	CouldNotGetFrameFromFilterGraphErr:  _BarPathTrackerErrCodeName[409:443],
+	VulkanNotSupportedErr:               _BarPathTrackerErrCodeName[443:464],
+	DecoderDoesNotSupportVulkanErr:      _BarPathTrackerErrCodeName[464:494],
+	AVCodecParametersToCtxtErr:          _BarPathTrackerErrCodeName[494:520],
+	CouldNotCreateHwDeviceErr:           _BarPathTrackerErrCodeName[520:545],
+	CouldNotReadFrameErr:                _BarPathTrackerErrCodeName[545:565],
+	CouldNotSendPacketErr:               _BarPathTrackerErrCodeName[565:586],
+	CouldNotReceiveFrameErr:             _BarPathTrackerErrCodeName[586:609],
+	CouldNotTransferDataFromGPUToCPUErr: _BarPathTrackerErrCodeName[609:644],
 }
 
 // String implements the Stringer interface.
@@ -104,24 +179,54 @@ func (x BarPathTrackerErrCode) IsValid() bool {
 var _BarPathTrackerErrCodeValue = map[string]BarPathTrackerErrCode{
 	_BarPathTrackerErrCodeName[0:19]:                     NoBarPathTrackerErr,
 	strings.ToLower(_BarPathTrackerErrCodeName[0:19]):    NoBarPathTrackerErr,
-	_BarPathTrackerErrCodeName[19:39]:                    VAAPINotSupportedErr,
-	strings.ToLower(_BarPathTrackerErrCodeName[19:39]):   VAAPINotSupportedErr,
-	_BarPathTrackerErrCodeName[39:66]:                    CouldNotAllocateAVPacketErr,
-	strings.ToLower(_BarPathTrackerErrCodeName[39:66]):   CouldNotAllocateAVPacketErr,
-	_BarPathTrackerErrCodeName[66:90]:                    CouldNotOpenVideoFileErr,
-	strings.ToLower(_BarPathTrackerErrCodeName[66:90]):   CouldNotOpenVideoFileErr,
-	_BarPathTrackerErrCodeName[90:120]:                   CouldNotFindInputStreamInfoErr,
-	strings.ToLower(_BarPathTrackerErrCodeName[90:120]):  CouldNotFindInputStreamInfoErr,
-	_BarPathTrackerErrCodeName[120:146]:                  CouldNotFindVideoStreamErr,
-	strings.ToLower(_BarPathTrackerErrCodeName[120:146]): CouldNotFindVideoStreamErr,
-	_BarPathTrackerErrCodeName[146:175]:                  DecoderDoesNotSupportVAAPIErr,
-	strings.ToLower(_BarPathTrackerErrCodeName[146:175]): DecoderDoesNotSupportVAAPIErr,
-	_BarPathTrackerErrCodeName[175:201]:                  AVCodecParametersToCtxtErr,
-	strings.ToLower(_BarPathTrackerErrCodeName[175:201]): AVCodecParametersToCtxtErr,
-	_BarPathTrackerErrCodeName[201:226]:                  CouldNotCreateHwDeviceErr,
-	strings.ToLower(_BarPathTrackerErrCodeName[201:226]): CouldNotCreateHwDeviceErr,
-	_BarPathTrackerErrCodeName[226:255]:                  CouldNotOpenCodecForStreamErr,
-	strings.ToLower(_BarPathTrackerErrCodeName[226:255]): CouldNotOpenCodecForStreamErr,
+	_BarPathTrackerErrCodeName[19:40]:                    CouldNotAllocFrameErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[19:40]):   CouldNotAllocFrameErr,
+	_BarPathTrackerErrCodeName[40:62]:                    CouldNotAllocPacketErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[40:62]):   CouldNotAllocPacketErr,
+	_BarPathTrackerErrCodeName[62:88]:                    CouldNotAllocDecoderCtxErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[62:88]):   CouldNotAllocDecoderCtxErr,
+	_BarPathTrackerErrCodeName[88:115]:                   CouldNotAllocFilterGraphErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[88:115]):  CouldNotAllocFilterGraphErr,
+	_BarPathTrackerErrCodeName[115:139]:                  CouldNotOpenVideoFileErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[115:139]): CouldNotOpenVideoFileErr,
+	_BarPathTrackerErrCodeName[139:169]:                  CouldNotFindInputStreamInfoErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[139:169]): CouldNotFindInputStreamInfoErr,
+	_BarPathTrackerErrCodeName[169:195]:                  CouldNotFindVideoStreamErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[169:195]): CouldNotFindVideoStreamErr,
+	_BarPathTrackerErrCodeName[195:224]:                  CouldNotOpenCodecForStreamErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[195:224]): CouldNotOpenCodecForStreamErr,
+	_BarPathTrackerErrCodeName[224:253]:                  CouldNotCreateBufferSourceErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[224:253]): CouldNotCreateBufferSourceErr,
+	_BarPathTrackerErrCodeName[253:280]:                  CouldNotCreateBufferSinkErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[253:280]): CouldNotCreateBufferSinkErr,
+	_BarPathTrackerErrCodeName[280:304]:                  CouldNotSetSinkPixFmtErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[280:304]): CouldNotSetSinkPixFmtErr,
+	_BarPathTrackerErrCodeName[304:329]:                  CouldNotInitBufferSinkErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[304:329]): CouldNotInitBufferSinkErr,
+	_BarPathTrackerErrCodeName[329:351]:                  CouldNotParseFilterErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[329:351]): CouldNotParseFilterErr,
+	_BarPathTrackerErrCodeName[351:377]:                  CouldNotConfigureFilterErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[351:377]): CouldNotConfigureFilterErr,
+	_BarPathTrackerErrCodeName[377:409]:                  CouldNotAddFrameToFilterGraphErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[377:409]): CouldNotAddFrameToFilterGraphErr,
+	_BarPathTrackerErrCodeName[409:443]:                  CouldNotGetFrameFromFilterGraphErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[409:443]): CouldNotGetFrameFromFilterGraphErr,
+	_BarPathTrackerErrCodeName[443:464]:                  VulkanNotSupportedErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[443:464]): VulkanNotSupportedErr,
+	_BarPathTrackerErrCodeName[464:494]:                  DecoderDoesNotSupportVulkanErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[464:494]): DecoderDoesNotSupportVulkanErr,
+	_BarPathTrackerErrCodeName[494:520]:                  AVCodecParametersToCtxtErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[494:520]): AVCodecParametersToCtxtErr,
+	_BarPathTrackerErrCodeName[520:545]:                  CouldNotCreateHwDeviceErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[520:545]): CouldNotCreateHwDeviceErr,
+	_BarPathTrackerErrCodeName[545:565]:                  CouldNotReadFrameErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[545:565]): CouldNotReadFrameErr,
+	_BarPathTrackerErrCodeName[565:586]:                  CouldNotSendPacketErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[565:586]): CouldNotSendPacketErr,
+	_BarPathTrackerErrCodeName[586:609]:                  CouldNotReceiveFrameErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[586:609]): CouldNotReceiveFrameErr,
+	_BarPathTrackerErrCodeName[609:644]:                  CouldNotTransferDataFromGPUToCPUErr,
+	strings.ToLower(_BarPathTrackerErrCodeName[609:644]): CouldNotTransferDataFromGPUToCPUErr,
 }
 
 // ParseBarPathTrackerErrCode attempts to convert a string to a BarPathTrackerErrCode.
