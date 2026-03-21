@@ -12,6 +12,10 @@ import (
 	sbbs "code.barbellmath.net/barbell-math/smoothbrain-bs"
 )
 
+const (
+	VulkanSDKVersion = "1.4.341.1"
+)
+
 var (
 	ffmpegConf = []string{
 		// Don't need ffplay or it's deps
@@ -23,9 +27,15 @@ var (
 		"--enable-gpl", "--enable-vulkan", "--enable-libglslang", // "--enable-libx264",
 		`--extra-cflags="-I${VULKAN_SDK}/include"`,
 		`--extra-ldflags="-L${VULKAN_SDK}/lib"`,
-		"--enable-vulkan-static",
 		// Food for thought: might be useful one day for advanced vulkan filtering
 		// "--enable-libplacebo",
+	}
+
+	requiredVkSdkLibs = []string{
+		"libglslang.a", "libglslang-default-resource-limits.a",
+		"libOSDependent.a", "libMachineIndependent.a", "libGenericCodeGen.a",
+		"libSPIRV.a", "libSPIRV-Tools.a",
+		"libshaderc_combined.a",
 	}
 )
 
@@ -57,7 +67,7 @@ func setupDevTarget() {
 		"configure.dev",
 		sbbs.CdToRepoRoot(),
 		sbbs.TargetAsStage("download.submodules"),
-		sbbs.TargetAsStage("download.vulkan"),
+		sbbs.TargetAsStage("download.vulkanSdk"),
 		sbbs.TargetAsStage("build.ffmpeg"),
 	)
 }
@@ -84,52 +94,61 @@ func setupDownloadTargets() {
 
 	sbbs.RegisterTarget(
 		context.Background(),
-		"download.vksdk",
+		"download.vulkanSdk",
 		sbbs.Stage(
-			"Cd to repo root",
+			"Cd to vkSdk dir",
 			func(ctxt context.Context, cmdLineArgs ...string) error {
 				repoRoot, err := sbbs.GitRevParse(ctxt)
 				if err != nil {
 					return err
 				}
-				return sbbs.Cd(repoRoot)
+				return sbbs.Cd(path.Join(repoRoot, "_deps", "vkSdk"))
 			},
 		),
 		sbbs.Stage(
-			"cd to vkSdk src dir",
+			fmt.Sprintf("Get vulkan sdk (Version: %s)", VulkanSDKVersion),
 			func(ctxt context.Context, cmdLineArgs ...string) error {
-				return sbbs.Cd(path.Join("_deps", "vkSdk"))
+				if err := sbbs.RmDir(VulkanSDKVersion); err != nil {
+					return err
+				}
+				if err := sbbs.RunStdout(ctxt, "wget", fmt.Sprintf(
+					"https://sdk.lunarg.com/sdk/download/%s/linux/vulkansdk-linux-x86_64-%s.tar.xz",
+					VulkanSDKVersion, VulkanSDKVersion,
+				)); err != nil {
+					return err
+				}
+				if err := sbbs.RunStdout(
+					ctxt, "tar", "xf",
+					fmt.Sprintf("vulkansdk-linux-x86_64-%s.tar.xz", VulkanSDKVersion),
+				); err != nil {
+					return nil
+				}
+				if err := sbbs.RunStdout(
+					ctxt, "rm",
+					fmt.Sprintf("vulkansdk-linux-x86_64-%s.tar.xz", VulkanSDKVersion),
+				); err != nil {
+					return nil
+				}
+				return nil
 			},
 		),
 		sbbs.Stage(
-			"Clear vkSdk dir",
+			"Copy required static libs",
 			func(ctxt context.Context, cmdLineArgs ...string) error {
-				return sbbs.RmDir("./vulkan-linux-x86_64-1.4.341.1")
-			},
-		),
-		sbbs.Stage(
-			"Download sdk",
-			func(ctxt context.Context, cmdLineArgs ...string) error {
-				return sbbs.RunStdout(
-					ctxt, "wget",
-					"https://sdk.lunarg.com/sdk/download/1.4.341.1/linux/vulkansdk-linux-x86_64-1.4.341.1.tar.xz",
-				)
-			},
-		),
-		sbbs.Stage(
-			"Extract sdk",
-			func(ctxt context.Context, cmdLineArgs ...string) error {
-				return sbbs.RunStdout(
-					ctxt, "tar", "xf", "vulkansdk-linux-x86_64-1.4.341.1.tar.xz",
-				)
-			},
-		),
-		sbbs.Stage(
-			"Remove sdk tar",
-			func(ctxt context.Context, cmdLineArgs ...string) error {
-				return sbbs.RunStdout(
-					ctxt, "rm", "vulkansdk-linux-x86_64-1.4.341.1.tar.xz",
-				)
+				if err := sbbs.RmDir("lib"); err != nil {
+					return err
+				}
+				if err := sbbs.Mkdir("lib"); err != nil {
+					return err
+				}
+				for _, lib := range requiredVkSdkLibs {
+					if err := sbbs.RunStdout(ctxt, "cp", fmt.Sprintf(
+						"%s/x86_64/lib/%s", VulkanSDKVersion, lib,
+					), "./lib"); err != nil {
+						return err
+					}
+				}
+				return nil
 			},
 		),
 	)
@@ -148,13 +167,7 @@ func setupBuildFFmpegTarget() {
 				if err != nil {
 					return
 				}
-				return sbbs.Cd(repoRoot)
-			},
-		),
-		sbbs.Stage(
-			"cd to ffmpeg src dir",
-			func(ctxt context.Context, cmdLineArgs ...string) error {
-				return sbbs.Cd(path.Join("_deps", "ffmpeg", "src"))
+				return sbbs.Cd(path.Join(repoRoot, "_deps", "ffmpeg", "src"))
 			},
 		),
 		sbbs.Stage(

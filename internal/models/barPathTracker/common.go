@@ -2,18 +2,20 @@ package barpathtracker
 
 // #cgo CXXFLAGS: -O3 -Wall -Werror -march=native -std=c++23
 // #cgo CXXFLAGS: -I../../../_deps/ffmpeg/include
-// #cgo LDFLAGS: -lstdc++
 // #cgo LDFLAGS: -L../../../_deps/ffmpeg/lib
-// #cgo LDFLAGS: -L../../../_deps/vkSdk/1.4.341.1/x86_64/lib
+// #cgo LDFLAGS: -L../../../_deps/vkSdk/lib
 // #cgo LDFLAGS: -lavfilter -lavformat -lavcodec -lavutil -lavdevice -lswscale -lswresample
-// #cgo LDFLAGS: -lvulkan -lglslang
-// #cgo LDFLAGS: -lpthread -pthread
-// #cgo LDFLAGS: -lz -lm -ldl -llzma
-// #cgo LDFLAGS: -ldrm
+// #cgo LDFLAGS: -lglslang -lSPIRV -lOSDependent -lMachineIndependent -lGenericCodeGen -lglslang-default-resource-limits -lSPIRV-Tools -lshaderc_combined
+// #cgo LDFLAGS: -lstdc++ -pthread -lpthread
+// #cgo LDFLAGS: -lz -lm -llzma -ldrm
 // #include "cpu.h"
 import "C"
 import (
 	"fmt"
+	"image"
+	"image/png"
+	"os"
+	"unsafe"
 
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
 )
@@ -53,6 +55,30 @@ type (
 
 	CData struct{}
 )
+
+//export goSaveImage
+func goSaveImage(data *C.uchar, width C.int, height C.int) {
+	fmt.Println("IN GO CODE: ", width, height)
+	var name string
+	fmt.Scanln(&name)
+	size := width * height
+	imgData := (*[1 << 30]uint8)(unsafe.Pointer(data))[:size:size]
+
+	img := &image.Gray{
+		Pix:    imgData,
+		Stride: int(width),
+		Rect:   image.Rect(0, 0, int(width), int(height)),
+	}
+	outfile, err := os.Create("test.png")
+	if err != nil {
+		panic(err)
+	}
+	defer outfile.Close()
+	err = png.Encode(outfile, img)
+	if err != nil {
+		panic(err)
+	}
+}
 
 func Calc(
 	rawData *types.PhysicsData,

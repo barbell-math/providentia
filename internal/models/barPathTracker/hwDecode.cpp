@@ -25,9 +25,11 @@ namespace BarPathTracker {
 
 // ./_deps/ffmpeg/bin/ffmpeg -init_hw_device vulkan=vk:0 -filter_hw_device vk -hwaccel vulkan -hwaccel_output_format vulkan -i ~/Downloads/VID_20250930_165654085.mp4 -vf "scale_vulkan=w=600:h=800:format=nv12,hwdownload,format=nv12" -frames:v 1 output.png
 struct HwDecode {
+public:
 	const char *filterDesc = "scale_vulkan=w=800:h=600:format=nv12,hwdownload";
 	const char *file = NULL;
 
+private:
 	int videoStream = 0;
 	enum AVHWDeviceType type = AV_HWDEVICE_TYPE_NONE;
 	AVFilterGraph *filterGraph = NULL;

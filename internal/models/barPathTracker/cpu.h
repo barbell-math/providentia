@@ -6,8 +6,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+	extern void goSaveImage(unsigned char *data, int width, int height);
 
-	enum BarPathCalcErrCode_t CalcBarPathTrackerData(
+	enum BarPathTrackerErrCode_t CalcBarPathTrackerData(
 		// barPathData_t* data,
 		// barPathCalcHyperparams_t* opts
 	);

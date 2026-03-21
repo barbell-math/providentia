@@ -5,8 +5,10 @@
 
 ## Dependencies
 
-1. postgres
+1. go
 1. clang-21
+1. vulkan
+1. postgres
 
 ## Helpful Developer Cmds
 
