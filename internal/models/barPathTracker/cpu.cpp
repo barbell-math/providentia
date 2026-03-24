@@ -3,6 +3,7 @@
 #include "../../clib/glue.h"
 #include "./hwDecode.cpp"
 #include "./swDecode.cpp"
+#include "./analysis.cpp"
 
 namespace BarPathTracker {
 
@@ -14,13 +15,17 @@ extern "C" enum BarPathTrackerErrCode_t CalcBarPathTrackerData() {
 	const char* file = "/home/jack/Documents/research/vid/lifter3SquatTest.mp4";
 	// const char* file = "/home/jack/Documents/research/vid/lifter1DeadliftTestShort.mp4";
 
-	SwSuzukiAbeFindContours contourFinder;
-	SwMeanAdaptiveThresholding thresholding(11, 2, [&contourFinder](const SwFrame *frame) {
-		return contourFinder.onCallback(frame);
-	});
-	SwDecode swDecode(file, [&thresholding](const AVFrame *frame) {
-		return thresholding.onCallback(frame);
-	});
+	MooreNeighborTracing contourFinder;
+	MeanAdaptiveThresholding thresholding(
+		11, 2, [&contourFinder](const Frame &frame) {
+			return contourFinder.onCallback(frame);
+		}
+	);
+	SwDecode swDecode(
+		file, [&thresholding](const AVFrame *frame) {
+			return thresholding.onCallback(frame);
+		}
+	);
 	err = swDecode.decode();
 
 	// HwDecode hwDecode(file);

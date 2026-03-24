@@ -12,15 +12,12 @@ extern "C" {
 	#include <libavutil/display.h>
 }
 
-#include "cpu.h"
-#include <limits>
-#include <cassert>
 #include <unistd.h>
 #include <functional>
+
+#include "cpu.h"
 #include "../../clib/glue.h"
 #include "../../clib/errors.h"
-
-#include <iostream>
 
 namespace BarPathTracker {
 
@@ -40,7 +37,6 @@ public:
 	std::function<enum BarPathTrackerErrCode_t(const AVFrame *frame)> callback;
 
 private:
-	// const char *filterDesc = "scale=78:48";
 	const char *filterDesc0 = "scale='if(gt(iw,ih),1920,-2)': 'if(gt(iw,ih),-2,1920)'";
 	const char *filterDesc90 = "scale='if(gt(iw,ih),1920,-2)': 'if(gt(iw,ih),-2,1920)',transpose=1";
 	const char *filterDesc180 = "scale='if(gt(iw,ih),1920,-2)': 'if(gt(iw,ih),-2,1920)',transpose=2,transpose=2";
@@ -104,7 +100,6 @@ private:
 			AVPacketSideData *sd = &(params->coded_side_data[j]);
 			if(sd->type == AV_PKT_DATA_DISPLAYMATRIX) {
 				this->rotation = av_display_rotation_get((int32_t *)sd->data);
-				std::cout << "Frame is rotated: " << rotation << "degrees" << std::endl;
 			}
 		}
 		return NoBarPathTrackerErr;
@@ -307,183 +302,6 @@ public:
 		av_frame_free(&this->filtFrame);
 		av_packet_free(&this->packet);
 		return err;
-	}
-};
-
-class SwFrame {
-public:
-	uint8_t *frame = NULL;
-	size_t width = 0;
-	size_t height = 0;
-
-public:
-	SwFrame() {}
-	~SwFrame() { if (this->frame!=NULL) free(this->frame); }
-
-	void initIfNeeded(size_t width, size_t height) {
-		if (this->frame == NULL) {
-			size_t mallocSize = width*height*sizeof(uint8_t);
-			this->frame = (uint8_t*)malloc(mallocSize);
-			if (this->frame == NULL) {
-				// TODO - return oom err?? or throw??
-			}
-			this->width = width;
-			this->height = height;
-		}
-		assert(this->width == width && "Width of frames changed?");
-		assert(this->height == height && "Height of frames changed?");
-	}
-
-	uint8_t& operator[](size_t x, size_t y) {
-		assert(x>=0 && x < this->width && "Invalid X dimension");
-		assert(y>=0 && y < this->height && "Invalid Y dimension");
-		return this->frame[y*this->width+x];
-	}
-};
-
-class SwMeanAdaptiveThresholding {
-public:
-	const int neighborhoodSize = 11;
-	const int thresholdOffset = 2;
-	std::function<enum BarPathTrackerErrCode_t(const SwFrame *frame)> callback;
-private:
-	SwFrame frame;
-
-private:
-	double getNeighborhoodAvg(
-		const AVFrame *iterFrame,
-		size_t centerX,
-		size_t centerY
-	) {
-		double cntr = 0;
-		double total = 0;
-		uint8_t *data = iterFrame->data[0];
-		for (
-			size_t y=std::max((size_t)0, centerY-this->neighborhoodSize/2);
-			y<std::min(centerY+this->neighborhoodSize/2+1, (size_t)iterFrame->height);
-			y++
-		) {
-			for (
-				size_t x=std::max((size_t)0, centerX-this->neighborhoodSize/2);
-				x<std::min(centerX+this->neighborhoodSize/2+1, (size_t)iterFrame->width);
-				x++
-			) {
-				// Note: line size will not always be the same as frame->width
-				// line size is aligned to word boundaries
-				total += (double)(data[y*iterFrame->linesize[0] + x]);
-				cntr++;
-			}
-		}
-		if (cntr == 0) return 0;
-		return total/cntr;
-	}
-
-public:
-	SwMeanAdaptiveThresholding(
-		const int neighborhoodSize,
-		const int thresholdOffset,
-		std::function<enum BarPathTrackerErrCode_t(const SwFrame *frame)> callback
-	):
-		neighborhoodSize(neighborhoodSize),
-		thresholdOffset(thresholdOffset),
-		callback(callback) {}
-
-	enum BarPathTrackerErrCode_t onCallback(const AVFrame *iterFrame) {
-		this->frame.initIfNeeded(iterFrame->width, iterFrame->height);
-		uint8_t *data = iterFrame->data[0];
-		for (size_t y=0; y<iterFrame->height; y++) {
-			for (size_t x=0; x<iterFrame->width; x++) {
-				double threshold = this->getNeighborhoodAvg(iterFrame, x, y);
-				uint8_t *pix = &data[y*iterFrame->linesize[0] + x];
-				uint8_t *newPix = &this->frame[x, y];
-				if (*pix <= threshold-this->thresholdOffset) {
-					*newPix = std::numeric_limits<uint8_t>::min();
-				} else {
-					*newPix = std::numeric_limits<uint8_t>::max();
-				}
-			}
-		}
-		// this->displayFrame(frame);
-		// this->displayModifiedFrame();
-		goSaveImage(this->frame.frame, this->frame.width, this->frame.height);
-		return DecoderDoesNotSupportVulkanErr;
-		// return this->callback(&this->frame);
-	}
-
-	// void displayFrame(const AVFrame *frame) {
-	//     int x, y;
-	//     uint8_t *p0, *p;
-	// 
-	// 	// usleep(1000);
-	//     // if (frame->pts != AV_NOPTS_VALUE) {
-	//     //     if (last_pts != AV_NOPTS_VALUE) {
-	//     //         /* sleep roughly the right amount of time;
-	//     //          * usleep is in microseconds, just like AV_TIME_BASE. */
-	//     //         delay = av_rescale_q(frame->pts - last_pts,
-	//     //                              time_base, AV_TIME_BASE_Q);
-	//     //         if (delay > 0 && delay < 1000000)
-	//     //             usleep(delay);
-	//     //     }
-	//     //     last_pts = frame->pts;
-	//     // }
-	// 
-	//     /* Trivial ASCII grayscale display. */
-	//     p0 = frame->data[0];
-	//     puts("\033c");
-	//     for (y = 0; y < frame->height; y++) {
-	//         p = p0;
-	//         for (x = 0; x < frame->width; x++)
-	//             putchar(" .-+#"[*(p++) / 52]);
-	//         putchar('\n');
-	//         p0 += frame->linesize[0];
-	//     }
-	// 	printf("%d %d\n", frame->format, AV_PIX_FMT_NV12);
-	//     fflush(stdout);
-	// }
-
-	// void displayModifiedFrame() {
-	//     int x, y;
-	//     uint8_t *p0, *p;
-	// 
-	// 	// usleep(1000);
-	//     // if (frame->pts != AV_NOPTS_VALUE) {
-	//     //     if (last_pts != AV_NOPTS_VALUE) {
-	//     //         /* sleep roughly the right amount of time;
-	//     //          * usleep is in microseconds, just like AV_TIME_BASE. */
-	//     //         delay = av_rescale_q(frame->pts - last_pts,
-	//     //                              time_base, AV_TIME_BASE_Q);
-	//     //         if (delay > 0 && delay < 1000000)
-	//     //             usleep(delay);
-	//     //     }
-	//     //     last_pts = frame->pts;
-	//     // }
-	// 
-	//     /* Trivial ASCII grayscale display. */
-	//     p0 = this->modifiedFrame;
-	//     puts("\033c");
-	//     for (y = 0; y < this->height; y++) {
-	//         p = p0;
-	//         for (x = 0; x < this->width; x++)
-	//             putchar(" .-+#"[*(p++) / 52]);
-	//         putchar('\n');
-	//         p0 += this->width;
-	//     }
-	//     fflush(stdout);
-	// }
-};
-
-class SwSuzukiAbeFindContours {
-public:
-
-private:
-	SwFrame frame;
-
-public:
-	SwSuzukiAbeFindContours() {}
-
-	enum BarPathTrackerErrCode_t onCallback(const SwFrame *iterFrame) {
-		this->frame.initIfNeeded(iterFrame->width, iterFrame->height);
-		return NoBarPathTrackerErr;
 	}
 };
 

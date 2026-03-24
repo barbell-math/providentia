@@ -16,23 +16,11 @@ struct Vec2 {
 	double X;
 	double Y;
 
-	double Dot(Vec2& other) {
-		return this->X*other.X + this->Y*other.Y;
-	}
+	double Dot(Vec2& other) { return this->X*other.X + this->Y*other.Y; }
+	// double Mag(const Vec2& v) { return std::sqrt(v.X*v.X + v.Y*v.Y); };
 
-	friend Vec2 operator*(Vec2& l, double r) {
-		return Vec2{
-			.X = l.X*r,
-			.Y = l.Y*r,
-		};
-	}
-
-	friend Vec2 operator*(Vec2 l, Vec2& r) {
-		return Vec2{
-			.X = l.X*r.X,
-			.Y = l.Y*r.Y,
-		};
-	}
+	friend Vec2 operator*(Vec2& l, double r) { return Vec2{.X = l.X*r, .Y = l.Y*r}; }
+	friend Vec2 operator*(Vec2 l, Vec2& r) { return Vec2{.X = l.X*r.X, .Y = l.Y*r.Y}; }
 
 	friend std::ostream& operator<<(std::ostream& os, Vec2 v) {
 		os << "Vec2{X: " << v.X << ", Y: " << v.Y << "}";
@@ -41,45 +29,21 @@ struct Vec2 {
 };
 
 struct Vec2XOps : Vec2 {
-	friend bool operator>(const Vec2XOps l, const Vec2XOps r) {
-		return l.X > r.X;
-	}
-	friend bool operator<(const Vec2XOps l, const Vec2XOps r) {
-		return l.X < r.X;
-	}
-	friend bool operator>=(const Vec2XOps l, const Vec2XOps r) {
-		return l.X >= r.X;
-	}
-	friend bool operator<=(const Vec2XOps l, const Vec2XOps r) {
-		return l.X <= r.X;
-	}
-	friend bool operator!=(const Vec2XOps l, const Vec2XOps r) {
-		return l.X != r.X;
-	}
-	friend bool operator==(const Vec2XOps l, const Vec2XOps r) {
-		return l.X == r.X;
-	}
+	friend bool operator>(const Vec2XOps l, const Vec2XOps r) { return l.X > r.X; }
+	friend bool operator<(const Vec2XOps l, const Vec2XOps r) { return l.X < r.X; }
+	friend bool operator>=(const Vec2XOps l, const Vec2XOps r) { return l.X >= r.X; }
+	friend bool operator<=(const Vec2XOps l, const Vec2XOps r) { return l.X <= r.X; }
+	friend bool operator!=(const Vec2XOps l, const Vec2XOps r) { return l.X != r.X; }
+	friend bool operator==(const Vec2XOps l, const Vec2XOps r) { return l.X == r.X; }
 };
 
 struct Vec2YOps : Vec2 {
-	friend bool operator>(const Vec2YOps l, const Vec2YOps r) {
-		return l.Y > r.Y;
-	}
-	friend bool operator<(const Vec2YOps l, const Vec2YOps r) {
-		return l.Y < r.Y;
-	}
-	friend bool operator>=(const Vec2YOps l, const Vec2YOps r) {
-		return l.Y >= r.Y;
-	}
-	friend bool operator<=(const Vec2YOps l, const Vec2YOps r) {
-		return l.Y <= r.Y;
-	}
-	friend bool operator!=(const Vec2YOps l, const Vec2YOps r) {
-		return l.Y != r.Y;
-	}
-	friend bool operator==(const Vec2YOps l, const Vec2YOps r) {
-		return l.Y == r.Y;
-	}
+	friend bool operator>(const Vec2YOps l, const Vec2YOps r) { return l.Y > r.Y; }
+	friend bool operator<(const Vec2YOps l, const Vec2YOps r) { return l.Y < r.Y; }
+	friend bool operator>=(const Vec2YOps l, const Vec2YOps r) { return l.Y >= r.Y; }
+	friend bool operator<=(const Vec2YOps l, const Vec2YOps r) { return l.Y <= r.Y; }
+	friend bool operator!=(const Vec2YOps l, const Vec2YOps r) { return l.Y != r.Y; }
+	friend bool operator==(const Vec2YOps l, const Vec2YOps r) { return l.Y == r.Y; }
 };
 
 // Operators -------------------------------------------------------------------
