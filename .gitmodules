@@ -2,3 +2,7 @@
 	shallow = true
 	path = _deps/ffmpeg/src
 	url = https://github.com/FFmpeg/FFmpeg
+[submodule "_deps/eigen/src"]
+	shallow = true
+	path = _deps/eigen/src
+	url = https://gitlab.com/libeigen/eigen
