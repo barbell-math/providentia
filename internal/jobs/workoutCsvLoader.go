@@ -86,12 +86,6 @@ func UploadWorkoutsFromCSV(
 		default:
 		}
 
-		state.Log.Log(
-			ctxt, sblog.VLevel(3),
-			formatJobLogLine("UploadWorkoutsFromCSV", -1, "Processing data file"),
-			"File", file,
-		)
-
 		clientEmail := strings.TrimSuffix(path.Base(file), path.Ext(file))
 		if _, err := mail.ParseAddress(clientEmail); err != nil {
 			return sberr.AppendError(
@@ -104,11 +98,17 @@ func UploadWorkoutsFromCSV(
 			)
 		}
 
+		uid := UID_CNTR.Add(1)
+		state.Log.Log(
+			ctxt, sblog.VLevel(3),
+			formatJobLogLine("UploadWorkoutsFromCSV", uid, "Processing data file"),
+			"File", file,
+		)
 		state.CSVLoaderJobQueue.Schedule(&workoutCSVLoader{
 			S:                         state,
 			Tx:                        tx,
 			B:                         opts.Batch,
-			UID:                       UID_CNTR.Add(1),
+			UID:                       uid,
 			ClientEmail:               clientEmail,
 			File:                      file,
 			Opts:                      opts.Opts,
@@ -124,10 +124,7 @@ func UploadWorkoutsFromCSV(
 }
 
 func (w *workoutCSVLoader) JobType(_ types.CSVLoaderJob) {}
-
-func (w *workoutCSVLoader) Batch() *sbjobqueue.Batch {
-	return w.B
-}
+func (w *workoutCSVLoader) Batch() *sbjobqueue.Batch     { return w.B }
 
 func (w *workoutCSVLoader) formatLogLine(msg string) string {
 	return formatJobLogLine("workoutCSVLoader", w.UID, msg)
@@ -139,7 +136,6 @@ func (w *workoutCSVLoader) Run(ctxt context.Context) (opErr error) {
 	w.PhysDataBatch, _ = sbjobqueue.BatchWithContext(ctxt)
 
 	var f *os.File
-	cntr := 0
 	params := []types.Workout{}
 	prevWorkoutId := types.WorkoutId{}
 	reqCols := sbcsv.ReqColsForStruct[rawWorkoutData]()
@@ -199,7 +195,6 @@ func (w *workoutCSVLoader) Run(ctxt context.Context) (opErr error) {
 				params[len(params)-1].Exercises,
 				iterExerciseData,
 			)
-			cntr++
 			return nil
 		},
 	}); opErr != nil {

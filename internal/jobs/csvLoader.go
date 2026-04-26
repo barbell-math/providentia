@@ -59,16 +59,17 @@ func UploadFromCSV[T genericCSVAvailableTypes](
 		default:
 		}
 
+		uid := UID_CNTR.Add(1)
 		state.Log.Log(
 			ctxt, sblog.VLevel(3),
-			formatJobLogLine("UploadFromCSV", -1, "Processing data file"),
+			formatSchedulerLogLine("UploadFromCSV", uid, "Processing data file"),
 			"File", file,
 		)
 		state.CSVLoaderJobQueue.Schedule(&genericCSVLoader[T]{
 			S:         state,
 			Tx:        tx,
 			B:         opts.Batch,
-			UID:       UID_CNTR.Add(1),
+			UID:       uid,
 			File:      file,
 			Opts:      opts.Opts,
 			WriteFunc: opts.Creator,
@@ -82,10 +83,7 @@ func UploadFromCSV[T genericCSVAvailableTypes](
 }
 
 func (w *genericCSVLoader[T]) JobType(_ types.CSVLoaderJob) {}
-
-func (w *genericCSVLoader[T]) Batch() *sbjobqueue.Batch {
-	return w.B
-}
+func (w *genericCSVLoader[T]) Batch() *sbjobqueue.Batch     { return w.B }
 
 func (w *genericCSVLoader[T]) formatLogLine(msg string) string {
 	return formatJobLogLine("genericCSVLoader", w.UID, msg)

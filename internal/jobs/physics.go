@@ -93,9 +93,11 @@ func RunPhysicsJobs(
 		if ceilSets > opts.ExerciseData.Sets && int(floorSets) == i {
 			expReps = max(int32((opts.ExerciseData.Sets-floorSets)*float64(opts.ExerciseData.Reps)), 1)
 		}
+
+		uid := UID_CNTR.Add(1)
 		state.Log.Log(
 			ctxt, sblog.VLevel(3),
-			formatJobLogLine("RunPhysicsJobs", -1, "Processing data for exercise"),
+			formatSchedulerLogLine("RunPhysicsJobs", uid, "Processing data for exercise"),
 			"Exercise", fmt.Sprintf("%+v", struct {
 				Exercise string
 				Set      int
@@ -106,7 +108,7 @@ func RunPhysicsJobs(
 			B:                    opts.Batch,
 			S:                    state,
 			Tx:                   tx,
-			UID:                  UID_CNTR.Add(1),
+			UID:                  uid,
 			BarPathCalcParams:    opts.BarPathCalcParams,
 			BarTrackerCalcParams: opts.BarTrackerCalcParams,
 			Weight:               opts.ExerciseData.Weight,
@@ -123,10 +125,7 @@ func RunPhysicsJobs(
 }
 
 func (p *physics) JobType(_ types.PhysicsJob) {}
-
-func (p *physics) Batch() *sbjobqueue.Batch {
-	return p.B
-}
+func (p *physics) Batch() *sbjobqueue.Batch   { return p.B }
 
 func (p *physics) formatLogLine(msg string) string {
 	return formatJobLogLine("physics", p.UID, msg)
@@ -139,9 +138,19 @@ func (p *physics) Run(ctxt context.Context) (opErr error) {
 	case types.VideoBarPathData:
 		p.Results.Value.VideoPath = p.RawData.VideoPath
 		// TODO - run video model to set time and position data
+		//p.S.Log.Log(
+		//	ctxt, sblog.VLevel(3),
+		//	p.formatLogLine("Finished processing video"),
+		//	"Path", p.Results.Value.VideoPath,
+		//)
 	case types.TimeSeriesBarPathData:
 		p.Results.Value.Time = p.RawData.TimeSeries.TimeData
 		p.Results.Value.Position = p.RawData.TimeSeries.PositionData
+		p.S.Log.Log(
+			ctxt, sblog.VLevel(3),
+			p.formatLogLine("Finished processing time series position data"),
+			"PointsProcessed", len(p.Results.Value.Time),
+		)
 	}
 
 	if opErr = barpathphysdata.Calc(
@@ -154,7 +163,6 @@ func (p *physics) Run(ctxt context.Context) (opErr error) {
 	p.S.Log.Log(
 		ctxt, sblog.VLevel(3),
 		p.formatLogLine("Finished processing physics data"),
-		"PointsProcessed", len(p.Results.Value.Time),
 	)
 	return nil
 errReturn:
