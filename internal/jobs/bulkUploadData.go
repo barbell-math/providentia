@@ -9,8 +9,8 @@ import (
 	"code.barbellmath.net/barbell-math/providentia/internal/dal"
 	"code.barbellmath.net/barbell-math/providentia/internal/util"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
-	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
-	sbjobqueue "code.barbellmath.net/barbell-math/smoothbrain-jobQueue"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sberrs"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sbjobqueue"
 	"github.com/jackc/pgx/v5"
 )
 

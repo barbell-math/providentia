@@ -2,13 +2,14 @@ package jobs
 
 import (
 	"context"
+	"fmt"
 	"math"
 
 	barpathphysdata "code.barbellmath.net/barbell-math/providentia/internal/models/barPathPhysData"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
-	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
-	sbjobqueue "code.barbellmath.net/barbell-math/smoothbrain-jobQueue"
-	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sberrs"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sbjobqueue"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sblog"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -17,7 +18,7 @@ type (
 		B   *sbjobqueue.Batch
 		S   *types.State
 		Tx  pgx.Tx
-		UID uint64
+		UID int64
 
 		BarPathCalcParams    *types.BarPathCalcHyperparams
 		BarTrackerCalcParams *types.BarPathTrackerHyperparams
@@ -71,7 +72,6 @@ func RunPhysicsJobs(
 	}
 	opts.ExerciseData.PhysData = opts.ExerciseData.PhysData[:len(opts.RawData)]
 
-	var iterPhysData types.PhysicsData
 	for i, exerciseSet := range opts.RawData {
 		select {
 		case <-ctxt.Done():
@@ -93,6 +93,15 @@ func RunPhysicsJobs(
 		if ceilSets > opts.ExerciseData.Sets && int(floorSets) == i {
 			expReps = max(int32((opts.ExerciseData.Sets-floorSets)*float64(opts.ExerciseData.Reps)), 1)
 		}
+		state.Log.Log(
+			ctxt, sblog.VLevel(3),
+			formatJobLogLine("RunPhysicsJobs", -1, "Processing data for exercise"),
+			"Exercise", fmt.Sprintf("%+v", struct {
+				Exercise string
+				Set      int
+				Variant  string
+			}{opts.ExerciseData.Name, i, opts.RawData[i].Flag.String()}),
+		)
 		state.PhysicsJobQueue.Schedule(&physics{
 			B:                    opts.Batch,
 			S:                    state,
@@ -105,13 +114,6 @@ func RunPhysicsJobs(
 			RawData:              opts.RawData[i],
 			Results:              &opts.ExerciseData.PhysData[i],
 		})
-
-		opts.ExerciseData.PhysData[i] = types.Optional[types.PhysicsData]{
-			Present: true,
-			Value:   iterPhysData,
-		}
-		iterPhysData.Time = iterPhysData.Time[:0]
-		iterPhysData.Position = iterPhysData.Position[:0]
 	}
 
 	if wait {
@@ -152,6 +154,7 @@ func (p *physics) Run(ctxt context.Context) (opErr error) {
 	p.S.Log.Log(
 		ctxt, sblog.VLevel(3),
 		p.formatLogLine("Finished processing physics data"),
+		"PointsProcessed", len(p.Results.Value.Time),
 	)
 	return nil
 errReturn:

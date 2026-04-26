@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
-	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sberrs"
 	"github.com/jackc/pgx/v5"
 )
 

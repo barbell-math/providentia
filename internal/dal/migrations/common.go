@@ -6,13 +6,13 @@ import (
 
 	"code.barbellmath.net/barbell-math/providentia/internal/dal"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
-	sbsqlm "code.barbellmath.net/barbell-math/smoothbrain-sqlmigrate"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sbsql"
 	"github.com/jackc/pgx/v5"
 )
 
 //go:embed *.sql
 var SqlMigrations embed.FS
-var PostOps = map[sbsqlm.Migration]sbsqlm.PostMigrationOp[*types.State]{
+var PostOps = map[sbsql.Migration]sbsql.PostMigrationOp[*types.State]{
 	0: func(ctxt context.Context, tx pgx.Tx, state *types.State) error {
 		if err := dal.CreateExerciseFocusWithID(
 			ctxt, state, tx, ExerciseFocusSetupData,
@@ -50,7 +50,7 @@ var PostOps = map[sbsqlm.Migration]sbsqlm.PostMigrationOp[*types.State]{
 }
 
 func RunMigrations(ctxt context.Context, state *types.State) (opErr error) {
-	m := sbsqlm.Migrations[*types.State]{}
+	m := sbsql.Migrations[*types.State]{}
 	if opErr = m.Load(SqlMigrations, ".", PostOps); opErr != nil {
 		return
 	}

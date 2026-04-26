@@ -8,8 +8,8 @@ import (
 	"code.barbellmath.net/barbell-math/providentia/internal/dal/migrations"
 	"code.barbellmath.net/barbell-math/providentia/lib/logic"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
-	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
-	sbtest "code.barbellmath.net/barbell-math/smoothbrain-test"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sbcsv"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sbtest"
 )
 
 var (

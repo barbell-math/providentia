@@ -1,20 +1,20 @@
 module code.barbellmath.net/barbell-math/providentia
 
-go 1.25.1
+go 1.25.4
 
 require (
-	code.barbellmath.net/barbell-math/smoothbrain-arena v0.0.0-20251224055001-fa25c182f38a
-	code.barbellmath.net/barbell-math/smoothbrain-argparse v0.0.0-20251214093131-51ce1b0487fa
-	code.barbellmath.net/barbell-math/smoothbrain-bs v0.0.0-20260125031349-6dd10effa444
-	code.barbellmath.net/barbell-math/smoothbrain-cgoGlue v0.0.0-20260125045330-d146d9f62161
-	code.barbellmath.net/barbell-math/smoothbrain-csv v0.0.0-20251214092924-4bc2bcdcf726
-	code.barbellmath.net/barbell-math/smoothbrain-errs v0.0.0-20251214092612-fc98d8585e15
-	code.barbellmath.net/barbell-math/smoothbrain-jobQueue v0.0.0-20251226210359-024b18a3f9f4
-	code.barbellmath.net/barbell-math/smoothbrain-logging v0.0.0-20251214091108-38f7f10ecc50
-	code.barbellmath.net/barbell-math/smoothbrain-sqlmigrate v0.0.0-20251219074219-9b844eb6a153
-	code.barbellmath.net/barbell-math/smoothbrain-test v0.0.0-20251219050905-f51a8750587a
-	github.com/jackc/pgx/v5 v5.8.0
-	golang.org/x/exp v0.0.0-20260112195511-716be5621a96
+	code.barbellmath.net/carmichaeljr/smoothbrain/sbarena v0.0.0-20260425201130-15b7b12384d9
+	code.barbellmath.net/carmichaeljr/smoothbrain/sbargparse v0.0.0-20260425201130-15b7b12384d9
+	code.barbellmath.net/carmichaeljr/smoothbrain/sbbs v0.0.0-20260425201130-15b7b12384d9
+	code.barbellmath.net/carmichaeljr/smoothbrain/sbcglue v0.0.0-20260425201130-15b7b12384d9
+	code.barbellmath.net/carmichaeljr/smoothbrain/sbcsv v0.0.0-20260425201130-15b7b12384d9
+	code.barbellmath.net/carmichaeljr/smoothbrain/sberrs v0.0.0-20260425201130-15b7b12384d9
+	code.barbellmath.net/carmichaeljr/smoothbrain/sbjobqueue v0.0.0-20260425201130-15b7b12384d9
+	code.barbellmath.net/carmichaeljr/smoothbrain/sblog v0.0.0-20260425201130-15b7b12384d9
+	code.barbellmath.net/carmichaeljr/smoothbrain/sbsql v0.0.0-20260425201130-15b7b12384d9
+	code.barbellmath.net/carmichaeljr/smoothbrain/sbtest v0.0.0-20260424222108-7d9274c35131
+	github.com/jackc/pgx/v5 v5.9.2
+	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f
 )
 
 require (
@@ -22,6 +22,6 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
-	golang.org/x/sync v0.19.0 // indirect
-	golang.org/x/text v0.33.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
+	golang.org/x/text v0.36.0 // indirect
 )

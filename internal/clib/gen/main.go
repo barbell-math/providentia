@@ -7,8 +7,8 @@ import (
 	barpathphysdata "code.barbellmath.net/barbell-math/providentia/internal/models/barPathPhysData"
 	barpathtracker "code.barbellmath.net/barbell-math/providentia/internal/models/barPathTracker"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
-	testgen "code.barbellmath.net/barbell-math/smoothbrain-cgoGlue/testGen"
-	typegen "code.barbellmath.net/barbell-math/smoothbrain-cgoGlue/typeGen"
+	testgen "code.barbellmath.net/carmichaeljr/smoothbrain/sbcglue/testGen"
+	typegen "code.barbellmath.net/carmichaeljr/smoothbrain/sbcglue/typeGen"
 )
 
 func main() {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sblog"
 	"github.com/jackc/pgx/v5/tracelog"
 )
 

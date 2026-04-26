@@ -2,15 +2,15 @@ package jobs
 
 import (
 	"context"
-	"io"
 	"iter"
+	"os"
 
 	"code.barbellmath.net/barbell-math/providentia/internal/dal"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
-	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
-	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
-	sbjobqueue "code.barbellmath.net/barbell-math/smoothbrain-jobQueue"
-	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sbcsv"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sberrs"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sbjobqueue"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sblog"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -23,8 +23,8 @@ type (
 		B         *sbjobqueue.Batch
 		S         *types.State
 		Tx        pgx.Tx
-		UID       uint64
-		FileChunk io.Reader
+		UID       int64
+		File      string
 		Opts      *sbcsv.Opts
 		WriteFunc dal.CreateFunc[T]
 	}
@@ -61,29 +61,18 @@ func UploadFromCSV[T genericCSVAvailableTypes](
 
 		state.Log.Log(
 			ctxt, sblog.VLevel(3),
-			formatJobLogLine("UploadFromCSV", 0, "Processing data file"),
+			formatJobLogLine("UploadFromCSV", -1, "Processing data file"),
 			"File", file,
 		)
-		fileChunks, err := sbcsv.ChunkFile(
-			file, sbcsv.NewBasicFileChunk, state.ClientCSVFileChunks,
-		)
-		if err != nil {
-			return err
-		}
-		for _, chunk := range fileChunks {
-			if len(chunk.Data) == 0 {
-				continue
-			}
-			state.CSVLoaderJobQueue.Schedule(&genericCSVLoader[T]{
-				S:         state,
-				Tx:        tx,
-				B:         opts.Batch,
-				UID:       UID_CNTR.Add(1),
-				FileChunk: chunk,
-				Opts:      opts.Opts,
-				WriteFunc: opts.Creator,
-			})
-		}
+		state.CSVLoaderJobQueue.Schedule(&genericCSVLoader[T]{
+			S:         state,
+			Tx:        tx,
+			B:         opts.Batch,
+			UID:       UID_CNTR.Add(1),
+			File:      file,
+			Opts:      opts.Opts,
+			WriteFunc: opts.Creator,
+		})
 	}
 
 	if wait {
@@ -104,9 +93,15 @@ func (w *genericCSVLoader[T]) formatLogLine(msg string) string {
 
 func (w *genericCSVLoader[T]) Run(ctxt context.Context) (opErr error) {
 	w.S.Log.Log(ctxt, sblog.VLevel(3), w.formatLogLine("Starting..."))
-
+	var f *os.File
 	params := []T{}
-	if opErr = sbcsv.LoadReader(w.FileChunk, &sbcsv.LoadOpts{
+
+	f, opErr = os.Open(w.File)
+	if opErr != nil {
+		goto errReturn
+	}
+
+	if opErr = sbcsv.LoadReader(f, &sbcsv.LoadOpts{
 		Opts:          *w.Opts,
 		RequestedCols: sbcsv.ReqColsForStruct[T](),
 		Op:            sbcsv.RowToStructOp(&params),

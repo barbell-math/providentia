@@ -6,7 +6,7 @@
 ## Dependencies
 
 1. go
-1. clang-21
+1. clang-21 or greater
 1. vulkan
 1. postgres
 

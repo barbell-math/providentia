@@ -7,7 +7,7 @@ import (
 	"code.barbellmath.net/barbell-math/providentia/internal/jobs"
 	"code.barbellmath.net/barbell-math/providentia/internal/util"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
-	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sbcsv"
 )
 
 // Adds the supplied exercises to the database. The supplied name for each

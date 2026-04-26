@@ -6,6 +6,7 @@ import (
 	"code.barbellmath.net/barbell-math/providentia/internal/dal/migrations"
 	"code.barbellmath.net/barbell-math/providentia/internal/jobs"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sbjobqueue"
 )
 
 // Runs all necessary migrations. Previously run migrations will not run again
@@ -29,4 +30,33 @@ func BulkUploadData(
 	opts *types.BulkUploadDataOpts,
 ) (opErr error) {
 	return runOp(ctxt, jobs.BulkUploadData, opts)
+}
+
+// Initializes the providentia library by:
+//
+//   - Createing a cancelable context with the state variable
+//   - Creating a job poller and running it in a separate go routine
+//   - Checking if database migrations need to be run and running them
+//
+// This is a generic init function. If you wish to customize the job poller to
+// include queues from your application or any other custom initialization logic
+// you must perform the steps listed above somewhere in your code before calling
+// any providentia library functions.
+func Init(
+	ctxt context.Context,
+	state *types.State,
+) (provLifetime context.Context, cleanup func(), opErr error) {
+	appLifetime, appCancel := context.WithCancel(ctxt)
+	provLifetime = WithStateValue(appLifetime, state)
+
+	go sbjobqueue.Poll(
+		appLifetime, state.PhysicsJobQueue, state.CSVLoaderJobQueue,
+	)
+	cleanup = func() {
+		appCancel()
+		CleanupState(state)
+	}
+
+	opErr = RunMigrations(provLifetime)
+	return
 }

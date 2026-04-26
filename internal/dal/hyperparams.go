@@ -7,8 +7,8 @@ import (
 
 	"code.barbellmath.net/barbell-math/providentia/internal/util"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
-	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
-	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sberrs"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sblog"
 	"github.com/jackc/pgx/v5"
 )
 

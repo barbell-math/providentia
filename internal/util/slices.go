@@ -7,7 +7,7 @@ import (
 	"path"
 	"time"
 
-	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sberrs"
 	"golang.org/x/exp/constraints"
 )
 

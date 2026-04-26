@@ -3,7 +3,7 @@ package types
 import (
 	"time"
 
-	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sbcsv"
 )
 
 // Basic types

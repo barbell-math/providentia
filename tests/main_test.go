@@ -10,8 +10,7 @@ import (
 
 	"code.barbellmath.net/barbell-math/providentia/lib/logic"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
-	sbargp "code.barbellmath.net/barbell-math/smoothbrain-argparse"
-	sbjobqueue "code.barbellmath.net/barbell-math/smoothbrain-jobQueue"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sbargparse"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -94,22 +93,14 @@ func testAppMain(
 		panic(err)
 	}
 
-	// Normally this would be derived from context.Background()
-	appLifetime, appCancel := context.WithCancel(testCtxt)
-	state, err := logic.ConfToState(appLifetime, &conf)
+	state, err := logic.ConfToState(testCtxt, &conf)
 	if err != nil {
 		panic(err)
 	}
-	go sbjobqueue.Poll(
-		appLifetime,
-		state.PhysicsJobQueue, state.VideoJobQueue, state.CSVLoaderJobQueue,
-	)
 
-	// Notice how cancellation can be derived from a parent context. This allows
-	// separate lib calls to be canceled separately while still allowing a
-	// single parent context to cancel all lib calls at once.
-	provLifetime := logic.WithStateValue(appLifetime, state)
-	if err := logic.RunMigrations(provLifetime); err != nil {
+	var cleanup func()
+	provLifetime, cleanup, err := logic.Init(context.Background(), state)
+	if err != nil {
 		panic(err)
 	}
 
@@ -119,7 +110,7 @@ func testAppMain(
 	// Normally there would be a defer function call rather than returning a
 	// function
 	return provLifetime, func() {
-		appCancel()
+		cleanup()
 		logic.CleanupState(state)
 	}
 }

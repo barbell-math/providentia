@@ -2,7 +2,6 @@ package jobs
 
 import (
 	"context"
-	"io"
 	"io/fs"
 	"iter"
 	"math"
@@ -11,17 +10,16 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
 
 	"code.barbellmath.net/barbell-math/providentia/internal/dal"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
-	sbcsv "code.barbellmath.net/barbell-math/smoothbrain-csv"
-	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
-	sbjobqueue "code.barbellmath.net/barbell-math/smoothbrain-jobQueue"
-	sblog "code.barbellmath.net/barbell-math/smoothbrain-logging"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sbcsv"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sberrs"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sbjobqueue"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sblog"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -37,28 +35,19 @@ type (
 		DataDir       string
 	}
 
-	workoutFileChunk struct {
-		Headers    []byte
-		FullFile   []byte
-		StartIdx   int
-		EndIdx     int
-		Started    bool
-		Stop       bool
-		ReachedEnd bool
-		readPos    int
-	}
-
 	workoutCSVLoader struct {
 		B           *sbjobqueue.Batch
 		S           *types.State
 		Tx          pgx.Tx
-		UID         uint64
+		UID         int64
 		ClientEmail string
-		FileDir     string
-		FileChunk   *workoutFileChunk
+		File        string
 		Opts        *sbcsv.Opts
 		*types.BarPathCalcHyperparams
 		*types.BarPathTrackerHyperparams
+
+		DataDirMap    map[types.WorkoutId][]string
+		PhysDataBatch *sbjobqueue.Batch
 	}
 
 	CSVWorkoutLoaderOpts struct {
@@ -74,51 +63,6 @@ var (
 	setDataFileRe         = `^Set([0-9]+).(csv|mp4)$`
 	compiledSetDataFileRe = regexp.MustCompile(setDataFileRe)
 )
-
-func NewWorkoutFileChunk(
-	headers []byte,
-	fullFile []byte,
-	startIdx int,
-	endIdx int,
-) *workoutFileChunk {
-	return &workoutFileChunk{
-		Headers:    headers,
-		FullFile:   fullFile,
-		StartIdx:   startIdx,
-		EndIdx:     endIdx,
-		Started:    (startIdx == 0),
-		ReachedEnd: false,
-		Stop:       false,
-	}
-}
-
-func (f *workoutFileChunk) Read(buf []byte) (n int, err error) {
-	if f.Stop || f.readPos >= len(f.Headers)+len(f.FullFile[f.StartIdx:]) {
-		err = io.EOF
-		return
-	}
-	f.ReachedEnd = (f.readPos+f.StartIdx-len(f.Headers) > f.EndIdx)
-	if f.readPos < len(f.Headers) {
-		headersN := copy(buf, f.Headers[f.readPos:])
-		f.readPos += headersN
-		n += headersN
-	}
-	if n < len(buf) && f.readPos < len(f.Headers)+len(f.FullFile[f.StartIdx:]) {
-		endIdx := slices.Index(
-			f.FullFile[f.StartIdx+f.readPos-len(f.Headers):],
-			'\n',
-		)
-		if endIdx == -1 {
-			endIdx = len(f.FullFile)
-		} else {
-			endIdx += f.StartIdx + f.readPos - len(f.Headers) + 1
-		}
-		dataN := copy(buf[n:], f.FullFile[f.StartIdx+f.readPos-len(f.Headers):endIdx])
-		f.readPos += dataN
-		n += dataN
-	}
-	return
-}
 
 func UploadWorkoutsFromCSV(
 	ctxt context.Context,
@@ -144,7 +88,7 @@ func UploadWorkoutsFromCSV(
 
 		state.Log.Log(
 			ctxt, sblog.VLevel(3),
-			formatJobLogLine("UploadWorkoutsFromCSV", 0, "Processing data file"),
+			formatJobLogLine("UploadWorkoutsFromCSV", -1, "Processing data file"),
 			"File", file,
 		)
 
@@ -160,29 +104,17 @@ func UploadWorkoutsFromCSV(
 			)
 		}
 
-		fileChunks, err := sbcsv.ChunkFile(
-			file, NewWorkoutFileChunk, state.WorkoutCSVFileChunks,
-		)
-		if err != nil {
-			return err
-		}
-		for _, chunk := range fileChunks {
-			if chunk.EndIdx-chunk.StartIdx <= 0 {
-				continue
-			}
-			state.CSVLoaderJobQueue.Schedule(&workoutCSVLoader{
-				S:                         state,
-				Tx:                        tx,
-				B:                         opts.Batch,
-				UID:                       UID_CNTR.Add(1),
-				ClientEmail:               clientEmail,
-				FileDir:                   path.Dir(file),
-				FileChunk:                 chunk,
-				Opts:                      opts.Opts,
-				BarPathCalcHyperparams:    opts.BarPathCalcHyperparams,
-				BarPathTrackerHyperparams: opts.BarPathTrackerHyperparams,
-			})
-		}
+		state.CSVLoaderJobQueue.Schedule(&workoutCSVLoader{
+			S:                         state,
+			Tx:                        tx,
+			B:                         opts.Batch,
+			UID:                       UID_CNTR.Add(1),
+			ClientEmail:               clientEmail,
+			File:                      file,
+			Opts:                      opts.Opts,
+			BarPathCalcHyperparams:    opts.BarPathCalcHyperparams,
+			BarPathTrackerHyperparams: opts.BarPathTrackerHyperparams,
+		})
 	}
 
 	if wait {
@@ -203,21 +135,36 @@ func (w *workoutCSVLoader) formatLogLine(msg string) string {
 
 func (w *workoutCSVLoader) Run(ctxt context.Context) (opErr error) {
 	w.S.Log.Log(ctxt, sblog.VLevel(3), w.formatLogLine("Starting..."))
+	w.DataDirMap = map[types.WorkoutId][]string{}
+	w.PhysDataBatch, _ = sbjobqueue.BatchWithContext(ctxt)
 
-	firstWorkoutIdSet, lastWorkoutIdSet := w.FileChunk.StartIdx == 0, false
-	prevWorkoutId, lastWorkoutId := types.WorkoutId{}, types.WorkoutId{}
-
+	var f *os.File
+	cntr := 0
 	params := []types.Workout{}
-	if opErr = sbcsv.LoadReader(w.FileChunk, &sbcsv.LoadOpts{
+	prevWorkoutId := types.WorkoutId{}
+	reqCols := sbcsv.ReqColsForStruct[rawWorkoutData]()
+	fieldIdxs := []int{}
+
+	fieldIdxs, opErr = sbcsv.ReqColsToFieldIdxs[rawWorkoutData](reqCols)
+	if opErr != nil {
+		goto errReturn
+	}
+
+	f, opErr = os.Open(w.File)
+	if opErr != nil {
+		goto errReturn
+	}
+
+	if opErr = sbcsv.LoadReader(f, &sbcsv.LoadOpts{
 		Opts:          *w.Opts,
-		RequestedCols: sbcsv.ReqColsForStruct[rawWorkoutData](),
+		RequestedCols: reqCols,
 		Op: func(
 			o *sbcsv.Opts,
 			rowIdx int,
 			row []string,
 			reqCols []sbcsv.RequestedCols,
 		) error {
-			rawData, err := sbcsv.RowToStruct[rawWorkoutData](o, row, reqCols)
+			rawData, err := sbcsv.RowToStruct[rawWorkoutData](o, row, reqCols, fieldIdxs)
 			if err != nil {
 				return err
 			}
@@ -227,40 +174,15 @@ func (w *workoutCSVLoader) Run(ctxt context.Context) (opErr error) {
 				Session:       rawData.Session,
 				DatePerformed: rawData.DatePerformed,
 			}
-
-			w.FileChunk.Stop = (lastWorkoutIdSet && iterId != lastWorkoutId)
-			if w.FileChunk.Stop {
-				return nil
-			}
-
-			if !firstWorkoutIdSet {
-				firstWorkoutIdSet = true
-				prevWorkoutId = iterId
-			}
-			if !lastWorkoutIdSet && w.FileChunk.ReachedEnd {
-				lastWorkoutIdSet = true
-				lastWorkoutId = iterId
-			}
 			if iterId != prevWorkoutId {
-				w.FileChunk.Started = true
+				if err := w.scheduleWorkoutPhysDataJobs(ctxt, params); err != nil {
+					return err
+				}
 				params = append(params, types.Workout{WorkoutId: iterId})
 				prevWorkoutId = iterId
 			}
-			if !w.FileChunk.Started {
-				return nil
-			}
 
-			var variants []types.BarPathVariant
-			if rawData.DataDir != "" {
-				variants, err = w.parseWorkoutDataDir(
-					path.Join(w.FileDir, rawData.DataDir),
-					int(math.Ceil(rawData.Sets)),
-				)
-				if err != nil {
-					return err
-				}
-			}
-
+			w.DataDirMap[iterId] = append(w.DataDirMap[iterId], rawData.DataDir)
 			iterExerciseData := types.ExerciseData{
 				Name:   rawData.Exercise,
 				Weight: rawData.Weight,
@@ -273,25 +195,22 @@ func (w *workoutCSVLoader) Run(ctxt context.Context) (opErr error) {
 				),
 			}
 
-			if len(variants) > 0 {
-				if err := RunPhysicsJobs(ctxt, w.S, w.Tx, PhysicsOpts{
-					BarPathCalcParams:    w.BarPathCalcHyperparams,
-					BarTrackerCalcParams: w.BarPathTrackerHyperparams,
-					RawData:              variants,
-					ExerciseData:         &iterExerciseData,
-				}); err != nil {
-					return err
-				}
-			}
-
 			params[len(params)-1].Exercises = append(
 				params[len(params)-1].Exercises,
 				iterExerciseData,
 			)
-
+			cntr++
 			return nil
 		},
 	}); opErr != nil {
+		goto errReturn
+	}
+
+	if opErr = w.scheduleWorkoutPhysDataJobs(ctxt, params); opErr != nil {
+		goto errReturn
+	}
+
+	if opErr = w.PhysDataBatch.Wait(); opErr != nil {
 		goto errReturn
 	}
 
@@ -313,6 +232,48 @@ func (w *workoutCSVLoader) Run(ctxt context.Context) (opErr error) {
 errReturn:
 	w.S.Log.Error(w.formatLogLine("Encountered error"), "Error", opErr)
 	return sberr.AppendError(types.CSVLoaderJobQueueErr, opErr)
+}
+
+func (w *workoutCSVLoader) scheduleWorkoutPhysDataJobs(
+	ctxt context.Context,
+	params []types.Workout,
+) error {
+	if len(params) == 0 {
+		// This will happen when the very first workout is being created and the
+		// prev workout ID is still zero initialized.
+		return nil
+	}
+	lastWorkout := &params[len(params)-1]
+
+	for i, dataDir := range w.DataDirMap[lastWorkout.WorkoutId] {
+		var err error
+		var variants []types.BarPathVariant
+
+		if dataDir != "" {
+			variants, err = w.parseWorkoutDataDir(
+				path.Join(path.Dir(w.File), dataDir),
+				int(math.Ceil(lastWorkout.Exercises[i].Sets)),
+			)
+			if err != nil {
+				return err
+			}
+		}
+
+		if len(variants) > 0 {
+			if err := RunPhysicsJobs(ctxt, w.S, w.Tx, PhysicsOpts{
+				Batch:                w.PhysDataBatch,
+				BarPathCalcParams:    w.BarPathCalcHyperparams,
+				BarTrackerCalcParams: w.BarPathTrackerHyperparams,
+				RawData:              variants,
+				ExerciseData:         &params[len(params)-1].Exercises[i],
+			}); err != nil {
+				return err
+			}
+		}
+	}
+
+	delete(w.DataDirMap, lastWorkout.WorkoutId)
+	return nil
 }
 
 func (w *workoutCSVLoader) parseWorkoutDataDir(
@@ -374,19 +335,6 @@ func (w *workoutCSVLoader) parseWorkoutDataDir(
 				Flag:      types.VideoBarPathData,
 				VideoPath: path,
 			}
-		// TODO
-		// case "wla":
-		// 	tsData, err := w.loadWLACSVData(path)
-		// 	if err != nil {
-		// 		return sberr.AppendError(
-		// 			sberr.Wrap(
-		// 				types.InvalidDataDirErr,
-		// 				"Weight lifting analysis export file malformed",
-		// 			),
-		// 			err,
-		// 		)
-		// 	}
-		// 	res[setNum-1] = tsData
 		case "csv":
 			tsData, err := w.loadTimeSeriesCSVData(path)
 			if err != nil {

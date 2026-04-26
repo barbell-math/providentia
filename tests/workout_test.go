@@ -8,7 +8,7 @@ import (
 	"code.barbellmath.net/barbell-math/providentia/internal/util"
 	"code.barbellmath.net/barbell-math/providentia/lib/logic"
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
-	sbtest "code.barbellmath.net/barbell-math/smoothbrain-test"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sbtest"
 )
 
 var (

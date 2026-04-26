@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"code.barbellmath.net/barbell-math/providentia/lib/types"
-	sberr "code.barbellmath.net/barbell-math/smoothbrain-errs"
+	"code.barbellmath.net/carmichaeljr/smoothbrain/sberrs"
 )
 
 type (
@@ -55,12 +55,6 @@ func ValidateState(s *types.State) error {
 		return sberr.Wrap(
 			types.InvalidPhysicsJobQueueErr,
 			"The PhysicsJobQueue field must not be nil",
-		)
-	}
-	if s.VideoJobQueue == nil {
-		return sberr.Wrap(
-			types.InvalidVideoJobQueue,
-			"The VideoJobQueue field must not be nil",
 		)
 	}
 	if s.CSVLoaderJobQueue == nil {
