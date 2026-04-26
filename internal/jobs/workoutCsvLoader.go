@@ -46,7 +46,7 @@ type (
 		*types.BarPathCalcHyperparams
 		*types.BarPathTrackerHyperparams
 
-		DataDirMap    map[types.WorkoutId][]string
+		DataDirs      []string
 		PhysDataBatch *sbjobqueue.Batch
 	}
 
@@ -132,7 +132,6 @@ func (w *workoutCSVLoader) formatLogLine(msg string) string {
 
 func (w *workoutCSVLoader) Run(ctxt context.Context) (opErr error) {
 	w.S.Log.Log(ctxt, sblog.VLevel(3), w.formatLogLine("Starting..."))
-	w.DataDirMap = map[types.WorkoutId][]string{}
 	w.PhysDataBatch, _ = sbjobqueue.BatchWithContext(ctxt)
 
 	var f *os.File
@@ -178,7 +177,7 @@ func (w *workoutCSVLoader) Run(ctxt context.Context) (opErr error) {
 				prevWorkoutId = iterId
 			}
 
-			w.DataDirMap[iterId] = append(w.DataDirMap[iterId], rawData.DataDir)
+			w.DataDirs = append(w.DataDirs, rawData.DataDir)
 			iterExerciseData := types.ExerciseData{
 				Name:   rawData.Exercise,
 				Weight: rawData.Weight,
@@ -240,7 +239,7 @@ func (w *workoutCSVLoader) scheduleWorkoutPhysDataJobs(
 	}
 	lastWorkout := &params[len(params)-1]
 
-	for i, dataDir := range w.DataDirMap[lastWorkout.WorkoutId] {
+	for i, dataDir := range w.DataDirs {
 		var err error
 		var variants []types.BarPathVariant
 
@@ -267,7 +266,7 @@ func (w *workoutCSVLoader) scheduleWorkoutPhysDataJobs(
 		}
 	}
 
-	delete(w.DataDirMap, lastWorkout.WorkoutId)
+	w.DataDirs = w.DataDirs[:0]
 	return nil
 }
 
